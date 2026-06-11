@@ -1,0 +1,401 @@
+[
+  {
+    "id": "bc740394-cf37-431b-9624-5a98139cc7dd",
+    "createdAt": "2026-06-09T08:00:09.259Z",
+    "updatedAt": "2026-06-09T13:57:14.515Z",
+    "uid": "teacher_1",
+    "name": "Mr. Adebayo Okafor",
+    "location": "Lagos, Nigeria",
+    "subjects": [
+      "Mathematics",
+      "Physics"
+    ],
+    "curricula": [
+      "WAEC",
+      "JAMB",
+      "IGCSE",
+      "High School (Ages 15-18)",
+      "University Prep"
+    ],
+    "rate": 400000,
+    "rating": 4.9,
+    "reviewsCount": 247,
+    "badges": [
+      "badge-verified",
+      "badge-top-rated"
+    ],
+    "bio": "12 years teaching mathematics preparation. Specializes in algebra speed calculations and IGCSE/WAEC exam setups.",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Tomorrow": [
+        "4:00 PM",
+        "5:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "3:00 PM",
+        "4:00 PM",
+        "5:00 PM"
+      ],
+      "Thursday": [
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ]
+    },
+    "languages": [
+      "English",
+      "Yoruba"
+    ],
+    "verified": true,
+    "stats": {
+      "sessionsTaught": 540,
+      "responseRate": 98
+    },
+    "leaderboardOptIn": true,
+    "username": "adebayo",
+    "status": "verified"
+  },
+  {
+    "id": "ca5283a3-0fe6-44d1-b99f-b12000267942",
+    "createdAt": "2026-06-09T08:00:09.262Z",
+    "updatedAt": "2026-06-09T13:57:14.518Z",
+    "uid": "teacher_2",
+    "name": "Mr. Kofi Mensah",
+    "location": "Accra, Ghana",
+    "subjects": [
+      "Chemistry",
+      "Mathematics"
+    ],
+    "curricula": [
+      "WAEC",
+      "Cambridge",
+      "Middle School (Ages 12-14)",
+      "High School (Ages 15-18)"
+    ],
+    "rate": 450000,
+    "rating": 4.8,
+    "reviewsCount": 118,
+    "badges": [
+      "badge-verified",
+      "badge-fast"
+    ],
+    "bio": "Practical sciences master. Makes complex chemical formulas simple using visual laboratory representations.",
+    "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop",
+    "online": false,
+    "availability": {
+      "Tomorrow": [
+        "2:00 PM",
+        "3:00 PM"
+      ],
+      "Wednesday": [
+        "1:00 PM",
+        "2:00 PM"
+      ],
+      "Friday": [
+        "4:00 PM",
+        "5:00 PM"
+      ]
+    },
+    "languages": [
+      "English",
+      "Twi"
+    ],
+    "verified": true,
+    "stats": {
+      "sessionsTaught": 280,
+      "responseRate": 92
+    },
+    "leaderboardOptIn": true,
+    "username": "kofi",
+    "status": "verified"
+  },
+  {
+    "id": "93b2fd3c-5ef9-4292-abab-a11fb549fce1",
+    "createdAt": "2026-06-09T08:00:09.264Z",
+    "updatedAt": "2026-06-09T13:57:14.521Z",
+    "uid": "teacher_3",
+    "name": "Mrs. Chioma Nwachukwu",
+    "location": "Enugu, Nigeria",
+    "subjects": [
+      "English",
+      "Literature"
+    ],
+    "curricula": [
+      "WAEC",
+      "Cambridge",
+      "SAT",
+      "Primary (Ages 6-11)",
+      "Middle School (Ages 12-14)"
+    ],
+    "rate": 350000,
+    "rating": 5,
+    "reviewsCount": 92,
+    "badges": [
+      "badge-verified",
+      "badge-elite",
+      "badge-streak"
+    ],
+    "bio": "Creative writing and syntax focus. Multi-jurisdiction English instructor with an emphasis on SAT prep.",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Tomorrow": [
+        "9:00 AM",
+        "10:00 AM",
+        "11:00 AM"
+      ],
+      "Thursday": [
+        "1:00 PM",
+        "2:00 PM",
+        "3:00 PM"
+      ]
+    },
+    "languages": [
+      "English",
+      "Igbo"
+    ],
+    "verified": true,
+    "stats": {
+      "sessionsTaught": 195,
+      "responseRate": 100
+    },
+    "leaderboardOptIn": true,
+    "username": "chioma",
+    "status": "verified"
+  },
+  {
+    "id": "5d452628-9572-4983-a21b-ae94524eef19",
+    "createdAt": "2026-06-09T08:00:09.267Z",
+    "updatedAt": "2026-06-09T13:57:14.526Z",
+    "uid": "teacher_4",
+    "name": "Ms. Aminata Diallo",
+    "location": "Nairobi, Kenya",
+    "subjects": [
+      "Physics",
+      "Chemistry"
+    ],
+    "curricula": [
+      "IB Diploma",
+      "Cambridge",
+      "Primary (Ages 6-11)",
+      "Middle School (Ages 12-14)"
+    ],
+    "rate": 550000,
+    "rating": 4.9,
+    "reviewsCount": 204,
+    "badges": [
+      "badge-verified",
+      "badge-top-rated",
+      "badge-intl"
+    ],
+    "bio": "Bilingual instructor specializing in AP, IB, and IGCSE physics frameworks.",
+    "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Wednesday": [
+        "9:00 AM",
+        "10:00 AM"
+      ],
+      "Friday": [
+        "1:00 PM",
+        "2:00 PM",
+        "3:00 PM"
+      ]
+    },
+    "languages": [
+      "English",
+      "French",
+      "Swahili"
+    ],
+    "verified": true,
+    "stats": {
+      "sessionsTaught": 412,
+      "responseRate": 97
+    },
+    "leaderboardOptIn": true,
+    "username": "aminata",
+    "status": "verified"
+  },
+  {
+    "id": "70cc98ed-cc64-4de7-92a8-b97fdabd87d4",
+    "createdAt": "2026-06-09T08:00:09.269Z",
+    "updatedAt": "2026-06-09T13:57:14.529Z",
+    "uid": "teacher_5",
+    "name": "Mrs. Fatima Bello",
+    "location": "Abuja, Nigeria",
+    "subjects": [
+      "English",
+      "Mathematics"
+    ],
+    "curricula": [
+      "Nursery (Ages 2-5)",
+      "Primary (Ages 6-11)"
+    ],
+    "rate": 300000,
+    "rating": 4.9,
+    "reviewsCount": 84,
+    "badges": [
+      "badge-verified",
+      "badge-top-rated"
+    ],
+    "bio": "Early childhood development specialist. Passionate about phonics, foundational numeracy, and active learning strategies for nursery and primary pupils.",
+    "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Tomorrow": [
+        "1:00 PM",
+        "2:00 PM"
+      ],
+      "Thursday": [
+        "10:00 AM",
+        "11:00 AM"
+      ]
+    },
+    "languages": [
+      "English",
+      "Hausa"
+    ],
+    "verified": true,
+    "stats": {
+      "sessionsTaught": 130,
+      "responseRate": 95
+    },
+    "leaderboardOptIn": true,
+    "username": "fatima",
+    "status": "verified"
+  },
+  {
+    "id": "e402a51a-112d-42c2-baaa-1999cb1882d8",
+    "createdAt": "2026-06-09T13:57:14.510Z",
+    "updatedAt": "2026-06-09T13:57:14.510Z",
+    "uid": "teacher_fresh",
+    "name": "Dr. Chidi Johnson",
+    "location": "Enugu, Nigeria",
+    "subjects": [],
+    "curricula": [],
+    "rate": 0,
+    "rating": 5,
+    "reviewsCount": 0,
+    "badges": [
+      "badge-verified"
+    ],
+    "bio": "",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+    "online": true,
+    "availability": {},
+    "languages": [],
+    "verified": false,
+    "status": "onboarding",
+    "stats": {
+      "sessionsTaught": 0,
+      "responseRate": 100
+    },
+    "leaderboardOptIn": true
+  },
+  {
+    "id": "fa2fead3-c5ae-4449-9019-720c8839daa5",
+    "createdAt": "2026-06-09T21:03:26.613Z",
+    "updatedAt": "2026-06-09T21:04:42.018Z",
+    "uid": "user_1781039006549",
+    "name": "nuel",
+    "location": "Lagos, Nigeria",
+    "subjects": [
+      "Mathematics",
+      "Physics",
+      "English"
+    ],
+    "curricula": [
+      "WAEC",
+      "High School (Ages 15-18)"
+    ],
+    "rate": 3999900,
+    "rating": 5,
+    "reviewsCount": 0,
+    "badges": [
+      "badge-verified"
+    ],
+    "bio": "ytjtgy",
+    "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Tomorrow": [
+        "4:00 PM",
+        "5:00 PM"
+      ],
+      "Wednesday": [
+        "3:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "languages": [
+      "English"
+    ],
+    "verified": false,
+    "status": "pending_approval",
+    "stats": {
+      "sessionsTaught": 0,
+      "responseRate": 100
+    },
+    "leaderboardOptIn": true,
+    "username": "nuel",
+    "videoUrl": "dfgh"
+  },
+  {
+    "id": "9609472f-119a-487b-8a11-99b03e34fc2e",
+    "createdAt": "2026-06-10T08:16:08.331Z",
+    "updatedAt": "2026-06-10T08:56:08.144Z",
+    "uid": "user_1781079368304",
+    "name": "Dr. Chidi Johnson",
+    "location": "Lagos, Nigeria",
+    "subjects": [
+      "Mathematics"
+    ],
+    "curricula": [
+      "WAEC",
+      "IGCSE",
+      "High School (Ages 15-18)"
+    ],
+    "rate": 400000,
+    "rating": 5,
+    "reviewsCount": 0,
+    "badges": [
+      "badge-verified"
+    ],
+    "bio": "Experienced Mathematics educator specialized in advanced calculus and algebra.",
+    "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+    "coverImage": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
+    "online": true,
+    "availability": {
+      "Tomorrow": [
+        "4:00 PM",
+        "5:00 PM"
+      ],
+      "Wednesday": [
+        "3:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "languages": [
+      "English"
+    ],
+    "verified": true,
+    "status": "verified",
+    "stats": {
+      "sessionsTaught": 0,
+      "responseRate": 100
+    },
+    "leaderboardOptIn": true,
+    "username": "dr-chidi-johnson",
+    "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "govId": "NGA-ID-8840294",
+    "degree": "B.Sc. Mathematics, University of Nigeria Nsukka (2016)"
+  }
+]

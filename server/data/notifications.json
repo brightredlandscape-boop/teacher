@@ -1,0 +1,12 @@
+[
+  {
+    "id": "6c07e97a-71d2-405f-9e23-0e5ea0d4c089",
+    "createdAt": "2026-06-10T08:56:08.168Z",
+    "updatedAt": "2026-06-10T08:56:08.168Z",
+    "userId": "user_1781079368304",
+    "type": "application_response",
+    "title": "Application Approved!",
+    "body": "Welcome to EduBridge! Your teacher onboarding profile is approved and live.",
+    "read": false
+  }
+]

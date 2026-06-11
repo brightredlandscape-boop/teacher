@@ -1,0 +1,42 @@
+[
+  {
+    "id": "2028dcf2-b55b-4ce7-881b-669ae82c1657",
+    "createdAt": "2026-06-09T08:00:09.305Z",
+    "updatedAt": "2026-06-09T08:00:09.305Z",
+    "studentId": "student_1",
+    "studentName": "Tunde",
+    "title": "Homework #3 (Algebraic Fractions)",
+    "instructions": "Simplify the polynomial equations on page 42.",
+    "dueDate": "2026-06-11T08:00:09.304Z",
+    "maxScore": 100,
+    "status": "Graded",
+    "submission": {
+      "text": "Verified equations submitted."
+    },
+    "grade": {
+      "score": 85,
+      "feedback": "Excellent factoring structure. Focus on coefficients next.",
+      "date": "3 days ago"
+    }
+  },
+  {
+    "id": "5048d057-f1fe-4c90-8dcc-107b81c2fa04",
+    "createdAt": "2026-06-09T08:00:09.307Z",
+    "updatedAt": "2026-06-09T08:00:09.307Z",
+    "studentId": "student_1",
+    "studentName": "Tunde",
+    "title": "Quiz #2 (Simple Linear Equations)",
+    "instructions": "Complete quiz speed assessment.",
+    "dueDate": "2026-06-04T08:00:09.306Z",
+    "maxScore": 100,
+    "status": "Graded",
+    "submission": {
+      "text": "Quiz details submitted."
+    },
+    "grade": {
+      "score": 92,
+      "feedback": "Great precision and timeline speed.",
+      "date": "5 days ago"
+    }
+  }
+]

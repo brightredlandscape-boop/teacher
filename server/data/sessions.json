@@ -1,0 +1,24 @@
+[
+  {
+    "id": "a46e7027-4ee6-47dd-8438-2910efe8e4d1",
+    "createdAt": "2026-06-09T08:00:09.300Z",
+    "updatedAt": "2026-06-09T08:00:09.300Z",
+    "teacherId": "teacher_1",
+    "teacherName": "Mr. Adebayo Okafor",
+    "studentId": "student_1",
+    "studentName": "Tunde",
+    "parentId": "parent_1",
+    "subject": "Mathematics Prep",
+    "slot": {
+      "day": "Tomorrow",
+      "time": "4:00 PM"
+    },
+    "cost": 400000,
+    "status": "Scheduled",
+    "clockLog": [],
+    "recordingConsent": {
+      "teacher": true,
+      "parent": true
+    }
+  }
+]

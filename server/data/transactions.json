@@ -1,0 +1,32 @@
+[
+  {
+    "id": "5029c62f-e1fa-498b-93e7-e458734006d1",
+    "createdAt": "2026-06-09T21:00:57.674Z",
+    "updatedAt": "2026-06-09T21:00:57.685Z",
+    "amount": 400000,
+    "amountMinorUnits": 400000,
+    "currency": "NGN",
+    "commission": 60000,
+    "status": "settled",
+    "fromUserId": "parent_1",
+    "toUserId": "teacher_1",
+    "sessionId": "session_old_1",
+    "paymentProcessor": "escrow",
+    "payoutStatus": "completed"
+  },
+  {
+    "id": "b73bd04c-59dd-4734-a0f2-cb1eafdacfe9",
+    "createdAt": "2026-06-09T21:00:57.708Z",
+    "updatedAt": "2026-06-09T21:00:57.708Z",
+    "amount": 350000,
+    "amountMinorUnits": 350000,
+    "currency": "NGN",
+    "commission": 52500,
+    "status": "settled",
+    "fromUserId": "parent_1",
+    "toUserId": "teacher_3",
+    "sessionId": "session_old_2",
+    "paymentProcessor": "escrow",
+    "payoutStatus": "completed"
+  }
+]

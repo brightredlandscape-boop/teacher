@@ -1,0 +1,667 @@
+
+<style>
+:root {
+  --g: #1A6B47; --g-bg: #E8F5EF; --g-mid: #B5D9C8; --g-dark: #0F3D28;
+  --amber: #D97706; --amber-bg: #FEF3C7;
+  --blue: #1D4ED8; --blue-bg: #DBEAFE;
+  --purple: #6D28D9; --purple-bg: #EDE9FE;
+  --red: #DC2626; --red-bg: #FEE2E2;
+  --teal: #0D9488; --teal-bg: #CCFBF1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, system-ui); }
+.tabs { display: flex; gap: 4px; padding: 16px 16px 0; background: var(--color-background-secondary); border-bottom: 1px solid var(--color-border-tertiary); flex-wrap: wrap; }
+.tab { padding: 8px 16px; border-radius: 6px 6px 0 0; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; border-bottom: none; color: var(--color-text-secondary); background: transparent; display: flex; align-items: center; gap: 6px; transition: all .15s; }
+.tab:hover { color: var(--color-text-primary); background: var(--color-background-primary); }
+.tab.active { color: var(--color-text-primary); background: var(--color-background-primary); border-color: var(--color-border-tertiary); margin-bottom: -1px; padding-bottom: 9px; }
+.tab .dot { width: 8px; height: 8px; border-radius: 50%; }
+.panel { display: none; padding: 20px; background: var(--color-background-primary); }
+.panel.active { display: block; }
+
+.section-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-secondary); margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.section-label:first-child { margin-top: 0; }
+
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+.metric-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1.2; }
+.metric-lbl { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
+.metric-delta { font-size: 11px; margin-top: 4px; }
+.up { color: var(--g); } .down { color: var(--red); } .neutral { color: var(--color-text-secondary); }
+
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; margin-bottom: 10px; }
+.card-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.card-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.tag-g { background: var(--g-bg); color: var(--g-dark); }
+.tag-a { background: var(--amber-bg); color: var(--amber); }
+.tag-b { background: var(--blue-bg); color: var(--blue); }
+.tag-p { background: var(--purple-bg); color: var(--purple); }
+.tag-r { background: var(--red-bg); color: var(--red); }
+.tag-t { background: var(--teal-bg); color: var(--teal); }
+
+.widget-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.widget-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+.badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 0.5px solid var(--color-border-tertiary); }
+.badge i { font-size: 13px; }
+
+.progress-wrap { margin-top: 8px; }
+.progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.progress-bar { height: 6px; border-radius: 3px; }
+
+.row-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 13px; }
+.row-item:last-child { border-bottom: none; }
+.row-label { color: var(--color-text-primary); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.row-val { color: var(--color-text-secondary); }
+
+.priority { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.p-must { background: var(--red); }
+.p-should { background: var(--amber); }
+.p-nice { background: var(--g); }
+
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+
+.alert { padding: 10px 14px; border-radius: var(--border-radius-md); border-left: 3px solid; margin-bottom: 8px; font-size: 13px; }
+.alert-g { border-color: var(--g); background: var(--g-bg); color: var(--g-dark); }
+.alert-a { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); }
+.alert-r { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+</style>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="parent" onclick="switchTab('parent')">
+    <span class="dot" style="background:var(--purple)"></span> Parent Dashboard
+  </button>
+  <button class="tab" data-tab="student" onclick="switchTab('student')">
+    <span class="dot" style="background:var(--blue)"></span> Student Portal
+  </button>
+  <button class="tab" data-tab="teacher" onclick="switchTab('teacher')">
+    <span class="dot" style="background:var(--g)"></span> Teacher Dashboard
+  </button>
+  <button class="tab" data-tab="admin" onclick="switchTab('admin')">
+    <span class="dot" style="background:var(--red)"></span> Admin Dashboard
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PARENT DASHBOARD -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel active" id="panel-parent">
+  <div class="legend">
+    <div class="legend-item"><span class="priority p-must"></span> Must have</div>
+    <div class="legend-item"><span class="priority p-should"></span> Should have</div>
+    <div class="legend-item"><span class="priority p-nice"></span> Nice to have</div>
+  </div>
+
+  <div class="section-label">1 — Hero summary strip (top of every visit)</div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">89%</div>
+      <div class="metric-lbl">Attendance this month</div>
+      <div class="metric-delta up"><i class="ti ti-arrow-up" aria-hidden="true"></i> +4% vs last month</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--blue)">76%</div>
+      <div class="metric-lbl">Assignments submitted</div>
+      <div class="metric-delta up"><i class="ti ti-arrow-up" aria-hidden="true"></i> 3 of 4 returned</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--amber)">82</div>
+      <div class="metric-lbl">Avg. assessment score</div>
+      <div class="metric-delta up"><i class="ti ti-arrow-up" aria-hidden="true"></i> +12% this month</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">5</div>
+      <div class="metric-lbl">Sessions this month</div>
+      <div class="metric-delta neutral">2 upcoming scheduled</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">₦17,500</div>
+      <div class="metric-lbl">Spent this month</div>
+      <div class="metric-delta neutral">3 sessions remain in bundle</div>
+    </div>
+  </div>
+
+  <div class="section-label">2 — AI Weekly Insight (highest retention driver)</div>
+  <div class="alert alert-g">
+    <strong>Gemini Weekly Report — Timi, Week of 9 June</strong><br>
+    Timi improved 23% in algebraic equations this week. His assignment scores show consistent upward trends. One area to focus on: quadratic factorisation. Next session is planned to cover this. Overall trajectory: <strong>on track for exam readiness</strong>.
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tag-g"><i class="ti ti-robot" aria-hidden="true"></i> AI-generated</span>
+      <span class="tag tag-a">Every Monday morning</span>
+      <span class="tag tag-b">Specific to your child</span>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Per-child progress cards (one per enrolled child)</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-line" aria-hidden="true" style="color:var(--g)"></i> Score trend graph</div>
+      <div class="card-body">Subject scores plotted over time (last 8 sessions). Shows upward/downward trend per subject. Triggers concern flag if score drops 2 sessions in a row. Data source: graded assignments + teacher assessments.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-check" aria-hidden="true" style="color:var(--blue)"></i> Attendance tracker</div>
+      <div class="card-body">Sessions attended vs booked as a percentage. Shows streak badge ("5 sessions in a row"). Flags missed sessions with reason (parent cancelled / teacher cancelled / no-show). Data source: session clock logs.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-file-check" aria-hidden="true" style="color:var(--purple)"></i> Assignment log</div>
+      <div class="card-body">Every assignment set, submission status, score, written feedback, and optional teacher voice note. Filterable by subject and date. Overdue items highlighted in red. Parent can reply/comment on feedback.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock" aria-hidden="true" style="color:var(--amber)"></i> Session clock log</div>
+      <div class="card-body">Complete per-session record: exact start, any pauses (with reason), exact end, billed duration in minutes. Tamper-proof (server-side). Available as downloadable PDF for dispute evidence. Shows billed vs scheduled time.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-notes" aria-hidden="true" style="color:var(--teal)"></i> Teacher session notes</div>
+      <div class="card-body">Teacher's shared notes after every session: topics covered, student strengths, areas needing work, what will be covered next. Parent can message teacher directly from the note. Private notes hidden from parent.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-video" aria-hidden="true" style="color:var(--g)"></i> Session recordings</div>
+      <div class="card-body">Where consent was given by both parties. Accessible for 30 days. Private signed URL. Option to download before expiry. Consent status clearly shown. Parent can flag a recording for review.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">4 — Bookings and payment</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar" aria-hidden="true" style="color:var(--blue)"></i> Upcoming sessions</div>
+      <div class="card-body">Next 5 scheduled sessions with teacher name, subject, date, time in parent's local timezone, and Zoom/Meet link. One-tap cancel with policy shown. Reschedule request button.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-wallet" aria-hidden="true" style="color:var(--g)"></i> Spend tracker</div>
+      <div class="card-body">Total paid this month, per teacher, per subject. Bundle sessions remaining and expiry date. Full transaction history with downloadable receipts. Projected monthly cost based on current schedule.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">5 — Multi-child support</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-users" aria-hidden="true" style="color:var(--purple)"></i> Child switcher</div>
+    <div class="card-body">Tab or dropdown to switch between children (e.g. Timi and Zara). Each child has their own full progress dashboard. Add/remove children from account settings. Parent can set different teachers per child. AI weekly report is child-specific.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">6 — Trust and safety</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-alert-triangle" aria-hidden="true" style="color:var(--red)"></i> Dispute filing</div>
+      <div class="card-body">File a dispute within 48 hours of session completion. Reason dropdown + description + evidence upload. Escrow frozen immediately on filing. Status tracker: Filed → Under Review → Resolved. Admin resolution note shown.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-message-circle" aria-hidden="true" style="color:var(--teal)"></i> Teacher messaging</div>
+      <div class="card-body">In-app chat per teacher thread. Message from session notes, assignment feedback, or dashboard. Response time shown. Unread badge. All messages archived and auditable by admin if dispute is raised.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- STUDENT PORTAL -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-student">
+  <div class="legend">
+    <div class="legend-item"><span class="priority p-must"></span> Must have</div>
+    <div class="legend-item"><span class="priority p-should"></span> Should have</div>
+    <div class="legend-item"><span class="priority p-nice"></span> Nice to have</div>
+  </div>
+
+  <div class="section-label">1 — XP and level system (core gamification engine)</div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-val" style="color:var(--amber)">1,450</div>
+      <div class="metric-lbl">Total XP earned</div>
+      <div class="metric-delta" style="color:var(--amber)">Level 4 — Rising Scholar</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">550</div>
+      <div class="metric-lbl">XP to next level</div>
+      <div class="metric-delta neutral">Level 5 — Advanced Learner</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">7</div>
+      <div class="metric-lbl">Day streak</div>
+      <div class="metric-delta up">Keep it going!</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--purple)">4</div>
+      <div class="metric-lbl">Badges earned</div>
+      <div class="metric-delta neutral">2 more within reach</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">XP earning rules</div>
+    <div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-video" aria-hidden="true" style="color:var(--blue)"></i> Complete a session (attend full duration)</div><div class="row-val"><span class="tag tag-b">+100 XP</span></div></div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-file-upload" aria-hidden="true" style="color:var(--g)"></i> Submit assignment before due date</div><div class="row-val"><span class="tag tag-g">+50 XP</span></div></div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-star" aria-hidden="true" style="color:var(--amber)"></i> Score 90%+ on assignment</div><div class="row-val"><span class="tag tag-a">+200 XP</span></div></div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-calendar-check" aria-hidden="true" style="color:var(--teal)"></i> Perfect attendance week (all sessions attended)</div><div class="row-val"><span class="tag tag-t">+150 XP</span></div></div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-award" aria-hidden="true" style="color:var(--purple)"></i> Complete 10 sessions total</div><div class="row-val"><span class="tag tag-p">+500 XP</span></div></div>
+      <div class="row-item"><div class="row-label"><i class="ti ti-flame" aria-hidden="true" style="color:var(--red)"></i> 7-day active streak</div><div class="row-val"><span class="tag tag-r">+100 XP bonus</span></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">2 — Student badges</div>
+  <div class="badge-row">
+    <div class="badge" style="background:var(--g-bg);color:var(--g-dark)"><i class="ti ti-calendar-check" style="color:var(--g)"></i> Perfect Attendance</div>
+    <div class="badge" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-file-check" style="color:var(--blue)"></i> Assignment Champion</div>
+    <div class="badge" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-star" style="color:var(--amber)"></i> Top Scorer</div>
+    <div class="badge" style="background:var(--purple-bg);color:var(--purple)"><i class="ti ti-refresh" style="color:var(--purple)"></i> Consistent Learner</div>
+    <div class="badge" style="background:var(--teal-bg);color:var(--teal)"><i class="ti ti-flame" style="color:var(--teal)"></i> Streak Master</div>
+    <div class="badge" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-rocket" style="color:var(--red)"></i> Fast Finisher</div>
+    <div class="badge" style="background:var(--g-bg);color:var(--g-dark)"><i class="ti ti-bulb" style="color:var(--g)"></i> Subject Expert</div>
+    <div class="badge" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-trending-up" style="color:var(--amber)"></i> Most Improved</div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="card-title">Badge trigger conditions</div>
+    <div>
+      <div class="row-item"><div class="row-label">Perfect Attendance</div><div class="row-val">Attended 100% of sessions in a calendar month</div></div>
+      <div class="row-item"><div class="row-label">Assignment Champion</div><div class="row-val">Submitted 10 assignments on time in a row</div></div>
+      <div class="row-item"><div class="row-label">Top Scorer</div><div class="row-val">Scored 90%+ on 5 consecutive assignments</div></div>
+      <div class="row-item"><div class="row-label">Consistent Learner</div><div class="row-val">Active (1+ session or assignment) 30 days in a row</div></div>
+      <div class="row-item"><div class="row-label">Streak Master</div><div class="row-val">7-day engagement streak maintained</div></div>
+      <div class="row-item"><div class="row-label">Subject Expert</div><div class="row-val">Average subject score of 85%+ over 10 sessions</div></div>
+      <div class="row-item"><div class="row-label">Most Improved</div><div class="row-val">Score improved 30%+ over 4-week period</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Subject mastery tracker</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true" style="color:var(--g)"></i> Subject mastery by topic</div>
+    <div class="card-body" style="margin-bottom:10px">Progress bars per subject and sub-topic. Colour-coded: red = needs work, amber = developing, green = mastered. Data from assignment scores + teacher assessments over all sessions.</div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--color-text-primary)">Algebra</span><span style="color:var(--g)">82%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:82%;background:var(--g)"></div></div>
+    </div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--color-text-primary)">Quadratic equations</span><span style="color:var(--amber)">54%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:54%;background:var(--amber)"></div></div>
+    </div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--color-text-primary)">Trigonometry</span><span style="color:var(--red)">31%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:31%;background:var(--red)"></div></div>
+    </div>
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--color-text-primary)">Statistics</span><span style="color:var(--g)">91%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:91%;background:var(--g)"></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">4 — Upcoming sessions and assignments</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar" aria-hidden="true" style="color:var(--blue)"></i> Upcoming sessions</div>
+      <div class="card-body">Next 3 scheduled sessions: teacher name, subject, date, time, join link. Countdown timer to next session. "Add to calendar" button. Session prep tips from teacher shown 1 hour before.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-file-text" aria-hidden="true" style="color:var(--purple)"></i> Pending assignments</div>
+      <div class="card-body">All open assignments with due date, subject, teacher name, and status (not started / in progress / submitted). Red highlight for overdue. One-tap submit. Graded assignments show score + feedback.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">5 — Learning history and portfolio</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-history" aria-hidden="true" style="color:var(--teal)"></i> Session history</div>
+      <div class="card-body">All past sessions with teacher, subject, duration, date. Link to recording (if consented). Session notes from teacher. Option to rate the session (student perspective — feeds teacher improvement).</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-folder" aria-hidden="true" style="color:var(--amber)"></i> Student portfolio</div>
+      <div class="card-body">All submitted assignment work saved and organised by subject and date. Student can see their own improvement over time. Shareable as a learning portfolio with parents or future schools (optional toggle).</div>
+      <div style="margin-top:8px"><span class="tag tag-p">NICE TO HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">6 — Leaderboard and social</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-trophy" aria-hidden="true" style="color:var(--amber)"></i> Class leaderboard (opt-in)</div>
+    <div class="card-body">XP leaderboard among students sharing the same teacher (not platform-wide). Weekly reset. Student opts in; parents must also consent. Shows rank, XP, badges only — no scores or personal data. Drives healthy competition within study groups.</div>
+    <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TEACHER DASHBOARD -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-teacher">
+  <div class="legend">
+    <div class="legend-item"><span class="priority p-must"></span> Must have</div>
+    <div class="legend-item"><span class="priority p-should"></span> Should have</div>
+    <div class="legend-item"><span class="priority p-nice"></span> Nice to have</div>
+  </div>
+
+  <div class="section-label">1 — Earnings overview (top motivator for retention)</div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">₦84,500</div>
+      <div class="metric-lbl">Earned this month</div>
+      <div class="metric-delta up"><i class="ti ti-arrow-up"></i> +18% vs last month</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--amber)">₦12,300</div>
+      <div class="metric-lbl">In escrow (pending)</div>
+      <div class="metric-delta neutral">Releases in 18 hours</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">₦72,200</div>
+      <div class="metric-lbl">Paid out to date</div>
+      <div class="metric-delta neutral">Last payout: 8 Jun</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--red)">₦14,300</div>
+      <div class="metric-lbl">Platform commission</div>
+      <div class="metric-delta neutral">17% of gross</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">22</div>
+      <div class="metric-lbl">Sessions this month</div>
+      <div class="metric-delta up"><i class="ti ti-arrow-up"></i> +3 vs last month</div>
+    </div>
+  </div>
+
+  <div class="section-label">2 — Session management</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar" aria-hidden="true" style="color:var(--blue)"></i> Upcoming sessions</div>
+      <div class="card-body">Next 7 scheduled sessions: student name, subject, curriculum, date/time, and status. One-tap join. Reschedule or cancel with policy applied. Auto-detect booking conflicts with existing calendar.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock" aria-hidden="true" style="color:var(--g)"></i> Session clock access</div>
+      <div class="card-body">Per-session clock logs for all past sessions: start, pauses, end, billed duration. PDF export available. Visual timeline shows actual vs scheduled time. Used as evidence in any dispute. Server-side — cannot be edited.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-users" aria-hidden="true" style="color:var(--purple)"></i> Student roster</div>
+      <div class="card-body">All active students with: last session date, next session, current subject, outstanding assignments, overall grade trend (up/down/flat). Click to open full student profile with history and notes.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-device-tv" aria-hidden="true" style="color:var(--teal)"></i> Group class manager</div>
+      <div class="card-body">Create group sessions (up to 10 students). Set group name, subject, schedule, and per-student fee (auto-splits cost). Shows which students are enrolled, payment status, and attendance per group session.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Assignments and progress reports</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-file-plus" aria-hidden="true" style="color:var(--g)"></i> Assignment creator</div>
+      <div class="card-body">Rich text instructions, file attachments, due date, max score per student or group. AI-assisted assignment suggestion from Gemini based on topic covered. Bulk-assign to multiple students at once.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-check" aria-hidden="true" style="color:var(--amber)"></i> Grading queue</div>
+      <div class="card-body">All pending submissions sorted by due date. Score input, written feedback, optional 3-minute voice note recording. One-tap grade and return. Overdue-to-grade items flagged (affects Assignment Pro badge). Bulk grade if same rubric.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-report" aria-hidden="true" style="color:var(--blue)"></i> AI progress report generator</div>
+    <div class="card-body">Click "Generate report" for any student. Gemini pulls session history, assignment scores, attendance data and produces a draft report in the teacher's writing style. Teacher reviews and edits before sending. Parent receives as PDF and in-app. Counts toward session completion metrics.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">4 — Reputation and badge tracker</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-award" aria-hidden="true" style="color:var(--amber)"></i> Badge progress</div>
+      <div class="card-body">All 10 badges with current status: earned (shown with date), in progress (shows % toward trigger), locked. Tap any in-progress badge to see exact requirement remaining. Elite Educator badge shown as ultimate goal.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-star" aria-hidden="true" style="color:var(--g)"></i> Rating breakdown</div>
+      <div class="card-body">Overall star rating + breakdown across all 5 dimensions: Punctuality, Teaching Quality, Communication, Preparedness, Student Progress. Response rate %. Average response time. Total reviews. Review management (reply, flag inappropriate).</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-podium" aria-hidden="true" style="color:var(--purple)"></i> Leaderboard position</div>
+    <div class="card-body">Current rank on weekly and monthly leaderboards per subject and country. Score breakdown (sessions 40%, rating 35%, response rate 15%, badges 10%). Trend: moved up/down how many positions. Opt in/out toggle. "Reach Featured" goal shown.</div>
+    <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+  </div>
+
+  <div class="section-label">5 — Profile and availability management</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user-edit" aria-hidden="true" style="color:var(--teal)"></i> Profile editor</div>
+      <div class="card-body">Edit bio (with Gemini suggestion button), subjects, curricula, rates, video intro (re-upload), credentials. Profile completeness score shown with missing items highlighted. Preview public profile before saving.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-time" aria-hidden="true" style="color:var(--blue)"></i> Availability grid</div>
+      <div class="card-body">Weekly availability in 30-min slots. Sync with Google Calendar (shows as blocked when busy). Holiday/unavailable blocks. Auto-accept bookings toggle. Minimum notice period setting (e.g. 24 hours). Timezone auto-displayed.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">6 — Payouts and finance</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-credit-card" aria-hidden="true" style="color:var(--g)"></i> Payout settings and history</div>
+    <div class="card-body">Connected payout method: Paystack bank account / mobile money / Wise account. Set minimum payout threshold. Full payout history: gross, commission, net, payout reference, status. Download all receipts as PDF for tax. Currency conversion rate used shown per payout. Payout schedule (automatic 24h after session + no dispute).</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">7 — AI Academy progress</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-school" aria-hidden="true" style="color:var(--purple)"></i> Academy tracker</div>
+    <div class="card-body">6-module progression bar with XP earned per module, quiz scores, completion dates, and certificate download. Shows which modules unlock specific badges. Gemini roleplay practice button per module. Certificate sharing to LinkedIn one click.</div>
+    <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+  </div>
+
+  <div class="section-label">8 — Growth tools</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-share" aria-hidden="true" style="color:var(--amber)"></i> Referral programme</div>
+      <div class="card-body">Personal referral link. Track referred teachers: signed up, approved, total commission earned (10% of their earnings for 3 months). Share link pre-formatted for WhatsApp, Twitter, LinkedIn.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true" style="color:var(--teal)"></i> Profile analytics</div>
+      <div class="card-body">Profile views (last 30 days), booking conversion rate (views to bookings), search impressions by subject keyword, where traffic came from (search/direct/referral). Tips: "Add a video intro to increase bookings by 40%."</div>
+      <div style="margin-top:8px"><span class="tag tag-p">NICE TO HAVE</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- ADMIN DASHBOARD -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-admin">
+  <div class="legend">
+    <div class="legend-item"><span class="priority p-must"></span> Must have</div>
+    <div class="legend-item"><span class="priority p-should"></span> Should have</div>
+    <div class="legend-item"><span class="priority p-nice"></span> Nice to have</div>
+  </div>
+
+  <div class="section-label">1 — Platform financial overview</div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">₦4.2M</div>
+      <div class="metric-lbl">Total platform revenue</div>
+      <div class="metric-delta up">This month (commissions)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">₦3.1M</div>
+      <div class="metric-lbl">Total paid to teachers</div>
+      <div class="metric-delta neutral">This month</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--amber)">₦840K</div>
+      <div class="metric-lbl">In escrow (live)</div>
+      <div class="metric-delta neutral">Pending release</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--blue)">17%</div>
+      <div class="metric-lbl">Avg. commission rate</div>
+      <div class="metric-delta neutral">Across all sessions</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--red)">3</div>
+      <div class="metric-lbl">Failed payouts</div>
+      <div class="metric-delta down">Action required</div>
+    </div>
+  </div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-line" aria-hidden="true" style="color:var(--g)"></i> Revenue trend</div>
+      <div class="card-body">Daily, weekly, monthly gross revenue and net commission charts. Breakdowns: by currency (NGN, USD, GBP), by subject category, by country. Revenue forecast based on active subscriptions and bundle usage rates.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-building-bank" aria-hidden="true" style="color:var(--amber)"></i> Payout queue</div>
+      <div class="card-body">All pending and scheduled payouts. Manual override: release early, freeze (for dispute), mark failed. Failed payout retry queue. Filter by processor (Paystack/Wise), status, amount. Bulk approve scheduled payouts.</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">2 — Platform health metrics</div>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-val" style="color:var(--g)">4,214</div>
+      <div class="metric-lbl">Approved teachers</div>
+      <div class="metric-delta up">+48 this week</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">18,430</div>
+      <div class="metric-lbl">Registered parents</div>
+      <div class="metric-delta up">+312 this week</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--blue)">6,820</div>
+      <div class="metric-lbl">Active students</div>
+      <div class="metric-delta up">+189 this week</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">1,243</div>
+      <div class="metric-lbl">Sessions this week</div>
+      <div class="metric-delta neutral">Avg. 58 min billed</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" style="color:var(--amber)">23</div>
+      <div class="metric-lbl">Pending applications</div>
+      <div class="metric-delta down">7 over 48h SLA</div>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Teacher application and vetting queue</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-user-check" aria-hidden="true" style="color:var(--g)"></i> Application review workflow</div>
+    <div class="card-body">Queue sorted by submission time (oldest first). Per application: full profile preview, embedded video player, credential document viewer (PDF/image), Gemini bio quality score, ID match check, duplicate account detection flag. Decision: Approve / Reject (with dropdown reason) / Request More Info. 48-hour SLA tracker — escalation alert at 24h and 36h. Approval rate and average decision time analytics.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tag-r">MUST HAVE</span>
+      <span class="tag tag-a">SLA: 48 hours max</span>
+      <span class="tag tag-g">Gemini bio scoring</span>
+    </div>
+  </div>
+
+  <div class="section-label">4 — Dispute resolution centre</div>
+  <div class="alert alert-r">
+    <strong>4 open disputes</strong> — 2 pending admin review, 1 awaiting teacher response, 1 resolved. Oldest open: 31 hours.
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-alert-circle" aria-hidden="true" style="color:var(--red)"></i> Dispute management panel</div>
+    <div class="card-body">Full dispute record: session clock log, parent's claim + evidence, teacher's response + evidence. Admin decision form: Ruled in favour of parent / Ruled in favour of teacher / Split resolution. Escrow release or refund triggered from this panel. Resolution note sent to both parties. Dispute analytics: most common reason (clock discrepancy, no-show, quality concern). Resolution time SLA: 48 hours.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">5 — Cancellation policy and refund engine</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-file-invoice" aria-hidden="true" style="color:var(--amber)"></i> Policy configuration</div>
+    <div class="card-body">Platform-level defaults for each cancellation policy type (Flexible, Moderate, Strict). Teachers set their own per SRS rules. Admin can override policy for a specific transaction (e.g. emergency refund). Trial lesson refund processing queue: 5-business-day SLA, bulk approve. Refund amount calculator shown before each action. Audit log of every refund issued with admin ID.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">6 — Group classes and subscription bundles</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-users-group" aria-hidden="true" style="color:var(--purple)"></i> Group class oversight</div>
+      <div class="card-body">All active group classes: teacher, student list, subject, schedule, per-student fee, total class revenue, attendance per session. Flag groups over maximum size (10 students). Commission auto-calculated on group revenue.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-package" aria-hidden="true" style="color:var(--teal)"></i> Subscription bundle manager</div>
+      <div class="card-body">Active bundles (8/12/20-session packs) across all parents. Sessions used vs remaining. Expiry dates. Unused sessions pending refund requests. Bundle revenue total. Auto-renew status. Discount rates applied per bundle tier.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">7 — Compliance and safety</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-shield-check" aria-hidden="true" style="color:var(--g)"></i> NDPR / GDPR compliance panel</div>
+      <div class="card-body">Pending data deletion requests (must be actioned within 72h per NDPR). Data download requests queue. Cookie consent audit log. Privacy policy version history. Breach incident log (NDPR requires 72h notification to NITDA).</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-id-badge" aria-hidden="true" style="color:var(--blue)"></i> Background check seals</div>
+      <div class="card-body">Teachers who have submitted extended background checks. Premium tier flag. Admin manually marks "Background Checked" after verifying third-party report. Seal shown on teacher profile and search cards. Expiry date tracked (annual renewal).</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-video-off" aria-hidden="true" style="color:var(--red)"></i> Recording access (dispute-only)</div>
+    <div class="card-body">Admin request for temporary access to a session recording. Requires: dispute ID, reason, admin ID, and secondary admin approval (two-person rule for privacy compliance). Access auto-expires after 72 hours. Full audit log of every recording access event stored for 7 years.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+
+  <div class="section-label">8 — B2B school partnerships</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-building" aria-hidden="true" style="color:var(--teal)"></i> School account management</div>
+    <div class="card-body">Create and manage B2B school accounts: school name, contact, contract value, monthly flat fee, number of student accounts included, assigned teachers. Generate bulk student invite codes. School admin portal access management. School-specific reporting: total sessions, subjects used, aggregate progress data (anonymised). Contract renewal alerts. Invoice generation per school per month.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tag-a">SHOULD HAVE (Phase 6)</span>
+      <span class="tag tag-b">B2B revenue stream</span>
+    </div>
+  </div>
+
+  <div class="section-label">9 — Platform configuration</div>
+  <div class="widget-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-settings" aria-hidden="true" style="color:var(--purple)"></i> Platform config panel</div>
+      <div class="card-body">Commission rates per tier. Minimum payout thresholds. Trial lesson refund window. Exchange rate update frequency. Leaderboard refresh schedule. Badge trigger condition editor. AI Academy pass mark. Session late-join threshold (minutes).</div>
+      <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-dots" aria-hidden="true" style="color:var(--g)"></i> Rejection reason analytics</div>
+      <div class="card-body">Why teacher applications are rejected: blurry credentials, poor video, incomplete bio, duplicate account. Trend over time. If 40%+ rejected for same reason → trigger improvement to that onboarding step. Drives product feedback loop.</div>
+      <div style="margin-top:8px"><span class="tag tag-a">SHOULD HAVE</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">10 — Moderation and quality</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-flag" aria-hidden="true" style="color:var(--red)"></i> Review moderation queue</div>
+    <div class="card-body">Reviews flagged by teachers as inappropriate or false. Admin sees full review + session context + teacher flag reason. Decision: Keep / Remove (with reason) / Request parent clarification. Removed reviews logged with admin ID and reason for compliance. Pattern detection: flag reviewers who mass-submit negative reviews.</div>
+    <div style="margin-top:8px"><span class="tag tag-r">MUST HAVE</span></div>
+  </div>
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="'+id+'"]').classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+</script>

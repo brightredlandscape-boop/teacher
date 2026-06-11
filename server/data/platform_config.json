@@ -1,0 +1,17 @@
+[
+  {
+    "id": "default",
+    "createdAt": "2026-06-09T08:00:09.241Z",
+    "updatedAt": "2026-06-09T08:00:09.244Z",
+    "commissionRate": 15,
+    "minPayoutNGN": 500000,
+    "minPayoutUSD": 2000,
+    "exchangeRates": {
+      "NGN_USD": 0.00125,
+      "NGN_GBP": 0.001,
+      "NGN_EUR": 0.00116,
+      "NGN_GHS": 0.0143,
+      "NGN_CAD": 0.00172
+    }
+  }
+]

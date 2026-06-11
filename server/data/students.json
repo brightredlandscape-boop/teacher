@@ -1,0 +1,26 @@
+[
+  {
+    "id": "5297fc6c-456d-4844-b106-1d371daeb642",
+    "createdAt": "2026-06-09T08:00:09.283Z",
+    "updatedAt": "2026-06-09T08:00:09.283Z",
+    "uid": "student_1",
+    "parentUid": "parent_1",
+    "name": "Tunde",
+    "dob": "2012-05-15",
+    "subjects": [
+      "Mathematics",
+      "Physics"
+    ],
+    "xp": 400,
+    "badges": [
+      "Fast Learner"
+    ],
+    "progressBySubject": {
+      "Mathematics": {
+        "attendance": 95,
+        "averageScore": 88,
+        "completedLessons": 12
+      }
+    }
+  }
+]

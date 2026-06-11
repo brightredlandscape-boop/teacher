@@ -41,17 +41,14 @@ jobs:
           convert -background none resources/icon.svg resources/icon.png
           convert -background none resources/splash.svg resources/splash.png
           
-          # Install and run capacitor-assets
-          npx @capacitor/assets generate --android
+      - name: Add Android Platform
+        run: npx cap add android
+
+      - name: Generate Native Assets
+        run: npx @capacitor/assets generate --android
 
       - name: Sync Capacitor
-        run: |
-          npx cap sync android || {
-            echo "Sync failed, attempting to re-add android platform..."
-            rm -rf android
-            npx cap add android
-            npx cap sync android
-          }
+        run: npx cap sync android
 
       - name: Build Android APK
         run: |

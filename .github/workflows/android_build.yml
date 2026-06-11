@@ -57,7 +57,7 @@ jobs:
         run: npx @capacitor/assets generate --android
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: npx cap sync android --verbose
 
       - name: Build Android APK
         run: |

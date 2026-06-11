@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { exec } = require('child_process');
+import { exec } from 'child_process';
 
 console.log("=================================================================");
 console.log("                 EDUBRIDGE WEB SHARING SUITE                     ");

@@ -37,9 +37,13 @@ jobs:
       - name: Generate App Icons and Splash Screens
         run: |
           mkdir -p resources
-          # Convert SVGs to PNGs for Capacitor Assets
-          convert -background none resources/icon.svg resources/icon.png
-          convert -background none resources/splash.svg resources/splash.png
+          # Convert SVGs to PNGs for Capacitor Assets if not already present
+          if [ ! -f resources/icon.png ]; then
+            convert -background none resources/icon.svg resources/icon.png
+          fi
+          if [ ! -f resources/splash.png ]; then
+            convert -background none resources/splash.svg resources/splash.png
+          fi
           
       - name: Add Android Platform
         run: npx cap add android

@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">EduBridge Africa</string>
-    <string name="title_activity_main">EduBridge Africa</string>
-    <string name="package_name">com.edubridge.africa</string>
-    <string name="custom_url_scheme">com.edubridge.africa</string>
-</resources>

@@ -46,7 +46,12 @@ jobs:
           fi
           
       - name: Add Android Platform
-        run: npx cap add android
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          else
+            echo "Android folder already exists, skipping add."
+          fi
 
       - name: Generate Native Assets
         run: npx @capacitor/assets generate --android

@@ -10,7 +10,8 @@ export default function Academy({
   selectedCurrency, 
   formatCurrency, 
   convertMinor,
-  onUnlockBadge 
+  onUnlockBadge,
+  onRegisterClick
 }) {
   const [activeTab, setActiveTab] = useState('modules'); // 'modules', 'roleplay', 'forum', 'certificate'
   const [enrolled, setEnrolled] = useState(false);
@@ -565,12 +566,19 @@ export default function Academy({
             <p className="font-sans text-xs text-brand-cream/70 max-w-md mx-auto">
               Access to the Elite Academy dashboard, quiz workspace, discussion forums, and simulated certification modules is reserved exclusively for registered tutors.
             </p>
-            <a 
-              href="#dashboard" 
+            <button
+              type="button"
+              onClick={() => {
+                if (onRegisterClick) {
+                  onRegisterClick();
+                } else {
+                  window.location.hash = 'dashboard';
+                }
+              }}
               className="inline-block btn-magnetic py-3 px-8 bg-brand-clay hover:bg-brand-clay/95 rounded-full text-white font-bold uppercase tracking-wider text-xs shadow-lg shadow-brand-clay/10"
             >
               Go to Portal & Register
-            </a>
+            </button>
           </div>
         </div>
       </section>

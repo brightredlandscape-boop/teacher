@@ -2,9 +2,9 @@
   "appId": "com.edubridge.africa",
   "appName": "EduBridge Africa",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "cleartext": true
   },
   "plugins": {
     "SplashScreen": {

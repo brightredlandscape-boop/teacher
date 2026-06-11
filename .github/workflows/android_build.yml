@@ -45,13 +45,19 @@ jobs:
           npx @capacitor/assets generate --android
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          npx cap sync android || {
+            echo "Sync failed, attempting to re-add android platform..."
+            rm -rf android
+            npx cap add android
+            npx cap sync android
+          }
 
       - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Create GitHub Release
         id: create_release

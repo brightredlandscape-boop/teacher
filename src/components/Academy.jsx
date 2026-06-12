@@ -535,7 +535,6 @@ export default function Academy({
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16 relative">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">Core Credentials</span>
             <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white uppercase">
               ELITE TEACHERS ACADEMY
             </h2>

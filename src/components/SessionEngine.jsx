@@ -223,7 +223,6 @@ export default function SessionEngine({
     <section id="session-engine" className="py-24 px-6 md:px-16 lg:px-24 bg-brand-charcoal text-brand-cream border-t border-brand-cream/10">
       <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">Core Product #2</span>
           <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white">
             Live Session Engine Sandbox
           </h2>

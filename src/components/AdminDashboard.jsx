@@ -142,6 +142,19 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     }
   ]);
 
+  // B2B school partnerships
+  const [b2bSchools, setB2bSchools] = useState([
+    { id: 'sch_1', name: 'Corona Schools Trust', contact: 'Dr. Alabi', contractValue: 120000000, flatFee: 40000000, studentsCount: 50, studentsLimit: 100, teachersCount: 8, assignedTeachers: ["Mr. Adebayo Okafor", "Mrs. Chioma"], portalAccess: true, renewalDate: '2026-06-30', reporting: { totalSessions: 320, subjectsUsed: ["Mathematics", "Physics", "Chemistry"], avgProgress: "84%" }, apiKey: "eb_b2b_corona_key_8a3f12", apiKeyStatus: "active" },
+    { id: 'sch_2', name: 'British International School', contact: 'Mr. Davies', contractValue: 250000000, flatFee: 80000000, studentsCount: 120, studentsLimit: 150, teachersCount: 15, assignedTeachers: ["Mr. Kofi Mensah", "Dr. Chidi Johnson"], portalAccess: true, renewalDate: '2026-07-15', reporting: { totalSessions: 610, subjectsUsed: ["Biology", "Chemistry", "English"], avgProgress: "88%" }, apiKey: "eb_b2b_british_key_cf890d", apiKeyStatus: "active" }
+  ]);
+  const [selectedB2bSchool, setSelectedB2bSchool] = useState(null);
+  const [newSchoolName, setNewSchoolName] = useState('');
+  const [newSchoolContact, setNewSchoolContact] = useState('');
+  const [newSchoolContract, setNewSchoolContract] = useState('');
+  const [newSchoolFee, setNewSchoolFee] = useState('');
+  const [newSchoolStudentsLimit, setNewSchoolStudentsLimit] = useState('100');
+  const [newSchoolTeachersList, setNewSchoolTeachersList] = useState('Mr. Adebayo Okafor, Mrs. Chioma');
+
   // Policy configuration cancel overrides & Trial refund Calculator
   const [refundCalcCost, setRefundCalcCost] = useState('4000'); // in NGN raw
   const [refundCalcDeduct, setRefundCalcDeduct] = useState('15'); // percent
@@ -268,19 +281,6 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     { id: 'bc_1', name: 'Mr. Adebayo Okafor', checkType: 'Extended Academic & Criminal', verifiedDate: '2026-05-12', premiumTier: true, expiryDate: '2027-05-12' },
     { id: 'bc_2', name: 'Dr. Chidi Johnson', checkType: 'Extended Professional Vetting', verifiedDate: 'Pending', premiumTier: false, expiryDate: 'N/A' }
   ]);
-
-  // B2B school partnerships
-  const [b2bSchools, setB2bSchools] = useState([
-    { id: 'sch_1', name: 'Corona Schools Trust', contact: 'Dr. Alabi', contractValue: 120000000, flatFee: 40000000, studentsCount: 50, studentsLimit: 100, teachersCount: 8, assignedTeachers: ["Mr. Adebayo Okafor", "Mrs. Chioma"], portalAccess: true, renewalDate: '2026-06-30', reporting: { totalSessions: 320, subjectsUsed: ["Mathematics", "Physics", "Chemistry"], avgProgress: "84%" }, apiKey: "eb_b2b_corona_key_8a3f12", apiKeyStatus: "active" },
-    { id: 'sch_2', name: 'British International School', contact: 'Mr. Davies', contractValue: 250000000, flatFee: 80000000, studentsCount: 120, studentsLimit: 150, teachersCount: 15, assignedTeachers: ["Mr. Kofi Mensah", "Dr. Chidi Johnson"], portalAccess: true, renewalDate: '2026-07-15', reporting: { totalSessions: 610, subjectsUsed: ["Biology", "Chemistry", "English"], avgProgress: "88%" }, apiKey: "eb_b2b_british_key_cf890d", apiKeyStatus: "active" }
-  ]);
-  const [selectedB2bSchool, setSelectedB2bSchool] = useState(null);
-  const [newSchoolName, setNewSchoolName] = useState('');
-  const [newSchoolContact, setNewSchoolContact] = useState('');
-  const [newSchoolContract, setNewSchoolContract] = useState('');
-  const [newSchoolFee, setNewSchoolFee] = useState('');
-  const [newSchoolStudentsLimit, setNewSchoolStudentsLimit] = useState('100');
-  const [newSchoolTeachersList, setNewSchoolTeachersList] = useState('Mr. Adebayo Okafor, Mrs. Chioma');
 
   // Flagged Reviews Moderation Queue
   const [flaggedReviews, setFlaggedReviews] = useState([

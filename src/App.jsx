@@ -1597,7 +1597,6 @@ export default function App() {
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1545167622-3a6ac756afa4?q=80&w=1600&auto=format&fit=crop')` }}
         />
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-          <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-8">The Manifesto</span>
           <p className="font-heading text-lg sm:text-2xl text-brand-cream/60 tracking-wide uppercase mb-12">
             Most teacher marketplaces focus on: check-the-box profiles.
           </p>
@@ -1611,7 +1610,6 @@ export default function App() {
       {/* Stacking protocol cards */}
       <section id="protocol" className="relative bg-brand-moss text-brand-cream min-h-screen flex flex-col justify-between py-16 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 w-full mb-8">
-          <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">System Vetting</span>
           <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white mb-2">
             The Vetting Protocol
           </h2>
@@ -1855,7 +1853,6 @@ export default function App() {
       <section id="pricing" className="py-24 px-6 md:px-16 lg:px-24 bg-brand-cream text-brand-charcoal">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">Tuition Programs</span>
             <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss tracking-tight">
               Begin Academic Acceleration
             </h2>

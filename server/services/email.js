@@ -67,7 +67,7 @@ export function sendTransactionalEmail(to, subject, templateName, templateData) 
   const sentAt = new Date().toISOString();
 
   // Create human-readable body from templateName and data
-  let body = "";
+  let body;
   if (templateName === 'welcome') {
     body = `Hi ${templateData.displayName},\n\nWelcome to EduBridge Africa! Your account as a ${templateData.role} has been successfully registered. Please verify your email using this link: http://localhost:5173/verify-email?token=${crypto.randomBytes(16).toString('hex')}\n\nBest regards,\nThe EduBridge Support Team`;
   } else if (templateName === 'booking_secured') {

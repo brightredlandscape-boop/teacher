@@ -18,7 +18,14 @@ const PORT = process.env.PORT || 5000;
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin === clientOrigin || origin === 'http://localhost:5173') {
+    if (
+      !origin || 
+      origin === clientOrigin || 
+      origin === 'http://localhost:5173' || 
+      origin.endsWith('.ngrok-free.dev') || 
+      origin.endsWith('.ngrok.io') || 
+      origin.includes('ngrok-free.dev')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

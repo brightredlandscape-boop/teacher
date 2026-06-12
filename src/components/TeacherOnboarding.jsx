@@ -16,6 +16,7 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [customSubjectInput, setCustomSubjectInput] = useState('');
   const [selectedCurricula, setSelectedCurricula] = useState([]);
+  const [customCurriculumInput, setCustomCurriculumInput] = useState('');
 
   // Step 3: Rates & Availability
   const [rate, setRate] = useState(4000); // ₦4,000 hourly default
@@ -304,6 +305,40 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
                       </button>
                     );
                   })}
+                  {selectedCurricula.filter(c => !availableCurricula.includes(c)).map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => toggleCurriculum(c)}
+                      className="py-2.5 px-4 rounded-xl border font-sans text-xs transition-all duration-300 border-brand-clay bg-brand-clay/5 text-brand-charcoal font-bold"
+                    >
+                      ✓ {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2 max-w-sm">
+                  <input
+                    type="text"
+                    placeholder="Other curriculum (e.g. Custom standard)"
+                    value={customCurriculumInput}
+                    onChange={(e) => setCustomCurriculumInput(e.target.value)}
+                    className="flex-1 bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-3 py-2 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = customCurriculumInput.trim();
+                      if (val) {
+                        if (!selectedCurricula.includes(val)) {
+                          setSelectedCurricula(prev => [...prev, val]);
+                        }
+                        setCustomCurriculumInput('');
+                      }
+                    }}
+                    className="py-2 px-4 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-xs uppercase tracking-wider transition-all"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
             </div>

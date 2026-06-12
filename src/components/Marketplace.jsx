@@ -23,8 +23,44 @@ export default function Marketplace({
 
   // Filter teachers based on state
   const filteredTeachers = teachers.filter(t => {
-    const matchesSubject = subjectFilter === 'All' || t.subjects.includes(subjectFilter);
-    const matchesCurriculum = curriculumFilter === 'All' || t.curriculums.includes(curriculumFilter);
+    const standardSubjects = [
+      'Mathematics', 
+      'Physics', 
+      'Chemistry', 
+      'English', 
+      'Literature', 
+      'French', 
+      'Spanish', 
+      'Coding & Robotics', 
+      'Data Science'
+    ];
+
+    const standardCurricula = [
+      'Nursery (Ages 2-5)', 
+      'Primary (Ages 6-11)', 
+      'Middle School (Ages 12-14)', 
+      'High School (Ages 15-18)', 
+      'University Prep', 
+      'WAEC', 
+      'JAMB', 
+      'IGCSE', 
+      'Cambridge', 
+      'IB Diploma', 
+      'SAT',
+      'Professional Certs',
+      'Vocational & Technical'
+    ];
+
+    const matchesSubject = subjectFilter === 'All' || 
+      (subjectFilter === 'Others' 
+        ? t.subjects.some(subj => !standardSubjects.includes(subj) || subj === 'Others')
+        : t.subjects.includes(subjectFilter));
+
+    const matchesCurriculum = curriculumFilter === 'All' || 
+      (curriculumFilter === 'Others (Professional)' || curriculumFilter === 'Others'
+        ? t.curriculums.some(curr => !standardCurricula.includes(curr) || curr === 'Others (Professional)' || curr === 'Others')
+        : t.curriculums.includes(curriculumFilter));
+
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.bio.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSubject && matchesCurriculum && matchesSearch;
@@ -123,7 +159,8 @@ export default function Marketplace({
                 'French', 
                 'Spanish', 
                 'Coding & Robotics', 
-                'Data Science'
+                'Data Science',
+                'Others'
               ].map(subj => (
                 <button
                   key={subj}

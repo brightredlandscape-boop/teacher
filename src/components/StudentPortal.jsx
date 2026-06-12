@@ -12,6 +12,20 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
   const [sessions, setSessions] = useState([]);
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(true);
 
+  const [assignments, setAssignments] = useState([
+    { id: 1, title: "Algebraic Factorisation homework", subject: "Mathematics", teacher: "Mr. Adebayo Okafor", dueDate: "Tomorrow", status: "Pending" },
+    { id: 2, title: "WAEC Chemistry formulas", subject: "Chemistry", teacher: "Mr. Kofi Mensah", dueDate: "In 3 Days", status: "In Progress" },
+    { id: 3, title: "English Syntax & Paragraphing", subject: "English", teacher: "Mrs. Chioma", dueDate: "Completed", status: "Graded", score: 92, feedback: "Fantastic paragraph transitions. Keep reviewing relative pronouns." }
+  ]);
+
+  const [leaderboard, setLeaderboard] = useState([
+    { rank: 1, name: "Chinedu A.", xp: 1980, active: false },
+    { rank: 2, name: "Zara B.", xp: 1720, active: false },
+    { rank: 3, name: "Tunde O. (You)", xp: 1450, active: true },
+    { rank: 4, name: "Fatima S.", xp: 1390, active: false },
+    { rank: 5, name: "Kofi K.", xp: 1210, active: false }
+  ]);
+
   const API_BASE = '/api';
   const studentUid = currentUser?.uid || 'student_1';
 
@@ -104,19 +118,7 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
     { name: "Statistics", percentage: 91, color: "bg-emerald-600" }
   ];
 
-  const [assignments, setAssignments] = useState([
-    { id: 1, title: "Algebraic Factorisation homework", subject: "Mathematics", teacher: "Mr. Adebayo Okafor", dueDate: "Tomorrow", status: "Pending" },
-    { id: 2, title: "WAEC Chemistry formulas", subject: "Chemistry", teacher: "Mr. Kofi Mensah", dueDate: "In 3 Days", status: "In Progress" },
-    { id: 3, title: "English Syntax & Paragraphing", subject: "English", teacher: "Mrs. Chioma", dueDate: "Completed", status: "Graded", score: 92, feedback: "Fantastic paragraph transitions. Keep reviewing relative pronouns." }
-  ]);
 
-  const [leaderboard, setLeaderboard] = useState([
-    { rank: 1, name: "Chinedu A.", xp: 1980, active: false },
-    { rank: 2, name: "Zara B.", xp: 1720, active: false },
-    { rank: 3, name: "Tunde O. (You)", xp: 1450, active: true },
-    { rank: 4, name: "Fatima S.", xp: 1390, active: false },
-    { rank: 5, name: "Kofi K.", xp: 1210, active: false }
-  ]);
 
   const handleAssignmentSubmit = (e, id) => {
     e.preventDefault();

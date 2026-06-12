@@ -1046,7 +1046,7 @@ export default function ParentDashboard({
                 </div>
               ) : (
                 dashboardData.disputes.map(d => {
-                  const session = (dashboardData?.sessions || bookedSessions || []).find(s => s.id === d.sessionId);
+                  const session = (dashboardData?.sessions || parentBookedSessions || []).find(s => s.id === d.sessionId);
                   const teacherName = session ? session.teacherName : "Vetted Tutor";
                   return (
                     <div key={d.id} className="border border-brand-moss/10 rounded-2xl p-4 flex justify-between items-center bg-brand-cream/10">

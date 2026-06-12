@@ -14,6 +14,7 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
 
   // Step 2: Subjects & Curriculums
   const [selectedSubjects, setSelectedSubjects] = useState([]);
+  const [customSubjectInput, setCustomSubjectInput] = useState('');
   const [selectedCurricula, setSelectedCurricula] = useState([]);
 
   // Step 3: Rates & Availability
@@ -246,6 +247,40 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
                       </button>
                     );
                   })}
+                  {selectedSubjects.filter(s => !availableSubjects.includes(s)).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSubject(s)}
+                      className="py-2.5 px-4 rounded-xl border font-sans text-xs transition-all duration-300 border-brand-clay bg-brand-clay/5 text-brand-charcoal font-bold"
+                    >
+                      ✓ {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2 max-w-sm">
+                  <input
+                    type="text"
+                    placeholder="Other subject (e.g. Tech Skills)"
+                    value={customSubjectInput}
+                    onChange={(e) => setCustomSubjectInput(e.target.value)}
+                    className="flex-1 bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-3 py-2 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = customSubjectInput.trim();
+                      if (val) {
+                        if (!selectedSubjects.includes(val)) {
+                          setSelectedSubjects(prev => [...prev, val]);
+                        }
+                        setCustomSubjectInput('');
+                      }
+                    }}
+                    className="py-2 px-4 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-xs uppercase tracking-wider transition-all"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
 

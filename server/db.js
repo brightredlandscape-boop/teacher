@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 
 const DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
@@ -12,32 +13,212 @@ if (!fs.existsSync(DATA_DIR)) {
 // Helper to get collection file path
 const getFilePath = (collection) => path.join(DATA_DIR, `${collection}.json`);
 
-// Read collection
-export function readCollection(collection) {
-  const filepath = getFilePath(collection);
-  if (!fs.existsSync(filepath)) {
-    fs.writeFileSync(filepath, JSON.stringify([], null, 2));
-    return [];
+// In-memory collection cache
+const CACHE = {};
+let isMongo = false;
+
+const collections = [
+  'platform_config',
+  'teachers',
+  'users',
+  'parents',
+  'students',
+  'wallets',
+  'sessions',
+  'assignments',
+  'transactions',
+  'disputes',
+  'reviews',
+  'b2b_schools'
+];
+
+// Schema-free dynamic collection models
+const collectionSchema = new mongoose.Schema({}, { strict: false, timestamps: true });
+const getModel = (collectionName) => {
+  const modelName = collectionName.charAt(0).toUpperCase() + collectionName.slice(1);
+  return mongoose.models[modelName] || mongoose.model(modelName, collectionSchema, collectionName);
+};
+
+// Encryption parameters
+const algorithm = 'aes-256-cbc';
+const encryptionKeyString = process.env.DB_ENCRYPTION_KEY || process.env.JWT_SECRET || 'fallback_default_encryption_key_2026';
+const ENCRYPTION_KEY = crypto.createHash('sha256').update(encryptionKeyString).digest();
+
+// Encrypt plain text using AES-256-CBC
+function encrypt(text) {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(algorithm, ENCRYPTION_KEY, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
+
+// Decrypt cipher text using AES-256-CBC
+function decrypt(encryptedText) {
+  const parts = encryptedText.split(':');
+  if (parts.length !== 2) {
+    throw new Error('Invalid encrypted text format');
   }
-  try {
-    const content = fs.readFileSync(filepath, 'utf8');
-    return JSON.parse(content || '[]');
-  } catch (err) {
-    console.error(`Error reading collection ${collection}:`, err);
-    return [];
+  const iv = Buffer.from(parts[0], 'hex');
+  const encrypted = parts[1];
+  const decipher = crypto.createDecipheriv(algorithm, ENCRYPTION_KEY, iv);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+// Load fallback collections from JSON files
+function loadFromJsonFiles() {
+  for (const col of collections) {
+    const filepath = getFilePath(col);
+    if (!fs.existsSync(filepath)) {
+      // Write empty collection array encrypted
+      const emptyEncrypted = encrypt(JSON.stringify([], null, 2));
+      fs.writeFileSync(filepath, emptyEncrypted, 'utf8');
+      CACHE[col] = [];
+    } else {
+      try {
+        const content = fs.readFileSync(filepath, 'utf8').trim();
+        if (!content) {
+          CACHE[col] = [];
+          continue;
+        }
+
+        const isEncrypted = content.includes(':') && !content.startsWith('[');
+        if (isEncrypted) {
+          const decrypted = decrypt(content);
+          CACHE[col] = JSON.parse(decrypted || '[]');
+        } else {
+          // Backward-compatible plain text auto-migration
+          console.log(`Database Migration: Auto-migrating plain-text collection '${col}' to encrypted-at-rest...`);
+          CACHE[col] = JSON.parse(content || '[]');
+          writeCollectionToFile(col); // Converts to encrypted format on disk
+        }
+      } catch (err) {
+        console.error(`Database Migration: Error reading fallback collection ${col}:`, err);
+        CACHE[col] = [];
+      }
+    }
   }
 }
 
-// Write collection
-export function writeCollection(collection, data) {
+// Write collection cache to local JSON file fallback
+function writeCollectionToFile(collection) {
   const filepath = getFilePath(collection);
   try {
-    fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
+    const jsonStr = JSON.stringify(CACHE[collection] || [], null, 2);
+    const encryptedData = encrypt(jsonStr);
+    fs.writeFileSync(filepath, encryptedData, 'utf8');
     return true;
   } catch (err) {
-    console.error(`Error writing collection ${collection}:`, err);
+    console.error(`Database Migration: Error writing fallback JSON for ${collection}:`, err);
     return false;
   }
+}
+
+// Persist document operations to MongoDB or Local JSON Files
+async function persistDocumentInsert(collection, doc) {
+  if (isMongo) {
+    try {
+      const Model = getModel(collection);
+      await Model.create(doc);
+    } catch (err) {
+      console.error(`Database Migration: Error inserting into MongoDB [${collection}]:`, err);
+    }
+  } else {
+    writeCollectionToFile(collection);
+  }
+}
+
+async function persistDocumentUpdate(collection, id, doc) {
+  if (isMongo) {
+    try {
+      const Model = getModel(collection);
+      const selector = { $or: [{ id }, { uid: id }] };
+      await Model.replaceOne(selector, doc, { upsert: true });
+    } catch (err) {
+      console.error(`Database Migration: Error updating MongoDB [${collection}]:`, err);
+    }
+  } else {
+    writeCollectionToFile(collection);
+  }
+}
+
+async function persistDocumentDelete(collection, id) {
+  if (isMongo) {
+    try {
+      const Model = getModel(collection);
+      const selector = { $or: [{ id }, { uid: id }] };
+      await Model.deleteOne(selector);
+    } catch (err) {
+      console.error(`Database Migration: Error deleting from MongoDB [${collection}]:`, err);
+    }
+  } else {
+    writeCollectionToFile(collection);
+  }
+}
+
+// Initialize and connect database
+export async function connectDb() {
+  const uri = process.env.MONGODB_URI;
+  if (uri) {
+    console.log("Database Migration: Connecting to production MongoDB...");
+    try {
+      await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+      isMongo = true;
+      console.log("Database Migration: Connected to MongoDB successfully.");
+      
+      // Load all collections into cache
+      for (const col of collections) {
+        const Model = getModel(col);
+        const docs = await Model.find({}).lean();
+        CACHE[col] = docs.map(d => {
+          const { _id, __v, ...cleanDoc } = d;
+          return cleanDoc;
+        });
+        console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from MongoDB.`);
+      }
+    } catch (err) {
+      console.error("Database Migration: MongoDB connection failed, falling back to local JSON database:", err);
+      isMongo = false;
+      loadFromJsonFiles();
+    }
+  } else {
+    console.log("Database Migration: No MONGODB_URI configured, running local JSON database fallback.");
+    isMongo = false;
+    loadFromJsonFiles();
+  }
+
+  // Seed the database after collections are loaded in memory
+  seedDatabase();
+}
+
+// Read collection
+export function readCollection(collection) {
+  if (!CACHE[collection]) {
+    CACHE[collection] = [];
+  }
+  return CACHE[collection];
+}
+
+// Overwrite collection
+export function writeCollection(collection, data) {
+  CACHE[collection] = data;
+  if (isMongo) {
+    const Model = getModel(collection);
+    Model.deleteMany({})
+      .then(() => {
+        if (data.length > 0) {
+          return Model.insertMany(data);
+        }
+      })
+      .catch(err => {
+        console.error(`Database Migration: Error overwriting MongoDB collection ${collection}:`, err);
+      });
+  } else {
+    writeCollectionToFile(collection);
+  }
+  return true;
 }
 
 // Database Actions
@@ -61,7 +242,7 @@ export const db = {
       ...doc
     };
     data.push(newDoc);
-    writeCollection(collection, data);
+    persistDocumentInsert(collection, newDoc);
     return newDoc;
   },
 
@@ -76,14 +257,17 @@ export const db = {
       updatedAt: new Date().toISOString()
     };
     data[index] = updatedDoc;
-    writeCollection(collection, data);
+    persistDocumentUpdate(collection, id, updatedDoc);
     return updatedDoc;
   },
 
   delete: (collection, id) => {
     const data = readCollection(collection);
-    const filtered = data.filter(item => item.id !== id && item.uid !== id);
-    writeCollection(collection, filtered);
+    const index = data.findIndex(item => item.id === id || item.uid === id);
+    if (index === -1) return false;
+
+    data.splice(index, 1);
+    persistDocumentDelete(collection, id);
     return true;
   }
 };
@@ -299,8 +483,8 @@ export function seedDatabase() {
       name: "Tunde",
       dob: "2012-05-15",
       subjects: ["Mathematics", "Physics"],
-      xp: 400,
-      badges: ["Fast Learner"],
+      xp: 1450,
+      badges: ["Perfect Attendance", "Assignment Champion", "Streak Master"],
       progressBySubject: {
         Mathematics: { attendance: 95, averageScore: 88, completedLessons: 12 }
       }
@@ -312,11 +496,45 @@ export function seedDatabase() {
       name: "Yinka",
       dob: "2014-08-22",
       subjects: ["English", "Literature"],
-      xp: 650,
-      badges: ["Grammar Guru", "Academic Star"],
+      xp: 950,
+      badges: ["Consistent Learner", "Top Scorer"],
       progressBySubject: {
         English: { attendance: 98, averageScore: 92, completedLessons: 16 }
       }
+    });
+
+    // Seed mock students for dynamic study group leaderboard
+    db.insert('students', {
+      uid: "student_mock_1",
+      parentUid: "parent_other_1",
+      name: "Chinedu A.",
+      xp: 1980,
+      badges: ["Top Leader"],
+      progressBySubject: {}
+    });
+    db.insert('students', {
+      uid: "student_mock_2",
+      parentUid: "parent_other_2",
+      name: "Zara B.",
+      xp: 1720,
+      badges: ["Top Scholar"],
+      progressBySubject: {}
+    });
+    db.insert('students', {
+      uid: "student_mock_3",
+      parentUid: "parent_other_3",
+      name: "Fatima S.",
+      xp: 1390,
+      badges: ["Top Reader"],
+      progressBySubject: {}
+    });
+    db.insert('students', {
+      uid: "student_mock_4",
+      parentUid: "parent_other_4",
+      name: "Kofi K.",
+      xp: 1210,
+      badges: ["Top Writer"],
+      progressBySubject: {}
     });
 
     // Seed Reviews
@@ -499,5 +717,19 @@ export function seedDatabase() {
       payoutStatus: "completed"
     });
     console.log('Seeded transactions');
+  }
+
+  // Seed disputes
+  const disputes = readCollection('disputes');
+  if (disputes.length === 0) {
+    db.insert('disputes', {
+      id: "disp_1",
+      sessionId: "session_old_2",
+      reason: "Incorrect billing time",
+      details: "The tutor registered 15 minutes of excess time after the zoom session crashed.",
+      status: "Under Review",
+      raisedBy: "parent_1"
+    });
+    console.log('Seeded disputes');
   }
 }

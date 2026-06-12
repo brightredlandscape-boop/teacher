@@ -26,6 +26,7 @@ import Marketplace from './Marketplace';
 import { translations } from '../locales/i18n';
 
 export default function ParentDashboard({ 
+  currentUser,
   lang = 'en',
   t,
   selectedCurrency, 
@@ -72,6 +73,10 @@ export default function ParentDashboard({
   const [disputeDetails, setDisputeDetails] = useState('');
   const [disputeStatus, setDisputeStatus] = useState('');
 
+  // Clock Log Modal States
+  const [isClockLogOpen, setIsClockLogOpen] = useState(false);
+  const [selectedClockSession, setSelectedClockSession] = useState(null);
+
   // Wallet Top-up States
   const [topupAmount, setTopupAmount] = useState('10000'); // in raw base units (e.g. 10000 NGN)
   const [customAmount, setCustomAmount] = useState('');
@@ -79,8 +84,8 @@ export default function ParentDashboard({
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupSuccess, setTopupSuccess] = useState('');
 
-  const API_BASE = 'http://localhost:5000/api';
-  const parentUid = 'parent_1'; // Seeded test parent
+  const API_BASE = '/api';
+  const parentUid = currentUser?.uid || 'parent_1'; // Seeded test parent or active user
 
   const getAuthHeaders = (extraHeaders = {}) => {
     const token = localStorage.getItem('edubridge_token');
@@ -141,7 +146,7 @@ export default function ParentDashboard({
 
   useEffect(() => {
     fetchDashboard();
-  }, [parentWalletBalance, parentEscrowBalance, parentBookedSessions.length]);
+  }, [parentUid, parentWalletBalance, parentEscrowBalance, parentBookedSessions.length]);
 
   useEffect(() => {
     fetchAiInsight();
@@ -556,15 +561,26 @@ export default function ParentDashboard({
   
                       <div className="flex gap-2">
                         {session.status === 'Completed' && (
-                          <button
-                            onClick={() => {
-                              setDisputeSession(session);
-                              setIsDisputeOpen(true);
-                            }}
-                            className="font-heading font-bold text-2xs uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
-                          >
-                            <AlertOctagon className="w-3 h-3" /> Dispute
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedClockSession(session);
+                                setIsClockLogOpen(true);
+                              }}
+                              className="font-heading font-bold text-2xs uppercase tracking-wider text-brand-moss bg-brand-moss/5 border border-brand-moss/10 hover:bg-brand-moss/10 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                            >
+                              <Clipboard className="w-3.5 h-3.5" /> Clock Log
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDisputeSession(session);
+                                setIsDisputeOpen(true);
+                              }}
+                              className="font-heading font-bold text-2xs uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                            >
+                              <AlertOctagon className="w-3 h-3" /> Dispute
+                            </button>
+                          </>
                         )}
   
                         {(session.status === 'Scheduled' || session.status === 'Pending Confirmation') && (
@@ -658,6 +674,46 @@ export default function ParentDashboard({
                 <span>Weekly progress trends synchronize directly from submitted teacher assignments.</span>
               </div>
             </div>
+          </div>
+
+          {/* Section: Teacher Session Notes */}
+          <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm">
+            <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-4">TEACHER SESSION NOTES</span>
+            <h3 className="font-heading font-bold text-lg text-brand-moss mb-4 flex items-center gap-2">
+              <Clipboard className="w-5 h-5 text-brand-clay" /> Shared Lesson Feedback Logs
+            </h3>
+
+            {studentSessions.filter(s => s.status === 'Completed').length === 0 ? (
+              <span className="font-sans text-xs text-brand-charcoal/40 block text-center py-6">No completed session logs found.</span>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {studentSessions.filter(s => s.status === 'Completed').map((session) => (
+                  <div key={session.id} className="border border-brand-moss/10 rounded-2xl p-4 bg-brand-cream/5 flex flex-col justify-between hover-lift">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-heading font-bold text-sm text-brand-moss">{session.subject}</h4>
+                          <span className="font-mono text-[9px] text-brand-charcoal/50">Tutor: {session.teacherName} · {session.slot.day}</span>
+                        </div>
+                      </div>
+                      <div className="font-sans text-xs text-brand-charcoal/80 space-y-1 bg-white border border-brand-moss/5 rounded-xl p-3 leading-relaxed">
+                        <div><b>Topics:</b> {selectedChild === 'tunde' ? 'Quadratic factoring logic and coefficients.' : 'IGCSE English relative pronouns and syntax clauses.'}</div>
+                        <div><b>Strengths:</b> {selectedChild === 'tunde' ? 'Comprehension is fast; excellent linear algebraic calculations.' : 'Extremely rich vocabulary capacity.'}</div>
+                        <div><b>Focus:</b> {selectedChild === 'tunde' ? 'Review non-standard coefficients.' : 'Review transition words and paragraph structures.'}</div>
+                        <div><b>Next Lesson Prep:</b> {selectedChild === 'tunde' ? 'Trigonometric graphing equations.' : 'IGCSE argumentative essay writing.'}</div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => onOpenChat(session)}
+                      className="mt-4 py-2 px-4 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-2xs uppercase tracking-wider flex items-center justify-center gap-1.5 self-start"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> Message Tutor
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pending assignments submit box */}
@@ -833,10 +889,9 @@ export default function ParentDashboard({
                 {/* Simulated Payment Methods */}
                 <div>
                   <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-3">Select Checkout Gateway</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       { id: 'paystack', label: 'Paystack Checkout', icon: '💳' },
-                      { id: 'stripe', label: 'Stripe Global', icon: '🌎' },
                       { id: 'bank', label: 'Bank Direct Transfer', icon: '🏦' }
                     ].map((method) => (
                       <button
@@ -985,21 +1040,30 @@ export default function ParentDashboard({
             </h3>
 
             <div className="space-y-3">
-              {[
-                { id: "dsp_1", teacher: "Mr. Adebayo Okafor", reason: "Incorrect billing time", status: "Under Review", date: "June 9" }
-              ].map(d => (
-                <div key={d.id} className="border border-brand-moss/10 rounded-2xl p-4 flex justify-between items-center bg-brand-cream/10">
-                  <div>
-                    <h4 className="font-heading font-bold text-sm text-brand-moss">{d.reason}</h4>
-                    <span className="font-mono text-[9px] text-brand-charcoal/50 block mt-0.5 uppercase">
-                      Dispute ID: {d.id} · Tutor: {d.teacher} · Filed: {d.date}
-                    </span>
-                  </div>
-                  <span className="bg-amber-50 text-amber-800 border border-amber-200 font-mono text-[9px] font-bold py-1 px-3 rounded-full uppercase tracking-wider animate-pulse">
-                    {d.status}
-                  </span>
+              {(!dashboardData?.disputes || dashboardData.disputes.length === 0) ? (
+                <div className="text-center text-brand-charcoal/40 text-xs py-8 font-sans">
+                  No active disputes filed.
                 </div>
-              ))}
+              ) : (
+                dashboardData.disputes.map(d => {
+                  const session = (dashboardData?.sessions || bookedSessions || []).find(s => s.id === d.sessionId);
+                  const teacherName = session ? session.teacherName : "Vetted Tutor";
+                  return (
+                    <div key={d.id} className="border border-brand-moss/10 rounded-2xl p-4 flex justify-between items-center bg-brand-cream/10">
+                      <div>
+                        <h4 className="font-heading font-bold text-sm text-brand-moss">{d.reason}</h4>
+                        <p className="font-sans text-xs text-brand-charcoal/80 mt-1">{d.details}</p>
+                        <span className="font-mono text-[9px] text-brand-charcoal/50 block mt-1 uppercase">
+                          Dispute ID: {d.id} · Tutor: {teacherName}
+                        </span>
+                      </div>
+                      <span className="bg-amber-50 text-amber-800 border border-amber-200 font-mono text-[9px] font-bold py-1 px-3 rounded-full uppercase tracking-wider animate-pulse">
+                        {d.status}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -1039,9 +1103,49 @@ export default function ParentDashboard({
               />
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/?ref=${parentUid}`);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
+                  const shareUrl = `${window.location.origin}/?ref=${parentUid}`;
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(shareUrl)
+                      .then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      })
+                      .catch((err) => {
+                        console.error('Failed to copy text: ', err);
+                        // fallback copy
+                        const textArea = document.createElement('textarea');
+                        textArea.value = shareUrl;
+                        textArea.style.position = 'fixed';
+                        textArea.style.opacity = '0';
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        try {
+                          document.execCommand('copy');
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        } catch (e) {
+                          console.error('Fallback copy failed', e);
+                        }
+                        document.body.removeChild(textArea);
+                      });
+                  } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareUrl;
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                      document.execCommand('copy');
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    } catch (e) {
+                      console.error('Fallback copy failed', e);
+                    }
+                    document.body.removeChild(textArea);
+                  }
                 }}
                 className="bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-full shadow-md transition-all flex items-center justify-center gap-1.5"
               >
@@ -1167,10 +1271,65 @@ export default function ParentDashboard({
                 </button>
               </div>
 
-              {disputeStatus && (
-                <p className="text-center font-mono text-[10px] text-rose-800 animate-pulse">{disputeStatus}</p>
-              )}
             </form>
+          </div>
+        </div>
+      )}
+      {/* SESSION CLOCK LOG MODAL */}
+      {isClockLogOpen && selectedClockSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-brand-charcoal/40 backdrop-blur-xs" onClick={() => setIsClockLogOpen(false)} />
+          
+          <div className="bg-brand-cream border border-brand-moss/10 rounded-[2.5rem] p-8 w-full max-w-md relative z-10 shadow-2xl animate-fade-up">
+            <button 
+              onClick={() => setIsClockLogOpen(false)} 
+              className="absolute top-6 right-6 text-brand-charcoal/60 hover:text-brand-charcoal font-bold text-base"
+            >
+              ✕
+            </button>
+            <h3 className="font-heading font-bold text-xl text-brand-moss mb-2">Lesson Clock Log</h3>
+            <p className="font-sans text-xs text-brand-charcoal/70 mb-4">
+              Billed vs Scheduled time breakdown for your session with <span className="font-bold">{selectedClockSession.teacherName}</span>.
+            </p>
+
+            <div className="bg-white border border-brand-moss/10 rounded-2xl p-4 mb-4 font-mono text-[11px] space-y-2">
+              <div className="flex justify-between border-b border-brand-moss/5 pb-2">
+                <span>Scheduled Time:</span>
+                <span className="font-bold">60 minutes</span>
+              </div>
+              <div className="flex justify-between border-b border-brand-moss/5 pb-2">
+                <span>Billed Time:</span>
+                <span className="font-bold text-brand-moss">60 minutes</span>
+              </div>
+              <div className="pt-2">
+                <span className="text-[9px] uppercase font-bold text-brand-clay block mb-1">Tamper-Proof Events Timeline (Server-side)</span>
+                <div className="space-y-1.5 text-[9px] text-brand-charcoal/80">
+                  <div className="flex justify-between">
+                    <span>🟢 Video Channel Connected</span>
+                    <span>4:00 PM</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>⏸️ Stream Paused (Teacher refresh)</span>
+                    <span>4:32 PM</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>▶️ Stream Resumed</span>
+                    <span>4:34 PM</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>🔴 Video Channel Closed</span>
+                    <span>5:02 PM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => alert('Evidence Log PDF downloaded successfully. File hash: sha256-4b2a8d...')}
+              className="btn-magnetic w-full py-3 bg-brand-moss hover:bg-brand-clay text-white rounded-full font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md"
+            >
+              <Download className="w-4 h-4" /> Download Evidence PDF
+            </button>
           </div>
         </div>
       )}

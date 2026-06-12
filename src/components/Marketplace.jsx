@@ -15,7 +15,7 @@ export default function Marketplace({
   const [leaderboard, setLeaderboard] = useState([]);
 
   React.useEffect(() => {
-    fetch('http://localhost:5000/api/leaderboard')
+    fetch('/api/leaderboard')
       .then(res => res.json())
       .then(data => setLeaderboard(data))
       .catch(console.error);

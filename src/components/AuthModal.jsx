@@ -11,7 +11,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,9 +19,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     setLoading(true);
 
     const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
+    const refCode = localStorage.getItem('edubridge_ref');
     const payload = activeTab === 'login' 
       ? { email, password } 
-      : { email, displayName: name, role, country, password };
+      : { email, displayName: name, role, country, password, referredBy: refCode || undefined };
 
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {

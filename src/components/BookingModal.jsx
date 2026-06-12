@@ -89,7 +89,7 @@ export default function BookingModal({
   const handleCardPaymentSubmit = (e) => {
     e.preventDefault();
     setIsProcessing(true);
-    setPaymentStatusText("Contacting Paystack/Stripe checkout server...");
+    setPaymentStatusText("Contacting Paystack checkout server...");
     
     setTimeout(() => {
       setPaymentStatusText("Authorizing transaction with the bank...");
@@ -198,7 +198,7 @@ export default function BookingModal({
           /* SCREEN 2: Card Credentials Form Screen */
           <div className="space-y-6">
             <div className="mb-4">
-              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Stripe / Paystack Integration</span>
+              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Paystack Integration</span>
               <h3 className="font-heading font-bold text-2xl text-brand-moss">Credit / Debit Card Checkout</h3>
               <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
                 Enter your card credentials below. Payments are held in a secure local timed escrow.
@@ -388,7 +388,7 @@ export default function BookingModal({
                   )}
                 </button>
 
-                {/* Credit Card Option (Stripe/Paystack simulation) */}
+                {/* Credit Card Option (Paystack simulation) */}
                 <button
                   onClick={() => setPaymentMethod('card')}
                   className={`w-full py-3.5 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
@@ -399,7 +399,7 @@ export default function BookingModal({
                 >
                   <div>
                     <span className="text-xs font-bold block text-brand-charcoal">
-                      Credit / Debit Card ({selectedCurrency === 'NGN' || selectedCurrency === 'GHS' ? 'Paystack' : 'Stripe'})
+                      Credit / Debit Card (Paystack)
                     </span>
                     <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block">
                       Supports local cards, Apple Pay, Google Pay, Mobile Money

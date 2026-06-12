@@ -56,7 +56,7 @@ export default function Academy({
   const [newCommentContent, setNewCommentContent] = useState('');
   const [forumLoading, setForumLoading] = useState(false);
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
   const chatEndRef = useRef(null);
 
   // Elite Academy training curriculum modules

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 const DATA_DIR = path.join(process.cwd(), 'server', 'data');
 const EMAIL_LOG_FILE = path.join(DATA_DIR, 'sent_emails.json');
@@ -36,8 +37,30 @@ function writeSentEmails(emails) {
   }
 }
 
+let transporter = null;
+
+function getTransporter() {
+  if (!transporter) {
+    const host = process.env.SMTP_HOST || 'smtp.resend.com';
+    const port = parseInt(process.env.SMTP_PORT || '465', 10);
+    const user = process.env.SMTP_USER || 'resend';
+    const pass = process.env.SMTP_PASS || 're_N31LvYPg_HQpnmirsYo2EFPxPAzgugFXe';
+
+    transporter = nodemailer.createTransport({
+      host: host,
+      port: port,
+      secure: port === 465,
+      auth: {
+        user,
+        pass
+      }
+    });
+  }
+  return transporter;
+}
+
 /**
- * Sends a transactional email by logging it in the console and writing to sent_emails.json.
+ * Sends a transactional email by logging it in the console, writing to sent_emails.json, and sending via SMTP.
  */
 export function sendTransactionalEmail(to, subject, templateName, templateData) {
   const emailId = `email_${crypto.randomUUID()}`;
@@ -62,7 +85,8 @@ export function sendTransactionalEmail(to, subject, templateName, templateData) 
     template: templateName,
     body,
     data: templateData,
-    sentAt
+    sentAt,
+    status: 'pending'
   };
 
   // 1. Write to local sent_emails.json log
@@ -83,6 +107,37 @@ export function sendTransactionalEmail(to, subject, templateName, templateData) 
 ${body.split('\n').map(line => `│ ${line.padEnd(58).substring(0, 58)}│`).join('\n')}
 └────────────────────────────────────────────────────────────┘
   `);
+
+  // 3. Send email via SMTP asynchronously
+  const from = process.env.SMTP_FROM || 'EduBridge <onboarding@resend.dev>';
+  const client = getTransporter();
+
+  client.sendMail({
+    from,
+    to,
+    subject,
+    text: body
+  })
+  .then(info => {
+    console.log(`[SMTP] Email successfully sent to ${to} (Message ID: ${info.messageId})`);
+    const currentEmails = readSentEmails();
+    const idx = currentEmails.findIndex(e => e.id === emailId);
+    if (idx !== -1) {
+      currentEmails[idx].status = 'sent';
+      currentEmails[idx].messageId = info.messageId;
+      writeSentEmails(currentEmails);
+    }
+  })
+  .catch(err => {
+    console.error(`[SMTP] Failed to send email to ${to}:`, err);
+    const currentEmails = readSentEmails();
+    const idx = currentEmails.findIndex(e => e.id === emailId);
+    if (idx !== -1) {
+      currentEmails[idx].status = 'failed';
+      currentEmails[idx].error = err.message;
+      writeSentEmails(currentEmails);
+    }
+  });
 
   return emailRecord;
 }

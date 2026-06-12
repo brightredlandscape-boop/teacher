@@ -161,7 +161,7 @@ export default function SessionEngine({
   const logClockEvent = async (sessionId, eventType) => {
     try {
       const token = localStorage.getItem('edubridge_token');
-      await fetch('http://localhost:5000/api/sessions/clock', {
+      await fetch('/api/sessions/clock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

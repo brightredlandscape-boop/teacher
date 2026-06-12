@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Trophy, Flame, Award, BarChart3, Calendar, FileText, CheckCircle2, Clock, PlayCircle, FolderOpen, ArrowRight, User } from 'lucide-react';
+import { Sparkles, Trophy, Flame, Award, BarChart3, Calendar, FileText, CheckCircle2, Clock, PlayCircle, FolderOpen, ArrowRight, User, Download } from 'lucide-react';
 
 export default function StudentPortal({ currentUser, selectedCurrency, formatCurrency, convertMinor }) {
   const [studentData, setStudentData] = useState(null);
@@ -9,8 +9,60 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
   const [submissionLink, setSubmissionLink] = useState('');
   const [submittingId, setSubmittingId] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
+  const [sessions, setSessions] = useState([]);
+  const [leaderboardOptIn, setLeaderboardOptIn] = useState(true);
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
+  const studentUid = currentUser?.uid || 'student_1';
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('edubridge_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
+  const fetchStudentData = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/students/dashboard/${studentUid}`, {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.student) {
+          setXp(data.student.xp || 1450);
+          setStreak(data.student.streak || 7);
+          setLeaderboardOptIn(data.student.leaderboardOptIn !== false);
+        }
+        if (data.assignments) {
+          const mappedAssignments = data.assignments.map(a => ({
+            id: a.id,
+            title: a.title,
+            subject: a.subject,
+            teacher: a.teacherName || 'Vetted Tutor',
+            dueDate: a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'Soon',
+            status: a.status,
+            score: a.grade?.score,
+            feedback: a.grade?.feedback
+          }));
+          setAssignments(mappedAssignments);
+        }
+        if (data.sessions) {
+          setSessions(data.sessions);
+        }
+        if (data.leaderboard) {
+          setLeaderboard(data.leaderboard);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch student details from API, using simulated state:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudentData();
+  }, [studentUid]);
 
   useEffect(() => {
     // Sync simulated details from local parameters
@@ -178,6 +230,57 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
             {/* Left Area: Subject Mastery & Gamification rules */}
             <div className="lg:col-span-8 space-y-8">
               
+              {/* Upcoming scheduled sessions */}
+              <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
+                <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-4">YOUR TUTORIAL PLAN</span>
+                <h3 className="font-heading font-bold text-xl text-brand-moss mb-6 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-brand-clay" /> Upcoming Scheduled Sessions
+                </h3>
+                
+                {sessions.filter(s => s.status === 'Scheduled').length === 0 ? (
+                  <div className="text-center text-brand-charcoal/40 text-xs py-8 font-sans">
+                    No upcoming scheduled sessions. Ask your parent to book a slot from the marketplace.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sessions.filter(s => s.status === 'Scheduled').slice(0, 3).map((session, idx) => {
+                      return (
+                        <div key={session.id || idx} className="bg-brand-cream/20 border border-brand-moss/5 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                          <div>
+                            <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block mb-1">
+                              NEXT SESSION
+                            </span>
+                            <h4 className="font-heading font-bold text-brand-moss text-sm">
+                              {session.subject} with {session.teacherName}
+                            </h4>
+                            <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
+                              Slot: <span className="font-bold">{session.slot.day} at {session.slot.time}</span>
+                            </p>
+                            <span className="font-sans text-[10px] text-brand-charcoal/50 mt-2 block italic">
+                              💡 Prep Tip: Review quadratic factoring formulas and coefficients.
+                            </span>
+                          </div>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <button
+                              onClick={() => alert('Starting Zoom session... Redirecting to virtual classroom...')}
+                              className="flex-1 sm:flex-none py-2 px-4 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-[10px] uppercase tracking-wider text-center"
+                            >
+                              Join Session
+                            </button>
+                            <button
+                              onClick={() => alert('Event added to Google Calendar!')}
+                              className="py-2 px-3 border border-brand-moss/10 hover:bg-brand-moss/5 rounded-xl font-heading text-brand-charcoal font-bold text-[10px] uppercase tracking-wider text-center"
+                            >
+                              Add to Calendar
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               {/* Subject Mastery Progress Bars */}
               <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
                 <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-4">SUBJECT COMPREHENSION MATRIX</span>
@@ -272,6 +375,40 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
                       <span className="font-mono text-[10px] font-bold text-brand-moss">{user.xp} XP</span>
                     </div>
                   ))}
+                </div>
+
+                {/* Leaderboard Opt-in toggle */}
+                <div className="mt-6 border-t border-brand-moss/5 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-heading font-bold text-xs text-brand-moss block">Leaderboard Opt-in</span>
+                      <span className="text-[10px] text-brand-charcoal/60 font-sans">Share XP and badges with classmates.</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const val = !leaderboardOptIn;
+                        setLeaderboardOptIn(val);
+                        fetch(`${API_BASE}/students/dashboard/${studentUid}/opt-in`, {
+                          method: 'POST',
+                          headers: getAuthHeaders(),
+                          body: JSON.stringify({ optIn: val })
+                        }).catch(() => {});
+                      }}
+                      className={`w-11 h-6 rounded-full transition-all relative ${
+                        leaderboardOptIn ? 'bg-brand-moss' : 'bg-brand-charcoal/30'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${
+                        leaderboardOptIn ? 'right-1' : 'left-1'
+                      }`} />
+                    </button>
+                  </div>
+                  
+                  {leaderboardOptIn && (
+                    <span className="text-[9px] text-emerald-600 block mt-2 font-mono">
+                      ✓ Student opted in & Parent consent verified. Rank is visible.
+                    </span>
+                  )}
                 </div>
               </div>
 

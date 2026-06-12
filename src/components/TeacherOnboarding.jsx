@@ -28,7 +28,7 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
   const [govId, setGovId] = useState('');
   const [degree, setDegree] = useState('');
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
 
   const getAuthHeaders = (extraHeaders = {}) => {
     const token = localStorage.getItem('edubridge_token');

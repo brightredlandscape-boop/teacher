@@ -1,0 +1,16 @@
+[
+  {
+    "id": "email_cd273cf6-2ce6-4010-b360-6f594fc5aa8a",
+    "to": "test@edubridge.com",
+    "subject": "EduBridge SMTP Live Integration Test",
+    "template": "welcome",
+    "body": "Hi Test Parent,\n\nWelcome to EduBridge Africa! Your account as a Parent has been successfully registered. Please verify your email using this link: http://localhost:5173/verify-email?token=4b4fe7c900b9cfb68b4417587139fbff\n\nBest regards,\nThe EduBridge Support Team",
+    "data": {
+      "displayName": "Test Parent",
+      "role": "Parent"
+    },
+    "sentAt": "2026-06-12T13:56:14.064Z",
+    "status": "failed",
+    "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+  }
+]

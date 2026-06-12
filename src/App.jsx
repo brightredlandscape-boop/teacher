@@ -169,7 +169,7 @@ export default function App() {
   };
 
   // API Backend Sync
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
 
   const getAuthHeaders = (extraHeaders = {}) => {
     const token = localStorage.getItem('edubridge_token');
@@ -331,6 +331,7 @@ export default function App() {
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get('ref');
     if (ref) {
+      localStorage.setItem('edubridge_ref', ref);
       fetch(`${API_BASE}/parents/referral/hit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -422,9 +423,10 @@ export default function App() {
     setAuthLoading(true);
 
     const endpoint = authTab === 'login' ? '/auth/login' : '/auth/register';
+    const refCode = localStorage.getItem('edubridge_ref');
     const payload = authTab === 'login' 
       ? { email: authEmail, password: authPassword } 
-      : { email: authEmail, displayName: authName, role: authRole, country: authCountry, password: authPassword };
+      : { email: authEmail, displayName: authName, role: authRole, country: authCountry, password: authPassword, referredBy: refCode || undefined };
 
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -516,7 +518,7 @@ export default function App() {
   const handleBookingConfirm = async (costNgnMinor, slot, paymentMethod = 'wallet') => {
     try {
       if (paymentMethod === 'card') {
-        const provider = selectedCurrency === 'NGN' || selectedCurrency === 'GHS' ? 'paystack' : 'stripe';
+        const provider = 'paystack';
         const checkoutRes = await fetch(`${API_BASE}/payments/checkout`, {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -716,7 +718,7 @@ export default function App() {
   // Telemetry updates handler
   const [telemetryLogs, setTelemetryLogs] = useState([
     "Security check: standard biometric verification systems online.",
-    "Database Sync: Paystack and Stripe modules ready."
+    "Database Sync: Paystack module ready."
   ]);
   const appendTelemetryLog = (logText) => {
     setTelemetryLogs(prev => [logText, ...prev]);
@@ -772,34 +774,50 @@ export default function App() {
   useEffect(() => {
     let ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-stack');
-      cards.forEach((card, i) => {
-        const isLast = i === cards.length - 1;
-        ScrollTrigger.create({
-          trigger: card,
-          start: "top top",
-          pin: true,
-          pinSpacing: isLast,
-          end: () => `+=${window.innerHeight * (cards.length - i)}`,
-          id: `stack-pin-${i}`
-        });
+      if (cards.length === 0) return;
 
-        if (i > 0) {
-          gsap.fromTo(cards[i - 1],
-            { scale: 1, filter: "blur(0px)", opacity: 1 },
-            {
-              scale: 0.95,
-              filter: "blur(20px)",
-              opacity: 0.55,
-              scrollTrigger: {
-                trigger: card,
-                start: "top bottom",
-                end: "top top",
-                scrub: true
-              }
-            }
-          );
+      // Position cards 1 and 2 below card 0 initially
+      gsap.set(cards.slice(1), { yPercent: 100 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '#protocol',
+          start: 'top top',
+          end: () => `+=${window.innerHeight * 2}`,
+          pin: true,
+          scrub: true,
+          anticipatePin: 1
         }
       });
+
+      // Animate Card 1 sliding up over Card 0
+      tl.to(cards[1], {
+        yPercent: 0,
+        ease: 'none',
+        duration: 1
+      });
+      tl.to(cards[0], {
+        scale: 0.9,
+        filter: 'blur(10px)',
+        opacity: 0.55,
+        ease: 'none',
+        duration: 1
+      }, '<');
+
+      // Animate Card 2 sliding up over Card 1
+      tl.to(cards[2], {
+        yPercent: 0,
+        ease: 'none',
+        duration: 1
+      });
+      tl.to(cards[1], {
+        scale: 0.9,
+        filter: 'blur(10px)',
+        opacity: 0.55,
+        ease: 'none',
+        duration: 1
+      }, '<');
+
     });
     return () => ctx.revert();
   }, []);
@@ -1062,6 +1080,7 @@ export default function App() {
               />
             ) : (
               <ParentDashboard 
+                currentUser={currentUser}
                 lang={lang}
                 t={t}
                 selectedCurrency={selectedCurrency}
@@ -1335,7 +1354,7 @@ export default function App() {
                 <div className="space-y-1 mt-1">
                   <h4 className="font-heading font-bold text-brand-moss text-lg">Book a risk-free trial lesson</h4>
                   <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                    Your first lesson is protected by our full money-back guarantee. Pay securely via Paystack or Stripe. Your payment is held in escrow — released only after the session is confirmed.
+                    Your first lesson is protected by our full money-back guarantee. Pay securely via Paystack. Your payment is held in escrow — released only after the session is confirmed.
                   </p>
                 </div>
               </div>
@@ -1558,51 +1577,6 @@ export default function App() {
         selectedCurrency={selectedCurrency}
         convertMinor={convertMinor}
       />
-
-      {/* Portals and Dashboard */}
-      {currentUser?.role === 'Admin' ? (
-        <AdminDashboard
-          currentUser={currentUser}
-          selectedCurrency={selectedCurrency}
-          formatCurrency={formatCurrency}
-          convertMinor={convertMinor}
-        />
-      ) : currentUser?.role === 'Teacher' ? (
-        <TeacherDashboard
-          currentUser={currentUser}
-          selectedCurrency={selectedCurrency}
-          formatCurrency={formatCurrency}
-          convertMinor={convertMinor}
-          onOpenChat={handleOpenChat}
-          onGradeHomework={handleGradeHomework}
-          gradesLog={gradesLog}
-        />
-      ) : currentUser?.role === 'Student' ? (
-        <StudentPortal
-          currentUser={currentUser}
-          selectedCurrency={selectedCurrency}
-          formatCurrency={formatCurrency}
-          convertMinor={convertMinor}
-        />
-      ) : (
-        <ParentDashboard 
-          selectedCurrency={selectedCurrency}
-          formatCurrency={formatCurrency}
-          convertMinor={convertMinor}
-          gradesLog={gradesLog}
-          onGradeHomework={handleGradeHomework}
-          walletBalance={walletBalance}
-          escrowBalance={escrowBalance}
-          bookedSessions={bookedSessions}
-          onOpenChat={handleOpenChat}
-          pendingAssignments={pendingAssignments}
-          onTopupWallet={handleTopupWallet}
-          teachers={teachers}
-          onBookClick={handleBookClick}
-          onTeacherSelect={handleTutorProfileSelect}
-        />
-      )}
-
       {/* AI Academy */}
       <Academy 
         currentUser={currentUser}
@@ -1635,17 +1609,17 @@ export default function App() {
       </section>
 
       {/* Stacking protocol cards */}
-      <section id="protocol" className="relative bg-brand-moss text-brand-cream pb-32">
-        <div className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+      <section id="protocol" className="relative bg-brand-moss text-brand-cream min-h-screen flex flex-col justify-between py-16 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 w-full mb-8">
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">System Vetting</span>
-          <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white mb-4">
+          <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white mb-2">
             The Vetting Protocol
           </h2>
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 space-y-0">
+        <div className="relative flex-1 w-full max-w-6xl mx-auto px-6 min-h-[70vh]">
           {/* Card 1 */}
-          <div className="protocol-stack min-h-screen flex items-center justify-center py-12">
+          <div className="protocol-stack absolute inset-0 flex items-center justify-center">
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">01 // VERIFICATION</span>
@@ -1671,7 +1645,7 @@ export default function App() {
           </div>
 
           {/* Card 2 */}
-          <div className="protocol-stack min-h-screen flex items-center justify-center py-12">
+          <div className="protocol-stack absolute inset-0 flex items-center justify-center">
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">02 // INSTRUCTION</span>
@@ -1710,7 +1684,7 @@ export default function App() {
           </div>
 
           {/* Card 3 */}
-          <div className="protocol-stack min-h-screen flex items-center justify-center py-12">
+          <div className="protocol-stack absolute inset-0 flex items-center justify-center">
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">03 // SETTLEMENT</span>
@@ -1802,7 +1776,7 @@ export default function App() {
               },
               {
                 q: "Can I pay in GBP, USD, or CAD?",
-                a: "Yes. Select your currency in the top navigation. We accept NGN, USD, GBP, EUR, GHS, and CAD via Stripe (international) and Paystack (Africa). Your teacher earns in their currency — you pay in yours."
+                a: "Yes. Select your currency in the top navigation. We accept NGN, USD, GBP, EUR, GHS, and CAD via Paystack. Your teacher earns in their currency — you pay in yours."
               }
             ].map((item, idx) => {
               const isOpen = openFaqIdx === idx;

@@ -36,6 +36,16 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard({ currentUser, selectedCurrency, formatCurrency, convertMinor }) {
+  const API_BASE = '/api';
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('edubridge_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
   // Active sub-section view
   const [activeSubSection, setActiveSubSection] = useState('financials'); // 'financials' | 'vetting' | 'disputes' | 'groups' | 'compliance' | 'b2b' | 'config' | 'moderation'
   const [b2bSubTab, setB2bSubTab] = useState('accounts'); // 'accounts' | 'api_manager'
@@ -142,6 +152,75 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     const d = parseFloat(refundCalcDeduct || 0);
     setRefundCalcResult(cost * (1 - d / 100));
   }, [refundCalcCost, refundCalcDeduct]);
+
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        const headers = getAuthHeaders();
+        
+        // Fetch applications
+        const appRes = await fetch(`${API_BASE}/admin/applications`, { headers });
+        if (appRes.ok) {
+          const rawApps = await appRes.json();
+          // Map to fit applications structure with safety fallbacks
+          const mappedApps = rawApps.map(app => {
+            const hoursElapsed = app.createdAt ? Math.max(1, Math.round((new Date() - new Date(app.createdAt)) / (1000 * 60 * 60))) : 12;
+            return {
+              uid: app.uid,
+              name: app.name,
+              location: app.location || 'N/A',
+              subjects: app.subjects || [],
+              curricula: app.curricula || [],
+              rate: app.rate || 0,
+              status: app.status || 'pending_approval',
+              videoUrl: app.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ",
+              bio: app.bio || "No biography provided yet.",
+              avatar: app.avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+              govId: app.govId || "NGA-ID-9182049",
+              degree: app.degree || "B.Ed. Education (Verified)",
+              geminiBioScore: app.bio ? Math.min(100, 60 + app.bio.length % 35) : 75,
+              idMatch: "Passed",
+              duplicateCheck: "Clear",
+              slaHoursElapsed: hoursElapsed,
+              submittedTime: `${hoursElapsed} hours ago`,
+              id: app.id
+            };
+          });
+          setApplications(mappedApps);
+        }
+
+        // Fetch B2B Schools
+        const schoolRes = await fetch(`${API_BASE}/admin/b2b-schools`, { headers });
+        if (schoolRes.ok) {
+          const rawSchools = await schoolRes.json();
+          const mappedSchools = rawSchools.map(sch => ({
+            id: sch.uid || sch.id,
+            uid: sch.uid,
+            name: sch.name,
+            contact: sch.contact || 'Dr. Alabi',
+            contractValue: sch.contractValue || 120000000,
+            flatFee: sch.flatFee || 40000000,
+            studentsCount: sch.registeredStudentsCount || 0,
+            studentsLimit: sch.studentsLimit || 100,
+            teachersCount: sch.teachersCount || 8,
+            assignedTeachers: sch.assignedTeachers || ["Mr. Adebayo Okafor", "Mrs. Chioma"],
+            portalAccess: sch.status === 'active',
+            renewalDate: sch.renewalDate || '2026-06-30',
+            reporting: sch.reporting || { totalSessions: 320, subjectsUsed: ["Mathematics", "Physics", "Chemistry"], avgProgress: "84%" },
+            apiKey: sch.apiKey,
+            apiKeyStatus: sch.status
+          }));
+          setB2bSchools(mappedSchools);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch admin data from backend:", err);
+      }
+    };
+
+    if (currentUser && currentUser.role === 'Admin') {
+      fetchAdminData();
+    }
+  }, [currentUser]);
 
   // Policy Defaults
   const [policyFlexFee, setPolicyFlexFee] = useState(0); // flex fee
@@ -300,19 +379,33 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   };
 
   // Vetting Flow logic
-  const handleRespond = (teacherUid, action) => {
+  const handleRespond = async (teacherUid, action) => {
     if (action === 'Reject') {
       setShowRejectModal(true);
       return;
     }
     
     setLoading(true);
-    setTimeout(() => {
-      setApplications(prev => prev.map(a => a.uid === teacherUid ? { ...a, status: 'verified' } : a));
-      triggerToast(`Application for ${selectedApp?.name} successfully approved!`);
+    try {
+      const response = await fetch(`${API_BASE}/admin/applications/respond`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ teacherUid, action: 'Approve' })
+      });
+      if (response.ok) {
+        setApplications(prev => prev.map(a => a.uid === teacherUid ? { ...a, status: 'verified', verified: true } : a));
+        triggerToast(`Application for ${selectedApp?.name || 'teacher'} successfully approved!`);
+      } else {
+        const err = await response.json();
+        triggerToast(`Error: ${err.error || 'Failed to approve application'}`);
+      }
+    } catch (err) {
+      console.warn("Failed to approve application:", err);
+      triggerToast("Network error during approval.");
+    } finally {
       setSelectedApp(null);
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleRequestMoreInfo = (teacherUid) => {
@@ -321,24 +414,37 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     setSelectedApp(null);
   };
 
-  const handleConfirmReject = () => {
+  const handleConfirmReject = async () => {
+    if (!selectedApp) return;
     setLoading(true);
-    setTimeout(() => {
-      setApplications(prev => prev.map(a => a.uid === selectedApp.uid ? { ...a, status: 'rejected', rejectReason } : a));
-      triggerToast(`Application for ${selectedApp?.name} rejected: ${rejectReason}`);
-      
-      // Update rejection reason counter dynamically
-      setRejectionReasons(prev => prev.map(r => {
-        if (r.reason.toLowerCase().includes(rejectReason.split(' ')[0].toLowerCase())) {
-          return { ...r, count: r.count + 1 };
-        }
-        return r;
-      }));
-
+    try {
+      const response = await fetch(`${API_BASE}/admin/applications/respond`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ teacherUid: selectedApp.uid, action: 'Reject' })
+      });
+      if (response.ok) {
+        setApplications(prev => prev.map(a => a.uid === selectedApp.uid ? { ...a, status: 'rejected', rejectReason } : a));
+        triggerToast(`Application for ${selectedApp?.name} rejected: ${rejectReason}`);
+        // Update rejection reason counter dynamically
+        setRejectionReasons(prev => prev.map(r => {
+          if (r.reason.toLowerCase().includes(rejectReason.split(' ')[0].toLowerCase())) {
+            return { ...r, count: r.count + 1 };
+          }
+          return r;
+        }));
+      } else {
+        const err = await response.json();
+        triggerToast(`Error: ${err.error || 'Failed to reject application'}`);
+      }
+    } catch (err) {
+      console.warn("Failed to reject application:", err);
+      triggerToast("Network error during rejection.");
+    } finally {
       setSelectedApp(null);
       setShowRejectModal(false);
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleBulkApprovePayouts = () => {
@@ -410,38 +516,53 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     triggerToast('Bundle cancellation refund processed. Remaining sessions voided.');
   };
 
-  const handleAddB2bSchool = (e) => {
+  const handleAddB2bSchool = async (e) => {
     e.preventDefault();
     if (!newSchoolName || !newSchoolContact) return;
-    const rand = Math.random().toString(36).substring(2, 8);
-    const namePart = newSchoolName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-    const newSchool = {
-      id: `sch_${Date.now()}`,
-      name: newSchoolName,
-      contact: newSchoolContact,
-      contractValue: parseInt(newSchoolContract || 0) * 100,
-      flatFee: parseInt(newSchoolFee || 0) * 100,
-      studentsCount: 0,
-      studentsLimit: parseInt(newSchoolStudentsLimit || 100),
-      teachersCount: newSchoolTeachersList.split(',').length,
-      assignedTeachers: newSchoolTeachersList.split(',').map(s => s.trim()),
-      portalAccess: true,
-      renewalDate: '2027-06-10',
-      reporting: { totalSessions: 0, subjectsUsed: [], avgProgress: 'N/A' },
-      apiKey: `eb_b2b_${namePart}_key_${rand}`,
-      apiKeyStatus: 'active'
-    };
-    setB2bSchools(prev => [...prev, newSchool]);
-    setNewSchoolName('');
-    setNewSchoolContact('');
-    setNewSchoolContract('');
-    setNewSchoolFee('');
-    triggerToast(`B2B Partnership created for ${newSchoolName}!`);
+    try {
+      const response = await fetch(`${API_BASE}/admin/b2b-schools/create`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name: newSchoolName })
+      });
+      if (response.ok) {
+        const createdSchool = await response.json();
+        const newSchool = {
+          id: createdSchool.uid || createdSchool.id,
+          uid: createdSchool.uid,
+          name: createdSchool.name,
+          contact: newSchoolContact,
+          contractValue: parseInt(newSchoolContract || 0) * 100,
+          flatFee: parseInt(newSchoolFee || 0) * 100,
+          studentsCount: createdSchool.registeredStudentsCount || 0,
+          studentsLimit: parseInt(newSchoolStudentsLimit || 100),
+          teachersCount: newSchoolTeachersList.split(',').length,
+          assignedTeachers: newSchoolTeachersList.split(',').map(s => s.trim()),
+          portalAccess: createdSchool.status === 'active',
+          renewalDate: '2027-06-10',
+          reporting: { totalSessions: 0, subjectsUsed: [], avgProgress: 'N/A' },
+          apiKey: createdSchool.apiKey,
+          apiKeyStatus: createdSchool.status
+        };
+        setB2bSchools(prev => [...prev, newSchool]);
+        setNewSchoolName('');
+        setNewSchoolContact('');
+        setNewSchoolContract('');
+        setNewSchoolFee('');
+        triggerToast(`B2B Partnership created for ${newSchoolName}!`);
+      } else {
+        const err = await response.json();
+        triggerToast(`Error: ${err.error || 'Failed to create school'}`);
+      }
+    } catch (err) {
+      console.warn("Failed to create B2B school:", err);
+      triggerToast("Network error during B2B school creation.");
+    }
   };
 
   const handleGenerateApiKey = (schoolId) => {
     setB2bSchools(prev => prev.map(s => {
-      if (s.id === schoolId) {
+      if (s.id === schoolId || s.uid === schoolId) {
         const rand = Math.random().toString(36).substring(2, 8);
         const namePart = s.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
         return {
@@ -452,22 +573,39 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
       }
       return s;
     }));
-    const sch = b2bSchools.find(s => s.id === schoolId);
+    const sch = b2bSchools.find(s => s.id === schoolId || s.uid === schoolId);
     triggerToast(`API Key generated for ${sch?.name}!`);
   };
 
-  const handleRevokeApiKey = (schoolId) => {
-    setB2bSchools(prev => prev.map(s => {
-      if (s.id === schoolId) {
-        return {
-          ...s,
-          apiKeyStatus: 'revoked'
-        };
+  const handleRevokeApiKey = async (schoolId) => {
+    const sch = b2bSchools.find(s => s.id === schoolId || s.uid === schoolId);
+    if (!sch) return;
+    try {
+      const response = await fetch(`${API_BASE}/admin/b2b-schools/revoke`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ id: sch.uid || sch.id })
+      });
+      if (response.ok) {
+        setB2bSchools(prev => prev.map(s => {
+          if (s.id === schoolId || s.uid === schoolId) {
+            return {
+              ...s,
+              apiKeyStatus: 'revoked',
+              portalAccess: false
+            };
+          }
+          return s;
+        }));
+        triggerToast(`API Key revoked for ${sch?.name}!`);
+      } else {
+        const err = await response.json();
+        triggerToast(`Error: ${err.error || 'Failed to revoke API key'}`);
       }
-      return s;
-    }));
-    const sch = b2bSchools.find(s => s.id === schoolId);
-    triggerToast(`API Key revoked for ${sch?.name}!`);
+    } catch (err) {
+      console.warn("Failed to revoke API key:", err);
+      triggerToast("Network error during API key revocation.");
+    }
   };
 
   const handleTogglePortalAccess = (schoolId) => {

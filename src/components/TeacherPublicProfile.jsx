@@ -14,7 +14,7 @@ export default function TeacherPublicProfile({
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState([]);
 
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = '/api';
 
   useEffect(() => {
     const fetchProfile = async () => {

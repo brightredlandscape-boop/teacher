@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { db, seedDatabase } from './db.js';
+import { rateLimit } from 'express-rate-limit';
+import { db, seedDatabase, connectDb } from './db.js';
 import paymentRoutes from './routes/payments.js';
 import b2bRoutes from './routes/b2b.js';
 import { sendTransactionalEmail } from './services/email.js';
@@ -13,153 +14,208 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS origin security configuration
+const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || origin === clientOrigin || origin === 'http://localhost:5173') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
-app.use(express.json());
+
+// Configure express.json to capture rawBody for webhook signature verification
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'edubridge_jwt_secret_2026';
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Too many authentication attempts from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const supportRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many support requests from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const paymentRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { error: "Too many payment operations from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use('/api/payments', paymentRoutes);
 app.use('/api/b2b/schools', b2bRoutes);
 
-// Helper to hash password with PBKDF2
-function hashPassword(password) {
+const pbkdf2Promise = (password, salt, iterations, keylen, digest) => {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, salt, iterations, keylen, digest, (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey.toString('hex'));
+    });
+  });
+};
+
+// Helper to hash password with PBKDF2 asynchronously (600,000 iterations for SHA-512)
+async function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  const hash = await pbkdf2Promise(password, salt, 600000, 64, 'sha512');
   return { salt, hash };
 }
 
-function verifyPassword(password, salt, storedHash) {
-  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+async function verifyPassword(password, salt, storedHash) {
+  const hash = await pbkdf2Promise(password, salt, 600000, 64, 'sha512');
   return hash === storedHash;
 }
 
-// Generate default credentials for seeded accounts
-const defaultCreds = hashPassword("password123");
+// Generate default credentials for seeded accounts asynchronously
+let defaultCreds = null;
 
-// Initialize Database & Seed
-seedDatabase();
-
-// Guarantee Admin User and Teacher Usernames for Testing
-const adminUser = db.findOne('users', u => u.role === 'Admin');
-if (!adminUser) {
-  db.insert('users', {
-    uid: "admin_1",
-    email: "admin@edubridge.com",
-    displayName: "System Admin",
-    role: "Admin",
-    country: "Nigeria",
-    status: "active",
-    salt: defaultCreds.salt,
-    passwordHash: defaultCreds.hash
-  });
-  console.log("Guaranteed admin@edubridge.com admin profile.");
+async function initDefaultCreds() {
+  if (!defaultCreds) {
+    defaultCreds = await hashPassword("password123");
+  }
 }
 
-const teacher1User = db.findOne('users', u => u.uid === 'teacher_1');
-if (!teacher1User) {
-  db.insert('users', {
-    uid: "teacher_1",
-    email: "teacher@edubridge.com",
-    displayName: "Mr. Adebayo Okafor",
-    role: "Teacher",
-    country: "Nigeria",
-    status: "active",
-    salt: defaultCreds.salt,
-    passwordHash: defaultCreds.hash
-  });
-  console.log("Guaranteed teacher@edubridge.com teacher profile.");
+// Initialize Database & Seed Guarantees
+async function guaranteeInitialProfiles() {
+  await initDefaultCreds();
+  // Guarantee Admin User and Teacher Usernames for Testing
+  const adminUser = db.findOne('users', u => u.role === 'Admin');
+  if (!adminUser) {
+    db.insert('users', {
+      uid: "admin_1",
+      email: "admin@edubridge.com",
+      displayName: "System Admin",
+      role: "Admin",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed admin@edubridge.com admin profile.");
+  }
+
+  const teacher1User = db.findOne('users', u => u.uid === 'teacher_1');
+  if (!teacher1User) {
+    db.insert('users', {
+      uid: "teacher_1",
+      email: "teacher@edubridge.com",
+      displayName: "Mr. Adebayo Okafor",
+      role: "Teacher",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed teacher@edubridge.com teacher profile.");
+  }
+
+  const parent1User = db.findOne('users', u => u.uid === 'parent_1');
+  if (!parent1User) {
+    db.insert('users', {
+      uid: "parent_1",
+      email: "parent@edubridge.com",
+      displayName: "Ngozi Adeleke",
+      role: "Parent",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed parent@edubridge.com parent profile.");
+  }
+
+  const student1User = db.findOne('users', u => u.uid === 'student_1');
+  if (!student1User) {
+    db.insert('users', {
+      uid: "student_1",
+      email: "student@edubridge.com",
+      displayName: "Tunde Okafor",
+      role: "Student",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed student@edubridge.com student profile.");
+  }
+
+  // Guarantee fresh teacher for onboarding flow testing
+  const freshTeacherUser = db.findOne('users', u => u.uid === 'teacher_fresh');
+  if (!freshTeacherUser) {
+    db.insert('users', {
+      uid: "teacher_fresh",
+      email: "newteacher@edubridge.com",
+      displayName: "Dr. Chidi Johnson",
+      role: "Teacher",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    db.insert('teachers', {
+      uid: "teacher_fresh",
+      name: "Dr. Chidi Johnson",
+      location: "Enugu, Nigeria",
+      subjects: [],
+      curricula: [],
+      rate: 0,
+      rating: 5.0,
+      reviewsCount: 0,
+      badges: ["badge-verified"],
+      bio: "",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+      online: true,
+      availability: {},
+      languages: [],
+      verified: false,
+      status: "onboarding",
+      stats: { sessionsTaught: 0, responseRate: 100 },
+      leaderboardOptIn: true
+    });
+    console.log("Guaranteed newteacher@edubridge.com onboarding testing profile.");
+  }
+
+  // Guarantee SEO usernames for seeded teachers
+  const teacher_1 = db.findOne('teachers', t => t.uid === 'teacher_1');
+  if (teacher_1 && !teacher_1.username) {
+    db.update('teachers', teacher_1.id, { username: "adebayo", status: "verified" });
+  }
+  const teacher_2 = db.findOne('teachers', t => t.uid === 'teacher_2');
+  if (teacher_2 && !teacher_2.username) {
+    db.update('teachers', teacher_2.id, { username: "kofi", status: "verified" });
+  }
+  const teacher_3 = db.findOne('teachers', t => t.uid === 'teacher_3');
+  if (teacher_3 && !teacher_3.username) {
+    db.update('teachers', teacher_3.id, { username: "chioma", status: "verified" });
+  }
+  const teacher_4 = db.findOne('teachers', t => t.uid === 'teacher_4');
+  if (teacher_4 && !teacher_4.username) {
+    db.update('teachers', teacher_4.id, { username: "aminata", status: "verified" });
+  }
+  const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
+  if (teacher_5 && !teacher_5.username) {
+    db.update('teachers', teacher_5.id, { username: "fatima", status: "verified" });
+  }
 }
 
-const parent1User = db.findOne('users', u => u.uid === 'parent_1');
-if (!parent1User) {
-  db.insert('users', {
-    uid: "parent_1",
-    email: "parent@edubridge.com",
-    displayName: "Ngozi Adeleke",
-    role: "Parent",
-    country: "Nigeria",
-    status: "active",
-    salt: defaultCreds.salt,
-    passwordHash: defaultCreds.hash
-  });
-  console.log("Guaranteed parent@edubridge.com parent profile.");
-}
-
-const student1User = db.findOne('users', u => u.uid === 'student_1');
-if (!student1User) {
-  db.insert('users', {
-    uid: "student_1",
-    email: "student@edubridge.com",
-    displayName: "Tunde Okafor",
-    role: "Student",
-    country: "Nigeria",
-    status: "active",
-    salt: defaultCreds.salt,
-    passwordHash: defaultCreds.hash
-  });
-  console.log("Guaranteed student@edubridge.com student profile.");
-}
-
-// Guarantee fresh teacher for onboarding flow testing
-const freshTeacherUser = db.findOne('users', u => u.uid === 'teacher_fresh');
-if (!freshTeacherUser) {
-  db.insert('users', {
-    uid: "teacher_fresh",
-    email: "newteacher@edubridge.com",
-    displayName: "Dr. Chidi Johnson",
-    role: "Teacher",
-    country: "Nigeria",
-    status: "active",
-    salt: defaultCreds.salt,
-    passwordHash: defaultCreds.hash
-  });
-  db.insert('teachers', {
-    uid: "teacher_fresh",
-    name: "Dr. Chidi Johnson",
-    location: "Enugu, Nigeria",
-    subjects: [],
-    curricula: [],
-    rate: 0,
-    rating: 5.0,
-    reviewsCount: 0,
-    badges: ["badge-verified"],
-    bio: "",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
-    online: true,
-    availability: {},
-    languages: [],
-    verified: false,
-    status: "onboarding",
-    stats: { sessionsTaught: 0, responseRate: 100 },
-    leaderboardOptIn: true
-  });
-  console.log("Guaranteed newteacher@edubridge.com onboarding testing profile.");
-}
-
-// Guarantee SEO usernames for seeded teachers
-const teacher_1 = db.findOne('teachers', t => t.uid === 'teacher_1');
-if (teacher_1 && !teacher_1.username) {
-  db.update('teachers', teacher_1.id, { username: "adebayo", status: "verified" });
-}
-const teacher_2 = db.findOne('teachers', t => t.uid === 'teacher_2');
-if (teacher_2 && !teacher_2.username) {
-  db.update('teachers', teacher_2.id, { username: "kofi", status: "verified" });
-}
-const teacher_3 = db.findOne('teachers', t => t.uid === 'teacher_3');
-if (teacher_3 && !teacher_3.username) {
-  db.update('teachers', teacher_3.id, { username: "chioma", status: "verified" });
-}
-const teacher_4 = db.findOne('teachers', t => t.uid === 'teacher_4');
-if (teacher_4 && !teacher_4.username) {
-  db.update('teachers', teacher_4.id, { username: "aminata", status: "verified" });
-}
-const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
-if (teacher_5 && !teacher_5.username) {
-  db.update('teachers', teacher_5.id, { username: "fatima", status: "verified" });
-}
 
 // Helper to create notifications
 function createNotification(userId, type, title, body) {
@@ -231,7 +287,7 @@ function sanitizeText(str) {
 // --- 1. AUTH & USER ENDPOINTS ---
 
 // Register a new user (Parent or Teacher)
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   const { email, displayName, role, country, password, referredBy } = req.body;
   if (!email || !displayName || !role || !password) {
     return res.status(400).json({ error: "Email, display name, role, and password are required." });
@@ -246,7 +302,7 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(400).json({ error: "User with this email already exists." });
   }
 
-  const { salt, hash } = hashPassword(password);
+  const { salt, hash } = await hashPassword(password);
   const uid = `user_${Date.now()}`;
   const newUser = db.insert('users', {
     uid,
@@ -314,7 +370,7 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // Login user
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', authRateLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
@@ -327,7 +383,7 @@ app.post('/api/auth/login', (req, res) => {
 
   // Securely verify password
   if (user.passwordHash && user.salt) {
-    const isMatch = verifyPassword(password, user.salt, user.passwordHash);
+    const isMatch = await verifyPassword(password, user.salt, user.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid password credentials." });
     }
@@ -339,7 +395,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // POST support agent chatbot message using Gemini AI
-app.post('/api/support/message', async (req, res) => {
+app.post('/api/support/message', supportRateLimiter, async (req, res) => {
   const { message, history } = req.body;
   if (!message) {
     return res.status(400).json({ error: "Message is required." });
@@ -695,6 +751,7 @@ app.get('/api/parents/dashboard/:uid', authenticateToken, requireOwnerOrAdmin, (
   const activeSessions = db.find('sessions', s => s.parentId === uid || studentNames.includes(s.studentName));
   const assignments = db.find('assignments', a => studentNames.includes(a.studentName));
   const parentTransactions = db.find('transactions', t => t.fromUserId === uid);
+  const parentDisputes = db.find('disputes', d => d.raisedBy === uid);
 
   // Fetch referrals for this parent
   const referrals = db.find('parents', p => p.referredBy === uid);
@@ -725,15 +782,85 @@ app.get('/api/parents/dashboard/:uid', authenticateToken, requireOwnerOrAdmin, (
     pendingAssignments: assignments.filter(a => a.status !== 'Graded'),
     transactions: parentTransactions,
     referralsList,
-    referralStats
+    referralStats,
+    disputes: parentDisputes
+  });
+});
+
+// GET Student dashboard data
+app.get('/api/students/dashboard/:uid', authenticateToken, (req, res) => {
+  const { uid } = req.params;
+
+  // Find student by UID or by username
+  let student = db.findOne('students', s => s.uid === uid);
+  if (!student) {
+    // Fallback: try by name
+    student = db.findOne('students', s => s.name.toLowerCase() === uid.toLowerCase());
+  }
+
+  if (!student) {
+    return res.status(404).json({ error: "Student dashboard not found." });
+  }
+
+  const studentSessions = db.find('sessions', s => s.studentId === student.uid || s.studentName.toLowerCase() === student.name.toLowerCase());
+  const assignments = db.find('assignments', a => a.studentId === student.uid || a.studentName.toLowerCase() === student.name.toLowerCase());
+
+  // Return dynamic student leaderboard sorted by XP
+  const allStudents = db.find('students');
+  const leaderboard = allStudents
+    .map((s, idx) => ({
+      rank: idx + 1, // Will be computed after sorting
+      name: s.name + (s.uid === student.uid ? ' (You)' : ''),
+      xp: s.xp || 0,
+      active: s.uid === student.uid
+    }))
+    .sort((a, b) => b.xp - a.xp)
+    .map((s, idx) => ({ ...s, rank: idx + 1 }));
+
+  res.json({
+    student,
+    sessions: studentSessions,
+    gradesLog: assignments.filter(a => a.status === 'Graded'),
+    pendingAssignments: assignments.filter(a => a.status !== 'Graded'),
+    leaderboard
+  });
+});
+
+// GET Teacher dashboard data
+app.get('/api/teachers/dashboard/:uid', authenticateToken, (req, res) => {
+  const { uid } = req.params;
+
+  const teacher = db.findOne('teachers', t => t.uid === uid);
+  if (!teacher) {
+    return res.status(404).json({ error: "Teacher dashboard not found." });
+  }
+
+  const teacherSessions = db.find('sessions', s => s.teacherId === uid);
+  const teacherAssignments = db.find('assignments', a => a.teacherName === teacher.name || a.studentName === 'Tunde'); // Fallback mock student Tunde
+
+  const wallet = db.findOne('wallets', w => w.uid === uid) || { balance: 0, escrow: 0 };
+  const teacherTransactions = db.find('transactions', t => t.toUserId === uid);
+
+  res.json({
+    teacher,
+    walletBalance: wallet.balance,
+    escrowBalance: wallet.escrow,
+    sessions: teacherSessions,
+    assignments: teacherAssignments,
+    transactions: teacherTransactions
   });
 });
 
 // POST Parent wallet top-up / add funds
-app.post('/api/parents/wallet/topup', authenticateToken, (req, res) => {
+app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, (req, res) => {
   const { amount, parentId } = req.body;
   if (!amount || amount <= 0) {
     return res.status(400).json({ error: "Invalid topup amount." });
+  }
+
+  // Enforce parent ownership check to prevent unauthorized wallet updates
+  if (req.user.role !== 'Admin' && req.user.uid !== parentId) {
+    return res.status(403).json({ error: "Access forbidden. User identity mismatch." });
   }
 
   let wallet = db.findOne('wallets', w => w.uid === parentId);
@@ -1826,6 +1953,15 @@ app.get('/api/status', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
+connectDb().then(async () => {
+  await guaranteeInitialProfiles();
+  app.listen(PORT, () => {
+    console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
+  });
+}).catch(async err => {
+  console.error("Database Migration: connection failed, starting server with fallback JSON db...", err);
+  await guaranteeInitialProfiles();
+  app.listen(PORT, () => {
+    console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (local file fallback)`);
+  });
 });

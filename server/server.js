@@ -778,7 +778,11 @@ app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Adm
 // GET teacher by SEO-friendly username
 app.get('/api/teachers/by-username/:username', (req, res) => {
   const { username } = req.params;
-  const teacher = db.findOne('teachers', t => t.username && t.username.toLowerCase() === username.toLowerCase());
+  const teacher = db.findOne('teachers', t => 
+    (t.username && t.username.toLowerCase() === username.toLowerCase()) ||
+    (t.uid && t.uid.toLowerCase() === username.toLowerCase()) ||
+    (t.id && String(t.id).toLowerCase() === username.toLowerCase())
+  );
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });
   }

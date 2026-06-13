@@ -64,8 +64,16 @@ export default function App() {
     }
     return null;
   });
-  const [currentView, setCurrentView] = useState('home'); // 'home' or 'teacher_profile'
-  const [profileUsername, setProfileUsername] = useState('');
+  const [currentView, setCurrentView] = useState(() => {
+    const path = window.location.pathname;
+    const match = path.match(/\/teacher\/([^/]+)/);
+    return match ? 'teacher_profile' : 'home';
+  });
+  const [profileUsername, setProfileUsername] = useState(() => {
+    const path = window.location.pathname;
+    const match = path.match(/\/teacher\/([^/]+)/);
+    return match ? match[1] : '';
+  });
   const [isTutorOnboarding, setIsTutorOnboarding] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -404,6 +412,13 @@ export default function App() {
     window.addEventListener('popstate', handleUrlCheck);
     return () => window.removeEventListener('popstate', handleUrlCheck);
   }, []);
+
+  // Refresh GSAP ScrollTriggers when showing the homepage layout
+  useEffect(() => {
+    if (currentView === 'home') {
+      ScrollTrigger.refresh();
+    }
+  }, [currentView]);
 
   // State handlers
   const handleBookClick = (teacher) => {
@@ -789,7 +804,7 @@ export default function App() {
       );
     });
     return () => ctx.revert();
-  }, []);
+  }, [currentView]);
 
   // GSAP trust section scroll entrances
   useLayoutEffect(() => {
@@ -811,7 +826,7 @@ export default function App() {
       );
     });
     return () => ctx.revert();
-  }, []);
+  }, [currentView]);
 
   // Protocol pin ScrollTrigger stacks
   useLayoutEffect(() => {
@@ -863,7 +878,7 @@ export default function App() {
 
     });
     return () => ctx.revert();
-  }, []);
+  }, [currentView]);
 
   return (
     <div className="relative min-h-screen bg-brand-cream text-brand-charcoal overflow-x-hidden selection:bg-brand-clay selection:text-white">
@@ -1076,27 +1091,32 @@ export default function App() {
         </div>
       </nav>
 
-      {currentUser ? (
-        currentView === 'teacher_profile' ? (
-          <TeacherPublicProfile 
-            username={profileUsername}
-            onBack={handleBackToHome}
-            onBookClick={handleBookClick}
-            selectedCurrency={selectedCurrency}
-            formatCurrency={formatCurrency}
-            convertMinor={convertMinor}
-          />
-        ) : isTutorOnboarding ? (
-          <TeacherOnboarding 
-            currentUser={currentUser}
-            onComplete={(profile) => {
-              setIsTutorOnboarding(false);
-              fetchInitialData();
-              alert("Application submitted successfully! Your account status is now Pending Approval.");
-            }}
-          />
-        ) : (
-          <div className="py-6 min-h-[75vh]">
+      {/* Teacher Public Profile View */}
+      {currentView === 'teacher_profile' && (
+        <TeacherPublicProfile 
+          username={profileUsername}
+          onBack={handleBackToHome}
+          onBookClick={handleBookClick}
+          selectedCurrency={selectedCurrency}
+          formatCurrency={formatCurrency}
+          convertMinor={convertMinor}
+        />
+      )}
+
+      {/* Main View Wrapper (hidden when viewing teacher profile to avoid unmounting conflicts with GSAP pinning) */}
+      <div className={currentView === 'teacher_profile' ? 'hidden' : ''}>
+        {currentUser ? (
+          isTutorOnboarding ? (
+            <TeacherOnboarding 
+              currentUser={currentUser}
+              onComplete={(profile) => {
+                setIsTutorOnboarding(false);
+                fetchInitialData();
+                alert("Application submitted successfully! Your account status is now Pending Approval.");
+              }}
+            />
+          ) : (
+            <div className="py-6 min-h-[75vh]">
             {currentUser.role === 'Admin' ? (
               <AdminDashboard
                 currentUser={currentUser}
@@ -1145,16 +1165,6 @@ export default function App() {
           </div>
         )
       ) : (
-        currentView === 'teacher_profile' ? (
-          <TeacherPublicProfile 
-            username={profileUsername}
-            onBack={handleBackToHome}
-            onBookClick={handleBookClick}
-            selectedCurrency={selectedCurrency}
-            formatCurrency={formatCurrency}
-            convertMinor={convertMinor}
-          />
-        ) : (
         <>
           {/* Cinematic opening shot Hero */}
       <section className="relative h-[95dvh] w-full overflow-hidden flex items-end justify-start md:justify-end pb-20 px-6 md:px-16 lg:px-24">
@@ -2042,8 +2052,8 @@ export default function App() {
       </section>
 
       </>
-        )
       )}
+      </div>
 
       {/* Universal Footer */}
       <footer className="bg-brand-charcoal text-brand-cream pt-24 pb-12 rounded-t-[4rem] border-t border-brand-cream/10">

@@ -36,7 +36,7 @@ export default function TeacherPublicProfile({
             metaDesc.setAttribute('name', 'description');
             document.head.appendChild(metaDesc);
           }
-          metaDesc.setAttribute('content', `Book private lessons with ${data.name} on EduBridge. Specializes in ${data.subjects?.join(', ')}. Vetted credentials, secure escrows, and AI certified.`);
+          metaDesc.setAttribute('content', `Book private lessons with ${data.name} on EduBridge. Specializes in ${Array.isArray(data.subjects) ? data.subjects.join(', ') : ''}. Vetted credentials, secure escrows, and AI certified.`);
         } else {
           setError('Tutor public profile page not found.');
         }
@@ -172,7 +172,7 @@ export default function TeacherPublicProfile({
                   <Award className="w-5 h-5 text-brand-clay" title="Verified Tutor Profile" />
                 </div>
                 <p className="font-drama italic text-sm text-brand-clay font-medium">
-                  Professional Instructor in {teacher.subjects?.join(' & ')}
+                  Professional Instructor in {Array.isArray(teacher.subjects) ? teacher.subjects.join(' & ') : ''}
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 font-mono text-[9px] uppercase tracking-wider">
                   <MapPin className="w-3.5 h-3.5 text-brand-charcoal/40" />
@@ -189,7 +189,7 @@ export default function TeacherPublicProfile({
 
             {/* Badges checklist */}
             <div className="flex gap-2 flex-wrap">
-              {teacher.badges?.filter(Boolean).map(badge => {
+              {(teacher.badges || []).filter(Boolean).map(badge => {
                 console.log("BADGE MAP ELEMENT:", badge, typeof badge);
                 return (
                   <span key={badge} className={`font-mono text-[9px] uppercase tracking-wider font-bold py-1 px-3 rounded-full border ${
@@ -349,7 +349,7 @@ export default function TeacherPublicProfile({
             <div className="space-y-2 font-sans text-xs">
               <div className="flex justify-between text-brand-charcoal/70">
                 <span>Spoken Languages:</span>
-                <span className="font-bold flex items-center gap-1"><Languages className="w-3.5 h-3.5 text-brand-clay" /> {teacher.languages?.join(', ') || 'English'}</span>
+                <span className="font-bold flex items-center gap-1"><Languages className="w-3.5 h-3.5 text-brand-clay" /> {Array.isArray(teacher.languages) ? teacher.languages.join(', ') : (typeof teacher.languages === 'string' ? teacher.languages : 'English')}</span>
               </div>
               <div className="flex justify-between text-brand-charcoal/70">
                 <span>Vetting Status:</span>
@@ -370,7 +370,7 @@ export default function TeacherPublicProfile({
                 <div key={day} className="bg-brand-cream/30 border border-brand-moss/5 p-3 rounded-xl">
                   <div className="font-mono text-[9px] uppercase tracking-wider font-bold text-brand-moss mb-1.5">{day}</div>
                   <div className="flex gap-1.5 flex-wrap">
-                    {teacher.availability[day].map(time => (
+                    {Array.isArray(teacher.availability[day]) && teacher.availability[day].map(time => (
                       <button
                         key={time}
                         onClick={() => onBookClick(teacher)}

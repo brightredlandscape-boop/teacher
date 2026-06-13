@@ -389,12 +389,11 @@ export default function App() {
   useEffect(() => {
     const handleUrlCheck = () => {
       const path = window.location.pathname;
-      if (path.startsWith('/teacher/')) {
-        const username = path.split('/')[2];
-        if (username) {
-          setCurrentView('teacher_profile');
-          setProfileUsername(username);
-        }
+      const match = path.match(/\/teacher\/([^/]+)/);
+      if (match) {
+        const username = match[1];
+        setCurrentView('teacher_profile');
+        setProfileUsername(username);
       } else {
         setCurrentView('home');
         setProfileUsername('');
@@ -418,13 +417,15 @@ export default function App() {
   };
 
   const handleBackToHome = () => {
-    window.history.pushState({}, '', '/');
+    const basePath = window.location.pathname.startsWith('/EduBridge') ? '/EduBridge/' : '/';
+    window.history.pushState({}, '', basePath);
     setCurrentView('home');
     setProfileUsername('');
   };
 
   const handleTutorProfileSelect = (username) => {
-    window.history.pushState({}, '', `/teacher/${username}`);
+    const basePath = window.location.pathname.startsWith('/EduBridge') ? '/EduBridge' : '';
+    window.history.pushState({}, '', `${basePath}/teacher/${username}`);
     setCurrentView('teacher_profile');
     setProfileUsername(username);
   };

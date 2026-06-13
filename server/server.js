@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { rateLimit } from 'express-rate-limit';
+import admin from 'firebase-admin';
 import { db, seedDatabase, connectDb } from './db.js';
 import paymentRoutes from './routes/payments.js';
 import b2bRoutes from './routes/b2b.js';
@@ -240,17 +241,54 @@ function createNotification(userId, type, title, body) {
   }
 }
 
-// Security Middleware: Verify JWT
+// Security Middleware: Verify Firebase ID Token or fallback to JWT
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: "Access token required." });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Invalid or expired token." });
-    req.user = user;
-    next();
-  });
+  // If Firebase Admin is initialized, verify via Firebase Auth
+  if (admin.apps.length > 0) {
+    admin.auth().verifyIdToken(token)
+      .then((decodedToken) => {
+        const uid = decodedToken.uid;
+        // Lookup user profile in database cache
+        const user = db.findOne('users', u => u.uid === uid);
+        if (user) {
+          req.user = {
+            uid: user.uid,
+            role: user.role,
+            email: user.email,
+            displayName: user.displayName
+          };
+        } else {
+          // If profile sync hasn't occurred yet, build basic request context
+          req.user = {
+            uid: uid,
+            role: decodedToken.role || 'Parent',
+            email: decodedToken.email
+          };
+        }
+        next();
+      })
+      .catch((err) => {
+        // Fallback to local JWT verification
+        jwt.verify(token, JWT_SECRET, (jwtErr, user) => {
+          if (jwtErr) {
+            return res.status(403).json({ error: "Invalid or expired token." });
+          }
+          req.user = user;
+          next();
+        });
+      });
+  } else {
+    // Normal local JWT fallback
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ error: "Invalid or expired token." });
+      req.user = user;
+      next();
+    });
+  }
 }
 
 // Security Middleware: Require Role
@@ -295,9 +333,9 @@ function sanitizeText(str) {
 
 // Register a new user (Parent or Teacher)
 app.post('/api/auth/register', authRateLimiter, async (req, res) => {
-  const { email, displayName, role, country, password, referredBy } = req.body;
-  if (!email || !displayName || !role || !password) {
-    return res.status(400).json({ error: "Email, display name, role, and password are required." });
+  const { email, displayName, role, country, password, referredBy, uid: clientUid } = req.body;
+  if (!email || !displayName || !role) {
+    return res.status(400).json({ error: "Email, display name, and role are required." });
   }
 
   const sanitizedEmail = sanitizeText(email);
@@ -309,8 +347,17 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     return res.status(400).json({ error: "User with this email already exists." });
   }
 
-  const { salt, hash } = await hashPassword(password);
-  const uid = `user_${Date.now()}`;
+  // Use clientUid from Firebase if available, otherwise fallback to mock
+  const uid = clientUid || `user_${Date.now()}`;
+  let salt = "";
+  let hash = "";
+
+  if (password) {
+    const pwDetails = await hashPassword(password);
+    salt = pwDetails.salt;
+    hash = pwDetails.hash;
+  }
+
   const newUser = db.insert('users', {
     uid,
     email: sanitizedEmail,
@@ -1959,16 +2006,28 @@ app.get('/api/status', (req, res) => {
   res.json({ status: "healthy", version: "2.0.0", message: "EduBridge API Server Active." });
 });
 
-// Start Server
-connectDb().then(async () => {
-  await guaranteeInitialProfiles();
-  app.listen(PORT, () => {
-    console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
+// Start Server conditionally (only when not running inside Vercel serverless environment)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDb().then(async () => {
+    await guaranteeInitialProfiles();
+    app.listen(PORT, () => {
+      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
+    });
+  }).catch(async err => {
+    console.error("Database Migration: connection failed, starting server with fallback JSON db...", err);
+    await guaranteeInitialProfiles();
+    app.listen(PORT, () => {
+      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (local file fallback)`);
+    });
   });
-}).catch(async err => {
-  console.error("Database Migration: connection failed, starting server with fallback JSON db...", err);
-  await guaranteeInitialProfiles();
-  app.listen(PORT, () => {
-    console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (local file fallback)`);
+} else {
+  // On Vercel, we run the database connection inside the serverless init context
+  connectDb().then(async () => {
+    await guaranteeInitialProfiles();
+    console.log("Database Migration: Serverless DB initialization finished.");
+  }).catch(err => {
+    console.error("Database Migration: Serverless DB initialization failed:", err);
   });
-});
+}
+
+export default app;

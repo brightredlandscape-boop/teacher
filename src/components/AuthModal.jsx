@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, User, Shield, Lock } from 'lucide-react';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
@@ -18,29 +20,49 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     setError('');
     setLoading(true);
 
-    const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
     const refCode = localStorage.getItem('edubridge_ref');
-    const payload = activeTab === 'login' 
-      ? { email, password } 
-      : { email, displayName: name, role, country, password, referredBy: refCode || undefined };
 
     try {
+      let firebaseUser = null;
+      let token = null;
+
+      // Real Firebase Auth flow if API Key is configured
+      if (auth.app.options.apiKey && auth.app.options.apiKey !== "mock-api-key") {
+        if (activeTab === 'login') {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          firebaseUser = userCredential.user;
+          token = await firebaseUser.getIdToken();
+        } else {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          firebaseUser = userCredential.user;
+          token = await firebaseUser.getIdToken();
+        }
+      }
+
+      const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
+      const payload = activeTab === 'login' 
+        ? { email, password, uid: firebaseUser?.uid } 
+        : { email, displayName: name, role, country, password, referredBy: refCode || undefined, uid: firebaseUser?.uid };
+
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       });
 
       const data = await response.json();
       if (response.ok) {
-        onSuccess(data);
+        onSuccess({ ...data, token: token || data.token });
         onClose();
       } else {
         setError(data.error || 'Something went wrong.');
       }
     } catch (err) {
       console.error('Auth error:', err);
-      // Fallback local simulation if backend offline
+      // Fallback local simulation if backend offline or Firebase not setup
       if (activeTab === 'login') {
         const lowerEmail = email.toLowerCase();
         if (lowerEmail.includes('parent')) {
@@ -56,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           onSuccess({ uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email });
           onClose();
         } else {
-          setError('Simulated error: use parent@edubridge.com, teacher@edubridge.com, student@edubridge.com or admin@edubridge.com');
+          setError(err.message || 'Simulated error: use parent@edubridge.com, teacher@edubridge.com, student@edubridge.com or admin@edubridge.com');
         }
       } else {
         const mockUid = `user_${Date.now()}`;

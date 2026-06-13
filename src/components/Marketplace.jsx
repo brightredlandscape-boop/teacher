@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle } from 'lucide-react';
+import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle, Play } from 'lucide-react';
 
 export default function Marketplace({ 
   teachers, 
@@ -7,7 +7,8 @@ export default function Marketplace({
   onBookClick, 
   formatCurrency, 
   convertMinor,
-  onTeacherSelect
+  onTeacherSelect,
+  onWatchVideo
 }) {
   const [subjectFilter, setSubjectFilter] = useState('All');
   const [curriculumFilter, setCurriculumFilter] = useState('All');
@@ -238,6 +239,20 @@ export default function Marketplace({
                     className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-transparent to-transparent opacity-60" />
+                  
+                  {/* Glassmorphic Play Button Overlay */}
+                  {teacher.videoUrl && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onWatchVideo) onWatchVideo(teacher);
+                      }}
+                      className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-white/25 hover:bg-white/40 backdrop-blur-md border border-white/30 flex items-center justify-center text-white scale-100 hover:scale-110 active:scale-95 transition-all duration-300 shadow-xl z-20"
+                      title="Watch Intro Video"
+                    >
+                      <Play className="w-5 h-5 fill-current translate-x-0.5" />
+                    </button>
+                  )}
                   
                   {/* Status Indicator */}
                   <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-brand-charcoal/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">

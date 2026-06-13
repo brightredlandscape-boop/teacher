@@ -29,6 +29,62 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
   const [videoUrl, setVideoUrl] = useState('');
   const [govId, setGovId] = useState('');
   const [degree, setDegree] = useState('');
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo';
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!uploadPreset) {
+      alert("Cloudinary upload preset is not configured in VITE_CLOUDINARY_UPLOAD_PRESET. Pasting a direct URL is supported as a fallback.");
+      return;
+    }
+
+    setUploadingVideo(true);
+    setUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          setVideoUrl(response.secure_url);
+        } else {
+          console.error(xhr.responseText);
+          alert("Cloudinary upload failed: " + xhr.statusText);
+        }
+        setUploadingVideo(false);
+      };
+
+      xhr.onerror = () => {
+        alert("Network error occurred during upload.");
+        setUploadingVideo(false);
+      };
+
+      xhr.send(formData);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Error occurred during upload.");
+      setUploadingVideo(false);
+    }
+  };
 
   const API_BASE = '/api';
 
@@ -431,17 +487,44 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
               </div>
 
               <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Video Introduction URL</label>
-                <div className="relative flex items-center">
-                  <Video className="absolute left-4 w-4 h-4 text-brand-moss/45" />
-                  <input
-                    type="url"
-                    required
-                    placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
-                  />
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Video Introduction (Cloudinary Upload or URL)</label>
+                <div className="space-y-3">
+                  {/* Cloudinary File Upload Box */}
+                  <div className="border border-dashed border-brand-moss/30 hover:border-brand-clay/50 rounded-2xl p-5 bg-brand-cream/10 transition-colors text-center relative">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      disabled={uploadingVideo}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Video className="w-8 h-8 text-brand-clay" />
+                      <span className="font-heading font-bold text-xs text-brand-moss">
+                        {uploadingVideo ? `Uploading to Cloudinary: ${uploadProgress}%` : "Drag & Drop or Click to Upload Intro Video"}
+                      </span>
+                      <span className="font-sans text-[10px] text-brand-charcoal/50">MP4, WebM up to 50MB</span>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    {uploadingVideo && (
+                      <div className="w-full bg-brand-moss/10 rounded-full h-1.5 mt-3 overflow-hidden">
+                        <div className="bg-brand-clay h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Manual URL input fallback */}
+                  <div className="relative flex items-center">
+                    <span className="font-sans font-bold text-[10px] uppercase text-brand-charcoal/40 bg-brand-cream/30 border border-brand-moss/10 px-3 py-3 rounded-l-xl border-r-0">URL</span>
+                    <input
+                      type="url"
+                      placeholder="Or paste video URL (e.g. YouTube, Cloudinary, etc.)"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-r-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 

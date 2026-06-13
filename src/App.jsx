@@ -40,6 +40,8 @@ import TeacherPublicProfile from './components/TeacherPublicProfile';
 import StudentPortal from './components/StudentPortal';
 import heroImage from './assets/hero.jpg';
 import { translations } from './locales/i18n';
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -138,6 +140,7 @@ export default function App() {
   // Booking Modal Trigger State
   const [selectedTeacherForBooking, setSelectedTeacherForBooking] = useState(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [watchingTeacherVideo, setWatchingTeacherVideo] = useState(null);
 
   // Exchange Rates & Display Engine (Integer logic)
   const exchangeRates = {
@@ -326,6 +329,45 @@ export default function App() {
   useEffect(() => {
     fetchInitialData();
   }, [currentUser]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const token = await user.getIdToken();
+        localStorage.setItem('edubridge_token', token);
+        
+        try {
+          const response = await fetch(`${API_BASE}/users/${user.uid}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const profile = await response.json();
+            const fullUser = { ...profile, token };
+            localStorage.setItem('edubridge_user', JSON.stringify(fullUser));
+            setCurrentUser(fullUser);
+          }
+        } catch (err) {
+          console.warn("Failed to retrieve database profile for Firebase user:", err);
+        }
+      } else {
+        const savedUserStr = localStorage.getItem('edubridge_user');
+        if (savedUserStr) {
+          const savedUser = JSON.parse(savedUserStr);
+          if (savedUser.uid && (savedUser.uid.startsWith('user_') || savedUser.uid.includes('_1'))) {
+            // Keep local mock profile
+          } else {
+            localStorage.removeItem('edubridge_user');
+            localStorage.removeItem('edubridge_token');
+            setCurrentUser(null);
+          }
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Check for referral code and register hit
   useEffect(() => {
@@ -1564,6 +1606,7 @@ export default function App() {
         formatCurrency={formatCurrency}
         convertMinor={convertMinor}
         onTeacherSelect={handleTutorProfileSelect}
+        onWatchVideo={(teacher) => setWatchingTeacherVideo(teacher)}
       />
 
 
@@ -2199,6 +2242,76 @@ export default function App() {
                 <Send className="w-4.5 h-4.5" />
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {watchingTeacherVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-brand-charcoal/80 backdrop-blur-md transition-opacity" 
+            onClick={() => setWatchingTeacherVideo(null)} 
+          />
+          
+          {/* Video Container */}
+          <div className="relative bg-white border border-brand-moss/10 rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl z-10 animate-slide-up">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-brand-moss/5 flex justify-between items-center bg-brand-cream/20">
+              <div>
+                <h3 className="font-heading font-bold text-lg text-brand-moss">{watchingTeacherVideo.name}</h3>
+                <span className="font-sans text-xs text-brand-clay font-medium italic">Intro Video Lesson Profile</span>
+              </div>
+              <button 
+                onClick={() => setWatchingTeacherVideo(null)} 
+                className="w-10 h-10 rounded-full border border-brand-moss/10 bg-white hover:bg-brand-cream flex items-center justify-center text-brand-moss transition-colors shadow-sm"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Video Body */}
+            <div className="aspect-video w-full bg-black relative">
+              {watchingTeacherVideo.videoUrl.includes('youtube.com') || watchingTeacherVideo.videoUrl.includes('youtu.be') ? (
+                <iframe 
+                  className="w-full h-full"
+                  src={watchingTeacherVideo.videoUrl.replace('watch?v=', 'embed/')} 
+                  title="Teacher Intro Video"
+                  frameBorder="0" 
+                  allowFullScreen
+                />
+              ) : (
+                <video 
+                  controls 
+                  autoPlay 
+                  className="w-full h-full object-contain"
+                  src={watchingTeacherVideo.videoUrl}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </div>
+
+            {/* Modal Footer / Bio excerpt */}
+            <div className="p-6 bg-brand-cream/10 border-t border-brand-moss/5 space-y-4">
+              <p className="font-sans text-brand-charcoal/80 text-xs leading-relaxed">
+                "{watchingTeacherVideo.bio}"
+              </p>
+              <div className="flex justify-between items-center">
+                <span className="font-mono text-2xs text-brand-charcoal/50 uppercase">RATE: {formatCurrency(convertMinor(watchingTeacherVideo.rate, selectedCurrency), selectedCurrency)} / hour</span>
+                <button
+                  onClick={() => {
+                    const tutor = watchingTeacherVideo;
+                    setWatchingTeacherVideo(null);
+                    handleBookClick(tutor);
+                  }}
+                  className="py-2.5 px-6 rounded-full bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider shadow-md shadow-brand-clay/10 transition-transform scale-100 hover:scale-103"
+                >
+                  Book Trial Session
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import admin from 'firebase-admin';
 
 const DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
@@ -16,6 +17,8 @@ const getFilePath = (collection) => path.join(DATA_DIR, `${collection}.json`);
 // In-memory collection cache
 const CACHE = {};
 let isMongo = false;
+let isFirestore = false;
+let firestoreDb = null;
 
 const collections = [
   'platform_config',
@@ -116,9 +119,16 @@ function writeCollectionToFile(collection) {
   }
 }
 
-// Persist document operations to MongoDB or Local JSON Files
+// Persist document operations to Firestore, MongoDB or Local JSON Files
 async function persistDocumentInsert(collection, doc) {
-  if (isMongo) {
+  if (isFirestore) {
+    try {
+      const docId = doc.id || doc.uid || crypto.randomUUID();
+      await firestoreDb.collection(collection).doc(docId).set(doc);
+    } catch (err) {
+      console.error(`Database Migration: Error inserting into Firestore [${collection}]:`, err);
+    }
+  } else if (isMongo) {
     try {
       const Model = getModel(collection);
       await Model.create(doc);
@@ -131,7 +141,13 @@ async function persistDocumentInsert(collection, doc) {
 }
 
 async function persistDocumentUpdate(collection, id, doc) {
-  if (isMongo) {
+  if (isFirestore) {
+    try {
+      await firestoreDb.collection(collection).doc(id).set(doc, { merge: true });
+    } catch (err) {
+      console.error(`Database Migration: Error updating Firestore [${collection}]:`, err);
+    }
+  } else if (isMongo) {
     try {
       const Model = getModel(collection);
       const selector = { $or: [{ id }, { uid: id }] };
@@ -145,7 +161,13 @@ async function persistDocumentUpdate(collection, id, doc) {
 }
 
 async function persistDocumentDelete(collection, id) {
-  if (isMongo) {
+  if (isFirestore) {
+    try {
+      await firestoreDb.collection(collection).doc(id).delete();
+    } catch (err) {
+      console.error(`Database Migration: Error deleting from Firestore [${collection}]:`, err);
+    }
+  } else if (isMongo) {
     try {
       const Model = getModel(collection);
       const selector = { $or: [{ id }, { uid: id }] };
@@ -158,35 +180,108 @@ async function persistDocumentDelete(collection, id) {
   }
 }
 
+function initFirestore() {
+  const serviceAccountPath = path.join(process.cwd(), 'edubridgez-firebase-adminsdk-fbsvc-d56360976c.json');
+  
+  if (fs.existsSync(serviceAccountPath)) {
+    try {
+      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      firestoreDb = admin.firestore();
+      isFirestore = true;
+      console.log("Database Migration: Connected to Cloud Firestore successfully using local service account JSON.");
+      return;
+    } catch (err) {
+      console.error("Database Migration: Failed to initialize using local service account JSON:", err);
+    }
+  }
+
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY 
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+    : null;
+
+  if (projectId && clientEmail && privateKey) {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        })
+      });
+      firestoreDb = admin.firestore();
+      isFirestore = true;
+      console.log("Database Migration: Connected to Cloud Firestore successfully.");
+    } catch (err) {
+      console.error("Database Migration: Failed to initialize Firebase Admin cert:", err);
+    }
+  } else if (projectId) {
+    try {
+      admin.initializeApp();
+      firestoreDb = admin.firestore();
+      isFirestore = true;
+      console.log("Database Migration: Connected to Firestore using default credentials.");
+    } catch (err) {
+      console.error("Database Migration: Failed to initialize default Firebase Admin:", err);
+    }
+  }
+}
+
 // Initialize and connect database
 export async function connectDb() {
-  const uri = process.env.MONGODB_URI;
-  if (uri) {
-    console.log("Database Migration: Connecting to production MongoDB...");
+  // Try to connect to Firestore first if variables are configured
+  initFirestore();
+
+  if (isFirestore) {
     try {
-      await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
-      isMongo = true;
-      console.log("Database Migration: Connected to MongoDB successfully.");
-      
       // Load all collections into cache
       for (const col of collections) {
-        const Model = getModel(col);
-        const docs = await Model.find({}).lean();
-        CACHE[col] = docs.map(d => {
-          const { _id, __v, ...cleanDoc } = d;
-          return cleanDoc;
+        const snapshot = await firestoreDb.collection(col).get();
+        const docs = [];
+        snapshot.forEach(doc => {
+          docs.push({ id: doc.id, ...doc.data() });
         });
-        console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from MongoDB.`);
+        CACHE[col] = docs;
+        console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from Firestore.`);
       }
     } catch (err) {
-      console.error("Database Migration: MongoDB connection failed, falling back to local JSON database:", err);
-      isMongo = false;
+      console.error("Database Migration: Firestore loading failed, falling back to local JSON database:", err);
+      isFirestore = false;
       loadFromJsonFiles();
     }
   } else {
-    console.log("Database Migration: No MONGODB_URI configured, running local JSON database fallback.");
-    isMongo = false;
-    loadFromJsonFiles();
+    const uri = process.env.MONGODB_URI;
+    if (uri) {
+      console.log("Database Migration: Connecting to production MongoDB...");
+      try {
+        await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
+        isMongo = true;
+        console.log("Database Migration: Connected to MongoDB successfully.");
+        
+        // Load all collections into cache
+        for (const col of collections) {
+          const Model = getModel(col);
+          const docs = await Model.find({}).lean();
+          CACHE[col] = docs.map(d => {
+            const { _id, __v, ...cleanDoc } = d;
+            return cleanDoc;
+          });
+          console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from MongoDB.`);
+        }
+      } catch (err) {
+        console.error("Database Migration: MongoDB connection failed, falling back to local JSON database:", err);
+        isMongo = false;
+        loadFromJsonFiles();
+      }
+    } else {
+      console.log("Database Migration: No Firestore or MongoDB configured, running local JSON database fallback.");
+      isMongo = false;
+      loadFromJsonFiles();
+    }
   }
 
   // Seed the database after collections are loaded in memory
@@ -204,7 +299,24 @@ export function readCollection(collection) {
 // Overwrite collection
 export function writeCollection(collection, data) {
   CACHE[collection] = data;
-  if (isMongo) {
+  if (isFirestore) {
+    const colRef = firestoreDb.collection(collection);
+    colRef.get().then(snapshot => {
+      const batch = firestoreDb.batch();
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      data.forEach(item => {
+        const docId = item.id || item.uid || crypto.randomUUID();
+        batch.set(colRef.doc(docId), item);
+      });
+      return batch.commit();
+    }).then(() => {
+      console.log(`Database Migration: Overwrote Firestore collection ${collection} successfully.`);
+    }).catch(err => {
+      console.error(`Database Migration: Error overwriting Firestore collection ${collection}:`, err);
+    });
+  } else if (isMongo) {
     const Model = getModel(collection);
     Model.deleteMany({})
       .then(() => {
@@ -310,6 +422,7 @@ export function seedDatabase() {
         bio: "12 years teaching mathematics preparation. Specializes in algebra speed calculations and IGCSE/WAEC exam setups.",
         avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
         coverImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop",
+        videoUrl: "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
         online: true,
         availability: {
           Tomorrow: ["4:00 PM", "5:00 PM", "6:00 PM"],
@@ -334,6 +447,7 @@ export function seedDatabase() {
         bio: "Practical sciences master. Makes complex chemical formulas simple using visual laboratory representations.",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop",
         coverImage: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop",
+        videoUrl: "https://res.cloudinary.com/demo/video/upload/dog.mp4",
         online: false,
         availability: {
           Tomorrow: ["2:00 PM", "3:00 PM"],
@@ -358,6 +472,7 @@ export function seedDatabase() {
         bio: "Creative writing and syntax focus. Multi-jurisdiction English instructor with an emphasis on SAT prep.",
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
         coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop",
+        videoUrl: "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
         online: true,
         availability: {
           Tomorrow: ["9:00 AM", "10:00 AM", "11:00 AM"],

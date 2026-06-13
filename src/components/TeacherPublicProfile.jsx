@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Star, ShieldCheck, Video, Calendar, ArrowLeft, Heart, Languages, MapPin, Award, CheckCircle, Zap } from 'lucide-react';
+import { Star, ShieldCheck, Video, Calendar, ArrowLeft, Heart, Languages, MapPin, Award, CheckCircle2, Zap } from 'lucide-react';
 
 export default function TeacherPublicProfile({ 
   username, 
@@ -189,19 +189,22 @@ export default function TeacherPublicProfile({
 
             {/* Badges checklist */}
             <div className="flex gap-2 flex-wrap">
-              {teacher.badges?.map(badge => (
-                <span key={badge} className={`font-mono text-[9px] uppercase tracking-wider font-bold py-1 px-3 rounded-full border ${
-                  badge === 'badge-bg-checked'
-                    ? 'bg-amber-50 border-brand-clay/30 text-brand-clay'
-                    : badge === 'badge-verified'
-                    ? 'bg-blue-50 border-blue-200 text-blue-800'
-                    : badge === 'badge-ai-cert'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    : 'bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
-                }`}>
-                  {badge.replace('badge-', '').replace('-', ' ')}
-                </span>
-              ))}
+              {teacher.badges?.filter(Boolean).map(badge => {
+                console.log("BADGE MAP ELEMENT:", badge, typeof badge);
+                return (
+                  <span key={badge} className={`font-mono text-[9px] uppercase tracking-wider font-bold py-1 px-3 rounded-full border ${
+                    badge === 'badge-bg-checked'
+                      ? 'bg-amber-50 border-brand-clay/30 text-brand-clay'
+                      : badge === 'badge-verified'
+                      ? 'bg-blue-50 border-blue-200 text-blue-800'
+                      : badge === 'badge-ai-cert'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
+                  }`}>
+                    {badge ? badge.replace('badge-', '').replace('-', ' ') : ''}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -247,14 +250,14 @@ export default function TeacherPublicProfile({
                 <Award className="w-5 h-5 text-brand-clay" /> Trophy Cabinet
               </h3>
               <div className="flex gap-3 flex-wrap">
-                {teacher.badges.map(badge => (
+                {teacher.badges.filter(Boolean).map(badge => (
                   <div key={badge} className="flex flex-col items-center justify-center p-4 border border-brand-moss/10 rounded-2xl bg-brand-cream/30 min-w-[100px]">
                     {badge === 'badge-top-rated' && <Star className="w-8 h-8 text-[#92400E] mb-2 fill-current" />}
                     {badge === 'badge-ai-cert' && <Zap className="w-8 h-8 text-emerald-600 mb-2 fill-current" />}
                     {badge === 'badge-verified' && <ShieldCheck className="w-8 h-8 text-blue-600 mb-2" />}
                     {badge === 'badge-bg-checked' && <ShieldCheck className="w-8 h-8 text-brand-clay mb-2 fill-brand-clay/10 animate-pulse" />}
                     <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-brand-charcoal text-center">
-                      {badge.replace('badge-', '').replace('-', ' ')}
+                      {badge ? badge.replace('badge-', '').replace('-', ' ') : ''}
                     </span>
                   </div>
                 ))}
@@ -313,7 +316,7 @@ export default function TeacherPublicProfile({
                       <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-3 ml-6 mt-2 relative">
                         <div className="absolute -left-3 top-4 w-3 h-px bg-brand-moss/20" />
                         <h5 className="font-heading font-bold text-[10px] text-brand-moss uppercase tracking-wider mb-1 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 text-emerald-600" /> Tutor Reply
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Tutor Reply
                         </h5>
                         <p className="font-sans text-xs text-brand-charcoal/70 leading-relaxed">{rev.reply}</p>
                       </div>
@@ -387,7 +390,7 @@ export default function TeacherPublicProfile({
             onClick={() => onBookClick(teacher)}
             className="btn-magnetic w-full py-4 bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
           >
-            <CheckCircle className="w-4.5 h-4.5" /> Book Trial Session
+            <CheckCircle2 className="w-4.5 h-4.5" /> Book Trial Session
           </button>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -781,7 +781,7 @@ export default function App() {
   }, []);
 
   // GSAP hero entrances
-  useEffect(() => {
+  useLayoutEffect(() => {
     let ctx = gsap.context(() => {
       gsap.fromTo('.hero-fade',
         { y: 45, opacity: 0 },
@@ -792,7 +792,7 @@ export default function App() {
   }, []);
 
   // GSAP trust section scroll entrances
-  useEffect(() => {
+  useLayoutEffect(() => {
     let ctx = gsap.context(() => {
       gsap.fromTo('.trust-fade',
         { y: 35, opacity: 0 },
@@ -814,7 +814,7 @@ export default function App() {
   }, []);
 
   // Protocol pin ScrollTrigger stacks
-  useEffect(() => {
+  useLayoutEffect(() => {
     let ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-stack');
       if (cards.length === 0) return;

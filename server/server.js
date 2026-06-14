@@ -16,6 +16,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+let dbInitialized = false;
+let dbInitPromise = null;
+
+async function ensureDb() {
+  if (dbInitialized) return;
+  if (!dbInitPromise) {
+    dbInitPromise = (async () => {
+      await connectDb();
+      await guaranteeInitialProfiles();
+      dbInitialized = true;
+    })();
+  }
+  await dbInitPromise;
+}
+
+// Database initialization middleware
+app.use(async (req, res, next) => {
+  try {
+    await ensureDb();
+    next();
+  } catch (err) {
+    console.error("Database initialization failed during request:", err);
+    res.status(500).json({ error: "Database initialization failed." });
+  }
+});
+
 // CORS origin security configuration
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 app.use(cors({
@@ -204,23 +230,23 @@ async function guaranteeInitialProfiles() {
 
   // Guarantee SEO usernames for seeded teachers
   const teacher_1 = db.findOne('teachers', t => t.uid === 'teacher_1');
-  if (teacher_1 && !teacher_1.username) {
+  if (teacher_1 && (!teacher_1.username || teacher_1.username !== 'adebayo' || teacher_1.status !== 'verified')) {
     db.update('teachers', teacher_1.id, { username: "adebayo", status: "verified" });
   }
   const teacher_2 = db.findOne('teachers', t => t.uid === 'teacher_2');
-  if (teacher_2 && !teacher_2.username) {
+  if (teacher_2 && (!teacher_2.username || teacher_2.username !== 'kofi' || teacher_2.status !== 'verified')) {
     db.update('teachers', teacher_2.id, { username: "kofi", status: "verified" });
   }
   const teacher_3 = db.findOne('teachers', t => t.uid === 'teacher_3');
-  if (teacher_3 && !teacher_3.username) {
+  if (teacher_3 && (!teacher_3.username || teacher_3.username !== 'chioma' || teacher_3.status !== 'verified')) {
     db.update('teachers', teacher_3.id, { username: "chioma", status: "verified" });
   }
   const teacher_4 = db.findOne('teachers', t => t.uid === 'teacher_4');
-  if (teacher_4 && !teacher_4.username) {
+  if (teacher_4 && (!teacher_4.username || teacher_4.username !== 'aminata' || teacher_4.status !== 'verified')) {
     db.update('teachers', teacher_4.id, { username: "aminata", status: "verified" });
   }
   const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
-  if (teacher_5 && !teacher_5.username) {
+  if (teacher_5 && (!teacher_5.username || teacher_5.username !== 'fatima' || teacher_5.status !== 'verified')) {
     db.update('teachers', teacher_5.id, { username: "fatima", status: "verified" });
   }
 }
@@ -2013,25 +2039,15 @@ app.get('/api/status', (req, res) => {
 
 // Start Server conditionally (only when not running inside Vercel serverless environment)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  connectDb().then(async () => {
-    await guaranteeInitialProfiles();
+  ensureDb().then(() => {
     app.listen(PORT, () => {
       console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
     });
-  }).catch(async err => {
-    console.error("Database Migration: connection failed, starting server with fallback JSON db...", err);
-    await guaranteeInitialProfiles();
-    app.listen(PORT, () => {
-      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (local file fallback)`);
-    });
-  });
-} else {
-  // On Vercel, we run the database connection inside the serverless init context
-  connectDb().then(async () => {
-    await guaranteeInitialProfiles();
-    console.log("Database Migration: Serverless DB initialization finished.");
   }).catch(err => {
-    console.error("Database Migration: Serverless DB initialization failed:", err);
+    console.error("Database initialization failed, starting server with fallback...", err);
+    app.listen(PORT, () => {
+      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (failed init fallback)`);
+    });
   });
 }
 

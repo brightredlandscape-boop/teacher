@@ -269,6 +269,9 @@ export async function connectDb() {
           const docs = await Model.find({}).lean();
           CACHE[col] = docs.map(d => {
             const { _id, __v, ...cleanDoc } = d;
+            if (!cleanDoc.id) {
+              cleanDoc.id = cleanDoc.uid || String(_id);
+            }
             return cleanDoc;
           });
           console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from MongoDB.`);

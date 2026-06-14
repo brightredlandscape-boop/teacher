@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { rateLimit } from 'express-rate-limit';
-import admin from 'firebase-admin';
+import { getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { db, seedDatabase, connectDb } from './db.js';
 import paymentRoutes from './routes/payments.js';
 import b2bRoutes from './routes/b2b.js';
@@ -248,8 +249,8 @@ function authenticateToken(req, res, next) {
   if (!token) return res.status(401).json({ error: "Access token required." });
 
   // If Firebase Admin is initialized, verify via Firebase Auth
-  if (admin.apps.length > 0) {
-    admin.auth().verifyIdToken(token)
+  if (getApps().length > 0) {
+    getAuth().verifyIdToken(token)
       .then((decodedToken) => {
         const uid = decodedToken.uid;
         // Lookup user profile in database cache

@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
-import admin from 'firebase-admin';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
@@ -186,10 +187,10 @@ function initFirestore() {
   if (fs.existsSync(serviceAccountPath)) {
     try {
       const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+      initializeApp({
+        credential: cert(serviceAccount)
       });
-      firestoreDb = admin.firestore();
+      firestoreDb = getFirestore();
       isFirestore = true;
       console.log("Database Migration: Connected to Cloud Firestore successfully using local service account JSON.");
       return;
@@ -206,14 +207,14 @@ function initFirestore() {
 
   if (projectId && clientEmail && privateKey) {
     try {
-      admin.initializeApp({
-        credential: admin.credential.cert({
+      initializeApp({
+        credential: cert({
           projectId,
           clientEmail,
           privateKey,
         })
       });
-      firestoreDb = admin.firestore();
+      firestoreDb = getFirestore();
       isFirestore = true;
       console.log("Database Migration: Connected to Cloud Firestore successfully.");
     } catch (err) {
@@ -221,8 +222,8 @@ function initFirestore() {
     }
   } else if (projectId) {
     try {
-      admin.initializeApp();
-      firestoreDb = admin.firestore();
+      initializeApp();
+      firestoreDb = getFirestore();
       isFirestore = true;
       console.log("Database Migration: Connected to Firestore using default credentials.");
     } catch (err) {
@@ -348,7 +349,7 @@ export const db = {
   insert: (collection, doc) => {
     const data = readCollection(collection);
     const newDoc = {
-      id: doc.id || crypto.randomUUID(),
+      id: doc.id || doc.uid || crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...doc
@@ -410,7 +411,10 @@ export function seedDatabase() {
   if (teachers.length === 0) {
     const initialTeachers = [
       {
+        id: "teacher_1",
         uid: "teacher_1",
+        username: "adebayo",
+        status: "verified",
         name: "Mr. Adebayo Okafor",
         location: "Lagos, Nigeria",
         subjects: ["Mathematics", "Physics"],
@@ -435,7 +439,10 @@ export function seedDatabase() {
         leaderboardOptIn: true
       },
       {
+        id: "teacher_2",
         uid: "teacher_2",
+        username: "kofi",
+        status: "verified",
         name: "Mr. Kofi Mensah",
         location: "Accra, Ghana",
         subjects: ["Chemistry", "Mathematics"],
@@ -460,7 +467,10 @@ export function seedDatabase() {
         leaderboardOptIn: true
       },
       {
+        id: "teacher_3",
         uid: "teacher_3",
+        username: "chioma",
+        status: "verified",
         name: "Mrs. Chioma Nwachukwu",
         location: "Enugu, Nigeria",
         subjects: ["English", "Literature"],
@@ -484,7 +494,10 @@ export function seedDatabase() {
         leaderboardOptIn: true
       },
       {
+        id: "teacher_4",
         uid: "teacher_4",
+        username: "aminata",
+        status: "verified",
         name: "Ms. Aminata Diallo",
         location: "Nairobi, Kenya",
         subjects: ["Physics", "Chemistry"],
@@ -507,7 +520,10 @@ export function seedDatabase() {
         leaderboardOptIn: true
       },
       {
+        id: "teacher_5",
         uid: "teacher_5",
+        username: "fatima",
+        status: "verified",
         name: "Mrs. Fatima Bello",
         location: "Abuja, Nigeria",
         subjects: ["English", "Mathematics"],

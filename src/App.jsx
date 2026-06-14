@@ -798,10 +798,12 @@ export default function App() {
   // GSAP hero entrances
   useLayoutEffect(() => {
     let ctx = gsap.context(() => {
-      gsap.fromTo('.hero-fade',
-        { y: 45, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.3, stagger: 0.12, ease: "power3.out" }
-      );
+      if (document.querySelector('.hero-fade')) {
+        gsap.fromTo('.hero-fade',
+          { y: 45, opacity: 0 },
+          { y: 0, opacity: 1, duration: 1.3, stagger: 0.12, ease: "power3.out" }
+        );
+      }
     });
     return () => ctx.revert();
   }, [currentView]);
@@ -809,21 +811,23 @@ export default function App() {
   // GSAP trust section scroll entrances
   useLayoutEffect(() => {
     let ctx = gsap.context(() => {
-      gsap.fromTo('.trust-fade',
-        { y: 35, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1.2,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: '.trust-section',
-            start: "top 80%",
-            toggleActions: "play none none none"
+      if (document.querySelector('.trust-section')) {
+        gsap.fromTo('.trust-fade',
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1.2,
+            stagger: 0.1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: '.trust-section',
+              start: "top 80%",
+              toggleActions: "play none none none"
+            }
           }
-        }
-      );
+        );
+      }
     });
     return () => ctx.revert();
   }, [currentView]);
@@ -833,6 +837,7 @@ export default function App() {
     let ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-stack');
       if (cards.length === 0) return;
+      if (!document.querySelector('#protocol')) return;
 
       // Position cards 1 and 2 below card 0 initially
       gsap.set(cards.slice(1), { yPercent: 100 });

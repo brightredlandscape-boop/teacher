@@ -46,7 +46,8 @@ export default function TeacherPublicProfile({
       } catch (err) {
         console.warn("API offline, falling back to mock search for username:", username);
         // Fallback mock details for adebayo
-        if (username.toLowerCase() === 'adebayo') {
+        const usernameLower = username.toLowerCase();
+        if (usernameLower === 'adebayo') {
           const mockAdebayo = {
             uid: "teacher_1",
             name: "Mr. Adebayo Okafor",
@@ -60,7 +61,7 @@ export default function TeacherPublicProfile({
             bio: "12 years teaching mathematics preparation. Specializes in algebra speed calculations and IGCSE/WAEC exam setups.",
             avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
             coverImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop",
-            videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            videoUrl: "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
             languages: ["English", "Yoruba"],
             availability: {
               Tomorrow: ["4:00 PM", "5:00 PM"],
@@ -73,6 +74,100 @@ export default function TeacherPublicProfile({
           };
           setTeacher(mockAdebayo);
           document.title = `${mockAdebayo.name} | Premium Vetted Tutor | EduBridge Africa`;
+        } else if (usernameLower === 'kofi') {
+          const mockKofi = {
+            uid: "teacher_2",
+            name: "Mr. Kofi Mensah",
+            location: "Accra, Ghana",
+            subjects: ["Chemistry", "Mathematics"],
+            curricula: ["WAEC", "Cambridge", "Middle School (Ages 12-14)", "High School (Ages 15-18)"],
+            rate: 450000,
+            rating: 4.8,
+            reviewsCount: 118,
+            badges: ["badge-verified", "badge-fast"],
+            bio: "Practical sciences master. Makes complex chemical formulas simple using visual laboratory representations.",
+            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop",
+            coverImage: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=600&auto=format&fit=crop",
+            videoUrl: "https://res.cloudinary.com/demo/video/upload/dog.mp4",
+            languages: ["English", "Twi"],
+            availability: {
+              Tomorrow: ["2:00 PM", "3:00 PM"],
+              Wednesday: ["1:00 PM", "2:00 PM"]
+            },
+            reviews: []
+          };
+          setTeacher(mockKofi);
+          document.title = `${mockKofi.name} | Premium Vetted Tutor | EduBridge Africa`;
+        } else if (usernameLower === 'chioma') {
+          const mockChioma = {
+            uid: "teacher_3",
+            name: "Mrs. Chioma Nwachukwu",
+            location: "Enugu, Nigeria",
+            subjects: ["English", "Literature"],
+            curricula: ["WAEC", "Cambridge", "SAT", "Primary (Ages 6-11)", "Middle School (Ages 12-14)"],
+            rate: 350000,
+            rating: 5.0,
+            reviewsCount: 92,
+            badges: ["badge-verified", "badge-elite"],
+            bio: "Creative writing and syntax focus. Multi-jurisdiction English instructor with an emphasis on SAT prep.",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+            coverImage: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop",
+            videoUrl: "https://res.cloudinary.com/demo/video/upload/elephants.mp4",
+            languages: ["English", "Igbo"],
+            availability: {
+              Tomorrow: ["9:00 AM", "10:00 AM"],
+              Thursday: ["1:00 PM", "2:00 PM"]
+            },
+            reviews: []
+          };
+          setTeacher(mockChioma);
+          document.title = `${mockChioma.name} | Premium Vetted Tutor | EduBridge Africa`;
+        } else if (usernameLower === 'aminata') {
+          const mockAminata = {
+            uid: "teacher_4",
+            name: "Ms. Aminata Diallo",
+            location: "Nairobi, Kenya",
+            subjects: ["Physics", "Chemistry"],
+            curricula: ["IB Diploma", "Cambridge", "Primary (Ages 6-11)", "Middle School (Ages 12-14)"],
+            rate: 550000,
+            rating: 4.9,
+            reviewsCount: 204,
+            badges: ["badge-verified", "badge-top-rated"],
+            bio: "Bilingual instructor specializing in AP, IB, and IGCSE physics frameworks.",
+            avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop",
+            coverImage: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
+            languages: ["English", "French", "Swahili"],
+            availability: {
+              Wednesday: ["9:00 AM", "10:00 AM"],
+              Friday: ["1:00 PM", "2:00 PM"]
+            },
+            reviews: []
+          };
+          setTeacher(mockAminata);
+          document.title = `${mockAminata.name} | Premium Vetted Tutor | EduBridge Africa`;
+        } else if (usernameLower === 'fatima') {
+          const mockFatima = {
+            uid: "teacher_5",
+            name: "Mrs. Fatima Bello",
+            location: "Abuja, Nigeria",
+            subjects: ["English", "Mathematics"],
+            curricula: ["Nursery (Ages 2-5)", "Primary (Ages 6-11)"],
+            rate: 300000,
+            rating: 4.9,
+            reviewsCount: 84,
+            badges: ["badge-verified", "badge-top-rated"],
+            bio: "Early childhood development specialist. Passionate about phonics, foundational numeracy, and active learning strategies.",
+            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+            coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
+            languages: ["English", "Hausa"],
+            availability: {
+              Tomorrow: ["1:00 PM", "2:00 PM"],
+              Thursday: ["10:00 AM", "11:00 AM"]
+            },
+            reviews: []
+          };
+          setTeacher(mockFatima);
+          document.title = `${mockFatima.name} | Premium Vetted Tutor | EduBridge Africa`;
         } else {
           setError('Tutor public profile page not found.');
         }

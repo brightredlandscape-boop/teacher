@@ -400,14 +400,16 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     let finalUsername = "";
     if (requestedUsername) {
       const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
+      if (!cleanUsername) {
+        return res.status(400).json({ error: "Username must contain alphanumeric characters or hyphens." });
+      }
       const existingTeacher = db.findOne('teachers', t => t.username === cleanUsername);
       if (existingTeacher) {
-        finalUsername = `${cleanUsername}-${Math.floor(Math.random() * 1000)}`;
-      } else {
-        finalUsername = cleanUsername;
+        return res.status(400).json({ error: "This username is taken. Please choose a unique username." });
       }
+      finalUsername = cleanUsername;
     } else {
-      finalUsername = sanitizedDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `teacher-${Date.now()}`;
+      return res.status(400).json({ error: "Public username is required for teachers." });
     }
 
     db.insert('teachers', {

@@ -64,6 +64,28 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       }
     } catch (err) {
       console.error('Auth error:', err);
+      // Fallback: try calling backend API directly before using local mock fallback
+      try {
+        const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
+        const payload = activeTab === 'login' 
+          ? { email, password } 
+          : { email, displayName: name, username: role === 'Teacher' ? username : undefined, role, country, password, referredBy: refCode || undefined };
+
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const data = await response.json();
+          onSuccess(data);
+          onClose();
+          return;
+        }
+      } catch (backendErr) {
+        console.warn("Backend login fallback failed:", backendErr);
+      }
+
       // Fallback local simulation if backend offline or Firebase not setup
       if (activeTab === 'login') {
         const lowerEmail = email.toLowerCase();
@@ -541,7 +563,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => { setEmail('parent@edubridge.com'); setActiveTab('login'); }}
+              onClick={() => { setEmail('parent@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
               className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
             >
               <span className="font-heading font-extrabold text-[9px] text-brand-moss">👨‍👩‍👦 Parent</span>
@@ -549,7 +571,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
             </button>
             <button
               type="button"
-              onClick={() => { setEmail('student@edubridge.com'); setActiveTab('login'); }}
+              onClick={() => { setEmail('student@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
               className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
             >
               <span className="font-heading font-extrabold text-[9px] text-brand-moss">🎓 Student</span>
@@ -557,7 +579,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
             </button>
             <button
               type="button"
-              onClick={() => { setEmail('teacher@edubridge.com'); setActiveTab('login'); }}
+              onClick={() => { setEmail('teacher@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
               className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
             >
               <span className="font-heading font-extrabold text-[9px] text-brand-moss">👨‍🏫 Teacher</span>
@@ -565,7 +587,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
             </button>
             <button
               type="button"
-              onClick={() => { setEmail('admin@edubridge.com'); setActiveTab('login'); }}
+              onClick={() => { setEmail('admin@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
               className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
             >
               <span className="font-heading font-extrabold text-[9px] text-brand-moss">🛡️ Admin</span>

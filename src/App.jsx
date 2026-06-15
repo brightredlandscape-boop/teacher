@@ -1123,7 +1123,7 @@ export default function App() {
 
       {/* Main View Wrapper (hidden when viewing teacher profile to avoid unmounting conflicts with GSAP pinning) */}
       <div className={currentView === 'teacher_profile' ? 'hidden' : ''}>
-        {currentUser ? (
+        {currentUser && (
           isTutorOnboarding ? (
             <TeacherOnboarding 
               currentUser={currentUser}
@@ -1181,9 +1181,9 @@ export default function App() {
               />
             )}
           </div>
-        )
-      ) : (
-        <>
+          )
+        )}
+        <div className={currentUser ? 'hidden' : ''}>
           {/* Cinematic opening shot Hero */}
       <section className="relative h-[95dvh] w-full overflow-hidden flex items-end justify-start md:justify-end pb-20 px-6 md:px-16 lg:px-24">
         <div 
@@ -2069,8 +2069,7 @@ export default function App() {
         </div>
       </section>
 
-      </>
-      )}
+        </div>
       </div>
 
       {/* Universal Footer */}

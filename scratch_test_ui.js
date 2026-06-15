@@ -27,9 +27,9 @@ async function run() {
   // We can just evaluate standard click or look for cards.
   // Let's wait for the teacher card or click it.
   try {
-    await page.waitForSelector('#marketplace div[class*="cursor-pointer"] h3', { timeout: 5000 });
+    await page.waitForSelector('#marketplace h3.text-lg', { timeout: 5000 });
     console.log("Teacher name element found. Clicking it...");
-    await page.click('#marketplace div[class*="cursor-pointer"] h3');
+    await page.click('#marketplace h3.text-lg');
     await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 2000)));
     console.log("URL after clicking teacher card:", page.url());
   } catch (e) {
@@ -110,6 +110,24 @@ async function run() {
       const mp = document.querySelector('#marketplace');
       return mp ? mp.innerText.substring(0, 300) : "Marketplace element not found";
     }));
+
+    // Now click a teacher card inside the Parent Dashboard Marketplace
+    console.log("Looking for a teacher card inside Parent Dashboard Marketplace...");
+    await page.waitForSelector('.py-6 #marketplace h3.text-lg', { timeout: 5000 });
+    console.log("Teacher name element found in Parent Dashboard. Clicking it...");
+    await page.evaluate(() => {
+      const card = document.querySelector('.py-6 #marketplace h3.text-lg');
+      if (card) card.click();
+    });
+    await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 2000)));
+    console.log("URL after clicking teacher card in Parent Dashboard:", page.url());
+    
+    // Now go back
+    console.log("Clicking browser back button...");
+    await page.goBack();
+    await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 2000)));
+    console.log("URL after going back to Parent Dashboard:", page.url());
+    console.log("Page content after going back (role check):", await page.evaluate(() => document.body.innerText.substring(0, 300)));
 
   } catch (e) {
     console.log("Failed to simulate parent login and marketplace check:", e.message);

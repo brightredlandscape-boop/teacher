@@ -203,6 +203,7 @@ export default function App() {
         latestTeachers = teachersData.map(t => ({
           ...t,
           id: t.uid || t.id,
+          subjects: t.subjects || [],
           curriculums: t.curricula || t.curriculums || [],
           reviews: t.reviews || []
         }));

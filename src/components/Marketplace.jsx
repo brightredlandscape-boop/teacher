@@ -62,8 +62,8 @@ export default function Marketplace({
         ? t.curriculums.some(curr => !standardCurricula.includes(curr) || curr === 'Others (Professional)' || curr === 'Others')
         : t.curriculums.includes(curriculumFilter));
 
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.bio.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (t.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (t.bio || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSubject && matchesCurriculum && matchesSearch;
   });
 

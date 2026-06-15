@@ -668,7 +668,7 @@ app.post('/api/waitlist', (req, res) => {
 
 // POST onboarding submissions (Teacher Onboarding)
 app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, (req, res) => {
-  const { uid, name, location, rate, bio, subjects, curricula, languages, availability, videoUrl, avatar, govId, degree } = req.body;
+  const { uid, name, username: requestedUsername, location, rate, bio, subjects, curricula, languages, availability, videoUrl, avatar, govId, degree } = req.body;
   if (!uid || !name) {
     return res.status(400).json({ error: "Teacher UID and Display Name are required." });
   }
@@ -678,18 +678,32 @@ app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), r
     return res.status(404).json({ error: "Teacher profile not found." });
   }
 
-  // Generate unique username based on lowercased name
-  let baseUsername = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  let username = baseUsername;
-  let counter = 1;
-  while (db.findOne('teachers', t => t.username === username && t.uid !== uid)) {
-    username = `${baseUsername}-${counter}`;
-    counter++;
+  // Handle username selection
+  let finalUsername = "";
+  if (requestedUsername) {
+    const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
+    if (cleanUsername.length < 3) {
+      return res.status(400).json({ error: "Username must be at least 3 characters long." });
+    }
+    const existing = db.findOne('teachers', t => t.username === cleanUsername && t.uid !== uid);
+    if (existing) {
+      return res.status(400).json({ error: "This username is already taken. Please choose another." });
+    }
+    finalUsername = cleanUsername;
+  } else {
+    // Generate unique username based on lowercased name if not provided (fallback)
+    let baseUsername = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    finalUsername = baseUsername;
+    let counter = 1;
+    while (db.findOne('teachers', t => t.username === finalUsername && t.uid !== uid)) {
+      finalUsername = `${baseUsername}-${counter}`;
+      counter++;
+    }
   }
 
   const updated = db.update('teachers', teacher.id, {
     name: sanitizeText(name),
-    username,
+    username: finalUsername,
     location: location ? sanitizeText(location) : "Nigeria",
     rate: rate ? parseInt(rate, 10) : 0,
     bio: bio ? sanitizeText(bio) : "",

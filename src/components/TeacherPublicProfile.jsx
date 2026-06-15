@@ -189,9 +189,7 @@ export default function TeacherPublicProfile({
 
             {/* Badges checklist */}
             <div className="flex gap-2 flex-wrap">
-              {(teacher.badges || []).filter(Boolean).map(badge => {
-                console.log("BADGE MAP ELEMENT:", badge, typeof badge);
-                return (
+              {(teacher.badges || []).filter(Boolean).map(badge => (
                   <span key={badge} className={`font-mono text-[9px] uppercase tracking-wider font-bold py-1 px-3 rounded-full border ${
                     badge === 'badge-bg-checked'
                       ? 'bg-amber-50 border-brand-clay/30 text-brand-clay'
@@ -201,10 +199,10 @@ export default function TeacherPublicProfile({
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                       : 'bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
                   }`}>
-                    {badge ? badge.replace('badge-', '').replace('-', ' ') : ''}
+                    {badge ? String(badge).replace('badge-', '').replace('-', ' ') : ''}
                   </span>
-                );
-              })}
+                )
+              )}
             </div>
           </div>
 
@@ -250,14 +248,14 @@ export default function TeacherPublicProfile({
                 <Award className="w-5 h-5 text-brand-clay" /> Trophy Cabinet
               </h3>
               <div className="flex gap-3 flex-wrap">
-                {teacher.badges.filter(Boolean).map(badge => (
+                {(teacher.badges || []).filter(Boolean).map(badge => (
                   <div key={badge} className="flex flex-col items-center justify-center p-4 border border-brand-moss/10 rounded-2xl bg-brand-cream/30 min-w-[100px]">
                     {badge === 'badge-top-rated' && <Star className="w-8 h-8 text-[#92400E] mb-2 fill-current" />}
                     {badge === 'badge-ai-cert' && <Zap className="w-8 h-8 text-emerald-600 mb-2 fill-current" />}
                     {badge === 'badge-verified' && <ShieldCheck className="w-8 h-8 text-blue-600 mb-2" />}
                     {badge === 'badge-bg-checked' && <ShieldCheck className="w-8 h-8 text-brand-clay mb-2 fill-brand-clay/10 animate-pulse" />}
                     <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-brand-charcoal text-center">
-                      {badge ? badge.replace('badge-', '').replace('-', ' ') : ''}
+                      {badge ? String(badge).replace('badge-', '').replace('-', ' ') : ''}
                     </span>
                   </div>
                 ))}

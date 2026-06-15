@@ -54,6 +54,7 @@ export default function TeacherDashboard({
 
   // Profile builder form states
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [location, setLocation] = useState('');
   const [rate, setRate] = useState(0);
   const [bio, setBio] = useState('');
@@ -135,6 +136,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         const data = await res.json();
         setTeacherProfile(data.teacher);
         setName(data.teacher.name || '');
+        setUsername(data.teacher.username || '');
         setLocation(data.teacher.location || '');
         setRate(data.teacher.rate ? data.teacher.rate / 100 : 0);
         setBio(data.teacher.bio || '');
@@ -180,8 +182,9 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
     const payload = {
       uid: currentUser.uid,
       name,
+      username,
       location,
-      rate: Math.round(rate * 100), // convert standard naira back to kobo minor unit
+      rate: Math.round(rate * 100), // convert back to minor units
       bio,
       subjects: selectedSubjects,
       curricula: selectedCurricula,
@@ -496,6 +499,19 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                       onChange={(e) => setName(e.target.value)}
                       className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
                     />
+                  </div>
+                  <div>
+                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Public Username</label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-4 font-mono text-brand-charcoal/40">@</span>
+                      <input
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-8 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-mono"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Location</label>

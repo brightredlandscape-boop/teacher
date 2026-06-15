@@ -8,6 +8,7 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
 
   // Step 1: Personal Info
   const [name, setName] = useState(currentUser?.displayName || '');
+  const [username, setUsername] = useState('');
   const [location, setLocation] = useState('Lagos, Nigeria');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop');
@@ -114,9 +115,19 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
 
   const handleNext = () => {
     setError('');
-    if (step === 1 && (!name || !bio)) {
-      setError('Please fill out your display name and short bio.');
-      return;
+    if (step === 1) {
+      if (!name || !bio) {
+        setError('Please fill out your display name and short bio.');
+        return;
+      }
+      if (!username) {
+        setError('Please choose a unique public username.');
+        return;
+      }
+      if (!/^[a-z0-9-]+$/.test(username)) {
+        setError('Username can only contain lowercase letters, numbers, and hyphens.');
+        return;
+      }
     }
     if (step === 2 && selectedSubjects.length === 0) {
       setError('Please select at least one subject to proceed.');
@@ -142,6 +153,7 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
     const payload = {
       uid: currentUser.uid,
       name,
+      username,
       location,
       rate: Math.round(rate * 100), // convert to minor units (kobo)
       bio,
@@ -236,16 +248,32 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
                   />
                 </div>
                 <div>
-                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Physical Location</label>
-                  <input
-                    type="text"
-                    required
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
-                    placeholder="e.g. Lagos, Nigeria"
-                  />
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Public Username</label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 font-mono text-brand-charcoal/40">@</span>
+                    <input
+                      type="text"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-8 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-mono"
+                      placeholder="adebayo-maths"
+                    />
+                  </div>
+                  <span className="text-[10px] text-brand-charcoal/40 mt-1 block px-1">Your profile URL: edubridge.africa/teacher/{username || 'username'}</span>
                 </div>
+              </div>
+
+              <div>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Physical Location</label>
+                <input
+                  type="text"
+                  required
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                  placeholder="e.g. Lagos, Nigeria"
+                />
               </div>
 
               <div>

@@ -126,6 +126,7 @@ export default function App() {
     {
       id: "teacher_1",
       uid: "teacher_1",
+      username: "adebayo",
       name: "Mr. Adebayo Okafor",
       location: "Lagos, Nigeria",
       subjects: ["Mathematics", "Physics"],
@@ -418,6 +419,11 @@ export default function App() {
     if (currentView === 'home') {
       ScrollTrigger.refresh();
     }
+  }, [currentView]);
+
+  // Scroll to top when view changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, [currentView]);
 
   // State handlers
@@ -806,7 +812,7 @@ export default function App() {
       }
     });
     return () => ctx.revert();
-  }, [currentView]);
+  }, [currentView, currentUser]);
 
   // GSAP trust section scroll entrances
   useLayoutEffect(() => {
@@ -830,7 +836,7 @@ export default function App() {
       }
     });
     return () => ctx.revert();
-  }, [currentView]);
+  }, [currentView, currentUser]);
 
   // Protocol pin ScrollTrigger stacks
   useLayoutEffect(() => {
@@ -883,7 +889,7 @@ export default function App() {
 
     });
     return () => ctx.revert();
-  }, [currentView]);
+  }, [currentView, currentUser]);
 
   return (
     <div className="relative min-h-screen bg-brand-cream text-brand-charcoal overflow-x-hidden selection:bg-brand-clay selection:text-white">

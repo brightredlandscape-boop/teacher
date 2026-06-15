@@ -443,8 +443,14 @@ export default function App() {
     window.history.pushState({}, '', basePath);
     setCurrentView('home');
     setProfileUsername('');
+    // Ensure scroll resets
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Force refresh ScrollTrigger after a short delay to allow DOM updates
+    setTimeout(() => {
+      gsap.globalTimeline.clear();
+      ScrollTrigger.refresh();
+    }, 100);
   };
-
   const handleTutorProfileSelect = (username) => {
     const basePath = window.location.pathname.startsWith('/EduBridge') ? '/EduBridge' : '';
     window.history.pushState({}, '', `${basePath}/teacher/${username}`);

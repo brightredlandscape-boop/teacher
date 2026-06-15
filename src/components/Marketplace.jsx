@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle, Play } from 'lucide-react';
 
 export default function Marketplace({ 
-  teachers, 
+  teachers = [], 
   selectedCurrency, 
   onBookClick, 
   formatCurrency, 
@@ -18,12 +18,16 @@ export default function Marketplace({
   React.useEffect(() => {
     fetch('/api/leaderboard')
       .then(res => res.json())
-      .then(data => setLeaderboard(data))
+      .then(data => setLeaderboard(Array.isArray(data) ? data : []))
       .catch(console.error);
   }, []);
 
   // Filter teachers based on state
-  const filteredTeachers = teachers.filter(t => {
+  const filteredTeachers = (teachers || []).filter(t => {
+    if (!t) return false;
+    const tSubjects = t.subjects || [];
+    const tCurricula = t.curricula || t.curriculums || [];
+
     const standardSubjects = [
       'Mathematics', 
       'Physics', 
@@ -54,13 +58,13 @@ export default function Marketplace({
 
     const matchesSubject = subjectFilter === 'All' || 
       (subjectFilter === 'Others' 
-        ? t.subjects.some(subj => !standardSubjects.includes(subj) || subj === 'Others')
-        : t.subjects.includes(subjectFilter));
+        ? tSubjects.some(subj => !standardSubjects.includes(subj) || subj === 'Others')
+        : tSubjects.includes(subjectFilter));
 
     const matchesCurriculum = curriculumFilter === 'All' || 
       (curriculumFilter === 'Others (Professional)' || curriculumFilter === 'Others'
-        ? t.curriculums.some(curr => !standardCurricula.includes(curr) || curr === 'Others (Professional)' || curr === 'Others')
-        : t.curriculums.includes(curriculumFilter));
+        ? tCurricula.some(curr => !standardCurricula.includes(curr) || curr === 'Others (Professional)' || curr === 'Others')
+        : tCurricula.includes(curriculumFilter));
 
     const matchesSearch = (t.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (t.bio || '').toLowerCase().includes(searchQuery.toLowerCase());
@@ -95,31 +99,34 @@ export default function Marketplace({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {leaderboard.map((teacher, idx) => (
-              <div 
-                key={teacher.id}
-                onClick={() => onTeacherSelect && onTeacherSelect(teacher.username || teacher.id)}
-                className="bg-brand-charcoal text-brand-cream border border-brand-cream/10 rounded-3xl p-5 flex items-center gap-4 cursor-pointer hover:border-brand-clay/50 transition-colors shadow-lg shadow-brand-charcoal/20 relative overflow-hidden"
-              >
-                <div className="absolute -right-6 -top-6 text-brand-cream/5 font-heading font-bold text-9xl pointer-events-none">
-                  {idx + 1}
-                </div>
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay bg-brand-moss z-10">
-                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
-                </div>
-                <div className="z-10">
-                  <h4 className="font-heading font-bold text-lg text-white flex items-center gap-1.5">
-                    {teacher.name}
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  </h4>
-                  <div className="flex items-center text-brand-clay mt-1">
-                    <Star className="w-3.5 h-3.5 fill-current" />
-                    <span className="font-heading font-bold text-xs ml-1 text-white">{teacher.rating}</span>
-                    <span className="text-xs text-brand-cream/50 ml-1">({teacher.reviewsCount})</span>
+            {leaderboard.map((teacher, idx) => {
+              const teacherId = teacher.username || teacher.uid || teacher.id;
+              return (
+                <div 
+                  key={teacher.id || teacher.uid || idx}
+                  onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
+                  className="bg-brand-charcoal text-brand-cream border border-brand-cream/10 rounded-3xl p-5 flex items-center gap-4 cursor-pointer hover:border-brand-clay/50 transition-colors shadow-lg shadow-brand-charcoal/20 relative overflow-hidden"
+                >
+                  <div className="absolute -right-6 -top-6 text-brand-cream/5 font-heading font-bold text-9xl pointer-events-none">
+                    {idx + 1}
+                  </div>
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay bg-brand-moss z-10">
+                    <img src={teacher.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop'} alt={teacher.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="z-10">
+                    <h4 className="font-heading font-bold text-lg text-white flex items-center gap-1.5">
+                      {teacher.name || 'Elite Tutor'}
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    </h4>
+                    <div className="flex items-center text-brand-clay mt-1">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span className="font-heading font-bold text-xs ml-1 text-white">{teacher.rating || '5.0'}</span>
+                      <span className="text-xs text-brand-cream/50 ml-1">({teacher.reviewsCount || 0})</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -219,18 +226,20 @@ export default function Marketplace({
       {/* Grid listing */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredTeachers.map(teacher => {
-          const convertedRate = convertMinor(teacher.rate, selectedCurrency);
+          const rateValue = teacher.rate || 0;
+          const convertedRate = convertMinor(rateValue, selectedCurrency);
           const formattedRate = formatCurrency(convertedRate, selectedCurrency);
+          const teacherId = teacher.username || teacher.uid || teacher.id;
           
           return (
             <div 
-              key={teacher.id} 
+              key={teacher.id || teacher.uid} 
               className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 flex flex-col justify-between custom-card-shadow hover-lift relative overflow-hidden"
             >
               <div>
                 {/* Intro video simulated screen */}
                 <div 
-                  onClick={() => onTeacherSelect && onTeacherSelect(teacher.username || teacher.id)}
+                  onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
                   className="relative h-44 bg-brand-charcoal rounded-2xl overflow-hidden mb-6 group cursor-pointer border border-brand-moss/10"
                 >
                   <img 
@@ -265,7 +274,7 @@ export default function Marketplace({
                   {/* Vetting standard display */}
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                     <div className="flex gap-1.5 flex-wrap">
-                      {teacher.badges && teacher.badges.map(badge => {
+                      {(teacher.badges || []).map(badge => {
                         if (badge === 'badge-top-rated') {
                           return (
                             <span key={badge} className="bg-[#FEF3C7] text-[#92400E] font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-[#FDE68A] shadow-sm">
@@ -303,39 +312,39 @@ export default function Marketplace({
                 {/* Avatar and Info */}
                 <div className="flex gap-4 items-start mb-4">
                   <div 
-                    onClick={() => onTeacherSelect && onTeacherSelect(teacher.username || teacher.id)}
+                    onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
                     className="w-14 h-14 rounded-full overflow-hidden border border-brand-moss/10 bg-brand-moss/5 cursor-pointer"
                   >
-                    <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+                    <img src={teacher.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop'} alt={teacher.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <h3 
-                      onClick={() => onTeacherSelect && onTeacherSelect(teacher.username || teacher.id)}
+                      onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
                       className="font-heading font-bold text-lg text-brand-moss flex items-center gap-1.5 cursor-pointer hover:underline"
                     >
-                      {teacher.name}
+                      {teacher.name || 'Verified Educator'}
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-50" />
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center text-brand-clay">
                         <Star className="w-3.5 h-3.5 fill-current" />
-                        <span className="font-heading font-bold text-xs ml-1 text-brand-moss">{teacher.rating}</span>
+                        <span className="font-heading font-bold text-xs ml-1 text-brand-moss">{teacher.rating || '5.0'}</span>
                       </div>
-                      <span className="text-xs text-brand-charcoal/50">({teacher.reviewsCount} sessions)</span>
+                      <span className="text-xs text-brand-charcoal/50">({teacher.reviewsCount || 0} sessions)</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Location and Subject tags */}
                 <div className="font-sans text-xs text-brand-charcoal/70 mb-4 space-y-1.5 border-b border-brand-moss/5 pb-4">
-                  <div>📍 {teacher.location} · <span className="font-medium text-brand-moss">Teaches Globally</span></div>
+                  <div>📍 {teacher.location || 'Africa'} · <span className="font-medium text-brand-moss">Teaches Globally</span></div>
                   <div className="flex flex-wrap gap-1.5 pt-2">
-                    {teacher.subjects.map(s => (
+                    {(teacher.subjects || []).map(s => (
                       <span key={s} className="bg-brand-moss/5 text-brand-moss font-medium text-[10px] px-2.5 py-0.5 rounded-full">
                         {s}
                       </span>
                     ))}
-                    {teacher.curriculums.map(c => (
+                    {(teacher.curricula || teacher.curriculums || []).map(c => (
                       <span key={c} className="bg-brand-clay/10 text-brand-clay font-medium text-[10px] px-2.5 py-0.5 rounded-full">
                         {c}
                       </span>
@@ -345,7 +354,7 @@ export default function Marketplace({
 
                 {/* Bio text excerpt */}
                 <p className="font-sans text-xs text-brand-charcoal/80 leading-relaxed mb-6 line-clamp-2">
-                  "{teacher.bio}"
+                  "{teacher.bio || 'Professional African educator vetted by EduBridge standards.'}"
                 </p>
               </div>
 

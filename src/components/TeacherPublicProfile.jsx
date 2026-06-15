@@ -18,6 +18,7 @@ export default function TeacherPublicProfile({
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!username) return;
       setLoading(true);
       setError('');
       try {
@@ -27,7 +28,7 @@ export default function TeacherPublicProfile({
           setTeacher(data);
           
           // SEO Metadata optimization on mount
-          document.title = `${data.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${data.name || 'Tutor'} | Premium Vetted Tutor | EduBridge Africa`;
           
           // Update or insert SEO meta description tag
           let metaDesc = document.querySelector('meta[name="description"]');
@@ -36,9 +37,11 @@ export default function TeacherPublicProfile({
             metaDesc.setAttribute('name', 'description');
             document.head.appendChild(metaDesc);
           }
-          metaDesc.setAttribute('content', `Book private lessons with ${data.name} on EduBridge. Specializes in ${Array.isArray(data.subjects) ? data.subjects.join(', ') : ''}. Vetted credentials, secure escrows, and AI certified.`);
+          const subjects = Array.isArray(data.subjects) ? data.subjects.join(', ') : 'subjects';
+          metaDesc.setAttribute('content', `Book private lessons with ${data.name || 'this tutor'} on EduBridge. Specializes in ${subjects}. Vetted credentials, secure escrows, and AI certified.`);
         } else {
-          setError('Tutor public profile page not found.');
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.error || 'Tutor public profile page not found.');
         }
       } catch (err) {
         console.warn("API offline, falling back to mock search for username:", username);

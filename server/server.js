@@ -360,7 +360,7 @@ function sanitizeText(str) {
 
 // Register a new user (Parent or Teacher)
 app.post('/api/auth/register', authRateLimiter, async (req, res) => {
-  const { email, displayName, role, country, password, referredBy, uid: clientUid } = req.body;
+  const { email, displayName, role, country, password, username: requestedUsername, referredBy, uid: clientUid } = req.body;
   if (!email || !displayName || !role) {
     return res.status(400).json({ error: "Email, display name, and role are required." });
   }
@@ -397,8 +397,22 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   });
 
   if (role === "Teacher") {
+    let finalUsername = "";
+    if (requestedUsername) {
+      const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
+      const existingTeacher = db.findOne('teachers', t => t.username === cleanUsername);
+      if (existingTeacher) {
+        finalUsername = `${cleanUsername}-${Math.floor(Math.random() * 1000)}`;
+      } else {
+        finalUsername = cleanUsername;
+      }
+    } else {
+      finalUsername = sanitizedDisplayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `teacher-${Date.now()}`;
+    }
+
     db.insert('teachers', {
       uid,
+      username: finalUsername,
       name: sanitizedDisplayName,
       location: sanitizedCountry,
       subjects: [],
@@ -819,10 +833,13 @@ app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Adm
 // GET teacher by SEO-friendly username
 app.get('/api/teachers/by-username/:username', (req, res) => {
   const { username } = req.params;
+  // Search strategy:
+  // 1. Case-insensitive search for custom username
+  // 2. Case-sensitive search for UID or ID (Firestore document IDs are case-sensitive)
   const teacher = db.findOne('teachers', t => 
     (t.username && t.username.toLowerCase() === username.toLowerCase()) ||
-    (t.uid && t.uid.toLowerCase() === username.toLowerCase()) ||
-    (t.id && String(t.id).toLowerCase() === username.toLowerCase())
+    (t.uid === username) ||
+    (String(t.id) === username)
   );
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });

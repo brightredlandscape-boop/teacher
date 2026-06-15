@@ -776,7 +776,7 @@ export default function ParentDashboard({
       {activeTab === 'marketplace' && (
         <div className="animate-fade-up">
           <Marketplace 
-            teachers={teachers} 
+            teachers={teachers || []} 
             selectedCurrency={selectedCurrency} 
             onBookClick={onBookClick}
             formatCurrency={formatCurrency}

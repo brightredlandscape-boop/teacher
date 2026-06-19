@@ -55,15 +55,15 @@ router.get('/tutors', authenticateB2BSchool, (req, res) => {
  * POST register a batch of students programmatically
  * URL: http://localhost:5000/api/b2b/schools/register-bulk-students
  */
-router.post('/register-bulk-students', authenticateB2BSchool, (req, res) => {
+router.post('/register-bulk-students', authenticateB2BSchool, async (req, res) => {
   const { students } = req.body; // Array of { name, dob, subjects }
   if (!students || !Array.isArray(students)) {
     return res.status(400).json({ error: "Missing or invalid students list batch array in request body." });
   }
 
   const createdStudents = [];
-  students.forEach(s => {
-    const studentRecord = db.insert('students', {
+  for (const s of students) {
+    const studentRecord = await db.insert('students', {
       parentUid: req.school.uid, // mapped to the school's account uid
       name: s.name,
       dob: s.dob || "2013-01-01",
@@ -73,7 +73,7 @@ router.post('/register-bulk-students', authenticateB2BSchool, (req, res) => {
       schoolB2B: req.school.name
     });
     createdStudents.push(studentRecord);
-  });
+  }
 
   res.json({
     school: req.school.name,

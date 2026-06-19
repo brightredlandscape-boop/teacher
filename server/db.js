@@ -289,7 +289,7 @@ export async function connectDb() {
   }
 
   // Seed the database after collections are loaded in memory
-  seedDatabase();
+  await seedDatabase();
 }
 
 // Read collection
@@ -349,7 +349,7 @@ export const db = {
     return data.find(filterFn) || null;
   },
 
-  insert: (collection, doc) => {
+  insert: async (collection, doc) => {
     const data = readCollection(collection);
     const newDoc = {
       id: doc.id || doc.uid || crypto.randomUUID(),
@@ -358,11 +358,11 @@ export const db = {
       ...doc
     };
     data.push(newDoc);
-    persistDocumentInsert(collection, newDoc);
+    await persistDocumentInsert(collection, newDoc);
     return newDoc;
   },
 
-  update: (collection, id, updates) => {
+  update: async (collection, id, updates) => {
     const data = readCollection(collection);
     const index = data.findIndex(item => item.id === id || item.uid === id);
     if (index === -1) return null;
@@ -373,27 +373,27 @@ export const db = {
       updatedAt: new Date().toISOString()
     };
     data[index] = updatedDoc;
-    persistDocumentUpdate(collection, id, updatedDoc);
+    await persistDocumentUpdate(collection, id, updatedDoc);
     return updatedDoc;
   },
 
-  delete: (collection, id) => {
+  delete: async (collection, id) => {
     const data = readCollection(collection);
     const index = data.findIndex(item => item.id === id || item.uid === id);
     if (index === -1) return false;
 
     data.splice(index, 1);
-    persistDocumentDelete(collection, id);
+    await persistDocumentDelete(collection, id);
     return true;
   }
 };
 
 // Seed initial data if database is empty
-export function seedDatabase() {
+export async function seedDatabase() {
   // 1. Seed Platform Config
   const configs = readCollection('platform_config');
   if (configs.length === 0) {
-    db.insert('platform_config', {
+    await db.insert('platform_config', {
       id: 'default',
       commissionRate: 15,
       minPayoutNGN: 500000, // ₦5,000 in minor kobo
@@ -550,7 +550,9 @@ export function seedDatabase() {
       }
     ];
 
-    initialTeachers.forEach(t => db.insert('teachers', t));
+    for (const t of initialTeachers) {
+      await db.insert('teachers', t);
+    }
     console.log('Seeded Teachers');
   }
 
@@ -558,7 +560,7 @@ export function seedDatabase() {
   const users = readCollection('users');
   if (users.length === 0) {
     // Parent Account
-    const parentUser = db.insert('users', {
+    const parentUser = await db.insert('users', {
       uid: "parent_1",
       email: "parent@edubridge.com",
       displayName: "Ngozi Adeleke",
@@ -568,7 +570,7 @@ export function seedDatabase() {
     });
     
     // Seed Parent Details
-    db.insert('parents', {
+    await db.insert('parents', {
       uid: "parent_1",
       children: ["Tunde", "Yinka"],
       paymentMethods: ["card_visa_1234"],
@@ -578,7 +580,7 @@ export function seedDatabase() {
     });
 
     // Seed Referred Parent (Converted)
-    db.insert('users', {
+    await db.insert('users', {
       uid: "parent_ref_1",
       email: "referred_parent1@edubridge.com",
       displayName: "Sarah Mensah",
@@ -586,7 +588,7 @@ export function seedDatabase() {
       country: "Ghana",
       status: "active"
     });
-    db.insert('parents', {
+    await db.insert('parents', {
       uid: "parent_ref_1",
       children: ["Kofi"],
       paymentMethods: ["card_visa_9999"],
@@ -594,7 +596,7 @@ export function seedDatabase() {
       referredBy: "parent_1"
     });
 
-    db.insert('users', {
+    await db.insert('users', {
       uid: "parent_ref_2",
       email: "referred_parent2@edubridge.com",
       displayName: "Kofi Boakye",
@@ -602,7 +604,7 @@ export function seedDatabase() {
       country: "Ghana",
       status: "active"
     });
-    db.insert('parents', {
+    await db.insert('parents', {
       uid: "parent_ref_2",
       children: ["Ama"],
       paymentMethods: ["card_visa_8888"],
@@ -611,7 +613,7 @@ export function seedDatabase() {
     });
 
     // Seed Students
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_1",
       parentUid: "parent_1",
       name: "Tunde",
@@ -624,7 +626,7 @@ export function seedDatabase() {
       }
     });
 
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_2",
       parentUid: "parent_1",
       name: "Yinka",
@@ -638,7 +640,7 @@ export function seedDatabase() {
     });
 
     // Seed mock students for dynamic study group leaderboard
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_mock_1",
       parentUid: "parent_other_1",
       name: "Chinedu A.",
@@ -646,7 +648,7 @@ export function seedDatabase() {
       badges: ["Top Leader"],
       progressBySubject: {}
     });
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_mock_2",
       parentUid: "parent_other_2",
       name: "Zara B.",
@@ -654,7 +656,7 @@ export function seedDatabase() {
       badges: ["Top Scholar"],
       progressBySubject: {}
     });
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_mock_3",
       parentUid: "parent_other_3",
       name: "Fatima S.",
@@ -662,7 +664,7 @@ export function seedDatabase() {
       badges: ["Top Reader"],
       progressBySubject: {}
     });
-    db.insert('students', {
+    await db.insert('students', {
       uid: "student_mock_4",
       parentUid: "parent_other_4",
       name: "Kofi K.",
@@ -672,7 +674,7 @@ export function seedDatabase() {
     });
 
     // Seed Reviews
-    db.insert('reviews', {
+    await db.insert('reviews', {
       sessionId: "session_old_1",
       parentId: "parent_1",
       teacherId: "teacher_1",
@@ -683,7 +685,7 @@ export function seedDatabase() {
     });
 
     // Seed Wallet Balance
-    db.insert('wallets', {
+    await db.insert('wallets', {
       uid: "parent_1",
       balance: 5000000, // ₦50,000 in minor kobo
       escrow: 0
@@ -695,7 +697,7 @@ export function seedDatabase() {
   // 4. Seed Sessions
   const sessions = readCollection('sessions');
   if (sessions.length === 0) {
-    db.insert('sessions', {
+    await db.insert('sessions', {
       teacherId: "teacher_1",
       teacherName: "Mr. Adebayo Okafor",
       studentId: "student_1",
@@ -709,7 +711,7 @@ export function seedDatabase() {
       recordingConsent: { teacher: true, parent: true }
     });
 
-    db.insert('sessions', {
+    await db.insert('sessions', {
       id: "session_old_1",
       teacherId: "teacher_1",
       teacherName: "Mr. Adebayo Okafor",
@@ -725,7 +727,7 @@ export function seedDatabase() {
       recordingUrl: "https://res.cloudinary.com/demo/video/upload/dog.mp4"
     });
 
-    db.insert('sessions', {
+    await db.insert('sessions', {
       id: "session_old_2",
       teacherId: "teacher_3",
       teacherName: "Mrs. Chioma Nwachukwu",
@@ -741,7 +743,7 @@ export function seedDatabase() {
       recordingUrl: "https://res.cloudinary.com/demo/video/upload/dog.mp4"
     });
     
-    db.insert('sessions', {
+    await db.insert('sessions', {
       teacherId: "teacher_3",
       teacherName: "Mrs. Chioma Nwachukwu",
       studentId: "student_2",
@@ -760,7 +762,7 @@ export function seedDatabase() {
   // 5. Seed Grades log
   const assignments = readCollection('assignments');
   if (assignments.length === 0) {
-    db.insert('assignments', {
+    await db.insert('assignments', {
       studentId: "student_1",
       studentName: "Tunde",
       title: "Homework #3 (Algebraic Fractions)",
@@ -772,7 +774,7 @@ export function seedDatabase() {
       grade: { score: 85, feedback: "Excellent factoring structure. Focus on coefficients next.", date: "3 days ago" }
     });
 
-    db.insert('assignments', {
+    await db.insert('assignments', {
       studentId: "student_1",
       studentName: "Tunde",
       title: "Quiz #2 (Simple Linear Equations)",
@@ -784,7 +786,7 @@ export function seedDatabase() {
       grade: { score: 92, feedback: "Great precision and timeline speed.", date: "5 days ago" }
     });
 
-    db.insert('assignments', {
+    await db.insert('assignments', {
       studentId: "student_2",
       studentName: "Yinka",
       title: "Homework #2 (Grammar & Syntax)",
@@ -796,7 +798,7 @@ export function seedDatabase() {
       grade: { score: 90, feedback: "Excellent identification of relative clauses.", date: "2 days ago" }
     });
 
-    db.insert('assignments', {
+    await db.insert('assignments', {
       studentId: "student_2",
       studentName: "Yinka",
       title: "Homework #1 (Synonyms & Antonyms)",
@@ -808,7 +810,7 @@ export function seedDatabase() {
       grade: { score: 86, feedback: "Strong vocabulary base, review antonym pairs.", date: "6 days ago" }
     });
 
-    db.insert('assignments', {
+    await db.insert('assignments', {
       studentId: "student_2",
       studentName: "Yinka",
       title: "Reading Reflection #1",
@@ -825,7 +827,7 @@ export function seedDatabase() {
   // 6. Seed Transactions log
   const transactions = readCollection('transactions');
   if (transactions.length === 0) {
-    db.insert('transactions', {
+    await db.insert('transactions', {
       amount: 400000,
       amountMinorUnits: 400000,
       currency: "NGN",
@@ -838,7 +840,7 @@ export function seedDatabase() {
       payoutStatus: "completed"
     });
 
-    db.insert('transactions', {
+    await db.insert('transactions', {
       amount: 350000,
       amountMinorUnits: 350000,
       currency: "NGN",
@@ -856,7 +858,7 @@ export function seedDatabase() {
   // Seed disputes
   const disputes = readCollection('disputes');
   if (disputes.length === 0) {
-    db.insert('disputes', {
+    await db.insert('disputes', {
       id: "disp_1",
       sessionId: "session_old_2",
       reason: "Incorrect billing time",

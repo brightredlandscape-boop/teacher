@@ -98,7 +98,7 @@ function verifyPaystackWebhook(rawBody, signatureHeader, paystackSecret) {
 /**
  * Simulate Webhook Confirmation (Top-up Wallet)
  */
-router.post('/webhook', (req, res) => {
+router.post('/webhook', async (req, res) => {
   const stripeSig = req.headers['stripe-signature'];
   const paystackSig = req.headers['x-paystack-signature'];
 
@@ -136,7 +136,7 @@ router.post('/webhook', (req, res) => {
   if (status === 'success') {
     const wallet = db.findOne('wallets', w => w.uid === parentId);
     if (wallet) {
-      db.update('wallets', wallet.id, {
+      await db.update('wallets', wallet.id, {
         balance: wallet.balance + amount
       });
       return res.json({ success: true, message: "Wallet topped up successfully." });

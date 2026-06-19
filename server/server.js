@@ -134,7 +134,7 @@ async function guaranteeInitialProfiles() {
   // Guarantee Admin User and Teacher Usernames for Testing
   const adminUser = db.findOne('users', u => u.role === 'Admin');
   if (!adminUser) {
-    db.insert('users', {
+    await db.insert('users', {
       uid: "admin_1",
       email: "admin@edubridge.com",
       displayName: "System Admin",
@@ -149,7 +149,7 @@ async function guaranteeInitialProfiles() {
 
   const teacher1User = db.findOne('users', u => u.uid === 'teacher_1');
   if (!teacher1User) {
-    db.insert('users', {
+    await db.insert('users', {
       uid: "teacher_1",
       email: "teacher@edubridge.com",
       displayName: "Mr. Adebayo Okafor",
@@ -164,7 +164,7 @@ async function guaranteeInitialProfiles() {
 
   const parent1User = db.findOne('users', u => u.uid === 'parent_1');
   if (!parent1User) {
-    db.insert('users', {
+    await db.insert('users', {
       uid: "parent_1",
       email: "parent@edubridge.com",
       displayName: "Ngozi Adeleke",
@@ -179,7 +179,7 @@ async function guaranteeInitialProfiles() {
 
   const student1User = db.findOne('users', u => u.uid === 'student_1');
   if (!student1User) {
-    db.insert('users', {
+    await db.insert('users', {
       uid: "student_1",
       email: "student@edubridge.com",
       displayName: "Tunde Okafor",
@@ -195,7 +195,7 @@ async function guaranteeInitialProfiles() {
   // Guarantee fresh teacher for onboarding flow testing
   const freshTeacherUser = db.findOne('users', u => u.uid === 'teacher_fresh');
   if (!freshTeacherUser) {
-    db.insert('users', {
+    await db.insert('users', {
       uid: "teacher_fresh",
       email: "newteacher@edubridge.com",
       displayName: "Dr. Chidi Johnson",
@@ -205,7 +205,7 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    db.insert('teachers', {
+    await db.insert('teachers', {
       uid: "teacher_fresh",
       name: "Dr. Chidi Johnson",
       location: "Enugu, Nigeria",
@@ -231,31 +231,31 @@ async function guaranteeInitialProfiles() {
   // Guarantee SEO usernames for seeded teachers
   const teacher_1 = db.findOne('teachers', t => t.uid === 'teacher_1');
   if (teacher_1 && (!teacher_1.username || teacher_1.username !== 'adebayo' || teacher_1.status !== 'verified')) {
-    db.update('teachers', teacher_1.uid, { username: "adebayo", status: "verified" });
+    await db.update('teachers', teacher_1.uid, { username: "adebayo", status: "verified" });
   }
   const teacher_2 = db.findOne('teachers', t => t.uid === 'teacher_2');
   if (teacher_2 && (!teacher_2.username || teacher_2.username !== 'kofi' || teacher_2.status !== 'verified')) {
-    db.update('teachers', teacher_2.uid, { username: "kofi", status: "verified" });
+    await db.update('teachers', teacher_2.uid, { username: "kofi", status: "verified" });
   }
   const teacher_3 = db.findOne('teachers', t => t.uid === 'teacher_3');
   if (teacher_3 && (!teacher_3.username || teacher_3.username !== 'chioma' || teacher_3.status !== 'verified')) {
-    db.update('teachers', teacher_3.uid, { username: "chioma", status: "verified" });
+    await db.update('teachers', teacher_3.uid, { username: "chioma", status: "verified" });
   }
   const teacher_4 = db.findOne('teachers', t => t.uid === 'teacher_4');
   if (teacher_4 && (!teacher_4.username || teacher_4.username !== 'aminata' || teacher_4.status !== 'verified')) {
-    db.update('teachers', teacher_4.uid, { username: "aminata", status: "verified" });
+    await db.update('teachers', teacher_4.uid, { username: "aminata", status: "verified" });
   }
   const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
   if (teacher_5 && (!teacher_5.username || teacher_5.username !== 'fatima' || teacher_5.status !== 'verified')) {
-    db.update('teachers', teacher_5.uid, { username: "fatima", status: "verified" });
+    await db.update('teachers', teacher_5.uid, { username: "fatima", status: "verified" });
   }
 }
 
 
 // Helper to create notifications
-function createNotification(userId, type, title, body) {
+async function createNotification(userId, type, title, body) {
   try {
-    return db.insert('notifications', {
+    return await db.insert('notifications', {
       userId,
       type,
       title,
@@ -385,7 +385,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     hash = pwDetails.hash;
   }
 
-  const newUser = db.insert('users', {
+  const newUser = await db.insert('users', {
     uid,
     email: sanitizedEmail,
     displayName: sanitizedDisplayName,
@@ -412,7 +412,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: "Public username is required for teachers." });
     }
 
-    db.insert('teachers', {
+    await db.insert('teachers', {
       uid,
       username: finalUsername,
       name: sanitizedDisplayName,
@@ -438,7 +438,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       leaderboardOptIn: true
     });
   } else if (role === "Parent") {
-    db.insert('parents', {
+    await db.insert('parents', {
       uid,
       children: ["Tunde"], // Default test student
       paymentMethods: ["card_visa_default"],
@@ -448,7 +448,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       referralHits: 0
     });
 
-    db.insert('wallets', {
+    await db.insert('wallets', {
       uid,
       balance: 10000000, // Seed ₦100,000 for local testing
       escrow: 0
@@ -644,14 +644,14 @@ app.post('/api/teachers/optimize-bio', authenticateToken, requireRole(['Teacher'
 });
 
 // POST Update teacher profile (builder)
-app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, (req, res) => {
+app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, async (req, res) => {
   const { uid, name, location, rate, subjects, curricula, languages, bio, avatar } = req.body;
   const teacher = db.findOne('teachers', t => t.uid === uid);
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });
   }
 
-  const updated = db.update('teachers', teacher.id, {
+  const updated = await db.update('teachers', teacher.id, {
     name: name ? sanitizeText(name) : teacher.name,
     location: location ? sanitizeText(location) : teacher.location,
     rate: rate ? parseInt(rate, 10) : teacher.rate,
@@ -666,13 +666,13 @@ app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), r
 });
 
 // POST waitlist submission
-app.post('/api/waitlist', (req, res) => {
+app.post('/api/waitlist', async (req, res) => {
   const { email, name, role } = req.body;
   if (!email || !name) {
     return res.status(400).json({ error: "Email and name are required." });
   }
   
-  db.insert('waitlist', {
+  await db.insert('waitlist', {
     email: sanitizeText(email),
     name: sanitizeText(name),
     role: role || 'Parent'
@@ -683,7 +683,7 @@ app.post('/api/waitlist', (req, res) => {
 
 
 // POST onboarding submissions (Teacher Onboarding)
-app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, (req, res) => {
+app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, async (req, res) => {
   const { uid, name, username: requestedUsername, location, rate, bio, subjects, curricula, languages, availability, videoUrl, avatar, govId, degree } = req.body;
   if (!uid || !name) {
     return res.status(400).json({ error: "Teacher UID and Display Name are required." });
@@ -717,7 +717,7 @@ app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), r
     }
   }
 
-  const updated = db.update('teachers', teacher.id, {
+  const updated = await db.update('teachers', teacher.id, {
     name: sanitizeText(name),
     username: finalUsername,
     location: location ? sanitizeText(location) : "Nigeria",
@@ -745,11 +745,11 @@ app.get('/api/admin/applications', authenticateToken, requireRole(['Admin']), (r
 });
 
 // GET all B2B Schools list
-app.get('/api/admin/b2b-schools', authenticateToken, requireRole(['Admin']), (req, res) => {
+app.get('/api/admin/b2b-schools', authenticateToken, requireRole(['Admin']), async (req, res) => {
   let schools = db.find('b2b_schools');
   if (schools.length === 0) {
     // Seed default B2B school
-    db.insert('b2b_schools', {
+    await db.insert('b2b_schools', {
       uid: "school_greenwood",
       name: "Greenwood Hall Academy",
       apiKey: "eb_b2b_greenwood_key_2026",
@@ -762,14 +762,14 @@ app.get('/api/admin/b2b-schools', authenticateToken, requireRole(['Admin']), (re
 });
 
 // POST generate new B2B School API Key
-app.post('/api/admin/b2b-schools/create', authenticateToken, requireRole(['Admin']), (req, res) => {
+app.post('/api/admin/b2b-schools/create', authenticateToken, requireRole(['Admin']), async (req, res) => {
   const { name } = req.body;
   if (!name) {
     return res.status(400).json({ error: "School name is required." });
   }
 
   const apiKey = `eb_b2b_${name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${crypto.randomBytes(4).toString('hex')}`;
-  const newSchool = db.insert('b2b_schools', {
+  const newSchool = await db.insert('b2b_schools', {
     uid: `school_${Date.now()}`,
     name,
     apiKey,
@@ -781,18 +781,18 @@ app.post('/api/admin/b2b-schools/create', authenticateToken, requireRole(['Admin
 });
 
 // POST revoke B2B School API key
-app.post('/api/admin/b2b-schools/revoke', authenticateToken, requireRole(['Admin']), (req, res) => {
+app.post('/api/admin/b2b-schools/revoke', authenticateToken, requireRole(['Admin']), async (req, res) => {
   const { id } = req.body;
   if (!id) {
     return res.status(400).json({ error: "School identity is required." });
   }
 
-  const updated = db.update('b2b_schools', id, { status: "revoked" });
+  const updated = await db.update('b2b_schools', id, { status: "revoked" });
   res.json(updated);
 });
 
 // POST Approve or Reject teacher application (Admin trigger)
-app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Admin']), (req, res) => {
+app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Admin']), async (req, res) => {
   const { teacherUid, action } = req.body;
   if (!teacherUid || !action) {
     return res.status(400).json({ error: "Teacher UID and action are required." });
@@ -806,7 +806,7 @@ app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Adm
   const status = action === "Approve" ? "verified" : "rejected";
   const verifiedStatus = action === "Approve";
 
-  const updated = db.update('teachers', teacher.id, {
+  const updated = await db.update('teachers', teacher.id, {
     status,
     verified: verifiedStatus
   });
@@ -814,13 +814,13 @@ app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Adm
   // Also update user verification state in users database collection
   const user = db.findOne('users', u => u.uid === teacherUid);
   if (user) {
-    db.update('users', user.id, {
+    await db.update('users', user.id, {
       status: action === "Approve" ? "active" : "suspended"
     });
   }
 
   // Notify teacher of the application outcome
-  createNotification(
+  await createNotification(
     teacherUid,
     "application_response",
     action === "Approve" ? "Application Approved!" : "Application Rejected",
@@ -970,7 +970,7 @@ app.get('/api/teachers/dashboard/:uid', authenticateToken, (req, res) => {
 });
 
 // POST Parent wallet top-up / add funds
-app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, (req, res) => {
+app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, async (req, res) => {
   const { amount, parentId } = req.body;
   if (!amount || amount <= 0) {
     return res.status(400).json({ error: "Invalid topup amount." });
@@ -983,21 +983,21 @@ app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, (re
 
   let wallet = db.findOne('wallets', w => w.uid === parentId);
   if (!wallet) {
-    const newId = db.insert('wallets', {
+    const newId = await db.insert('wallets', {
       uid: parentId,
       balance: amount,
       escrow: 0
     });
     wallet = db.findOne('wallets', w => w.id === newId);
   } else {
-    db.update('wallets', wallet.id, {
+    await db.update('wallets', wallet.id, {
       balance: wallet.balance + amount
     });
     wallet = db.findOne('wallets', w => w.id === wallet.id);
   }
 
   // log a mock transaction
-  db.insert('transactions', {
+  await db.insert('transactions', {
     fromUserId: 'system',
     toUserId: parentId,
     amount: amount,
@@ -1006,7 +1006,7 @@ app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, (re
   });
 
   // add notification
-  db.insert('notifications', {
+  await db.insert('notifications', {
     id: 'notif_' + Date.now(),
     userId: parentId,
     title: 'Wallet Top-up Successful',
@@ -1024,7 +1024,7 @@ app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, (re
 });
 
 // POST register referral link hit
-app.post('/api/parents/referral/hit', (req, res) => {
+app.post('/api/parents/referral/hit', async (req, res) => {
   const { ref } = req.body;
   if (!ref) {
     return res.status(400).json({ error: "Referral code is required." });
@@ -1032,7 +1032,7 @@ app.post('/api/parents/referral/hit', (req, res) => {
 
   const parent = db.findOne('parents', p => p.uid === ref);
   if (parent) {
-    db.update('parents', parent.id, {
+    await db.update('parents', parent.id, {
       referralHits: (parent.referralHits || 0) + 1
     });
     return res.json({ success: true, hits: (parent.referralHits || 0) + 1 });
@@ -1042,7 +1042,7 @@ app.post('/api/parents/referral/hit', (req, res) => {
 
 
 // POST submit assignments score
-app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { id, score, feedback } = req.body;
   const assignment = db.findOne('assignments', a => a.id === id);
   if (!assignment) {
@@ -1057,7 +1057,7 @@ app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), 
     }
   }
 
-  const updated = db.update('assignments', id, {
+  const updated = await db.update('assignments', id, {
     status: "Graded",
     grade: {
       score: parseInt(score, 10),
@@ -1069,7 +1069,7 @@ app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), 
   // Notify parent of graded assignment
   const student = db.findOne('students', s => s.name.toLowerCase() === assignment.studentName.toLowerCase());
   const parentUid = student ? student.parentUid : "parent_1";
-  createNotification(
+  await createNotification(
     parentUid,
     "assignment_graded",
     "Assignment Graded",
@@ -1089,7 +1089,7 @@ app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), 
 });
 
 // POST create new assignment (Teacher)
-app.post('/api/assignments/create', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/assignments/create', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { title, description, studentName, dueDate } = req.body;
   if (!title || !studentName) {
     return res.status(400).json({ error: "Title and Student Name are required." });
@@ -1097,7 +1097,7 @@ app.post('/api/assignments/create', authenticateToken, requireRole(['Teacher']),
 
   const teacher = db.findOne('teachers', t => t.uid === req.user.uid) || { name: "Teacher" };
 
-  const newAssignment = db.insert('assignments', {
+  const newAssignment = await db.insert('assignments', {
     title: sanitizeText(title),
     description: description ? sanitizeText(description) : "",
     teacherId: req.user.uid,
@@ -1111,7 +1111,7 @@ app.post('/api/assignments/create', authenticateToken, requireRole(['Teacher']),
   // Notify parent of new homework
   const studentObj = db.findOne('students', s => s.name.toLowerCase() === studentName.toLowerCase());
   const pUid = studentObj ? studentObj.parentUid : "parent_1";
-  createNotification(
+  await createNotification(
     pUid,
     "assignment_assigned",
     "New Homework Assigned",
@@ -1122,7 +1122,7 @@ app.post('/api/assignments/create', authenticateToken, requireRole(['Teacher']),
 });
 
 // POST submit assignment (Student/Parent)
-app.post('/api/assignments/submit', authenticateToken, (req, res) => {
+app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
   const { id, submissionText } = req.body;
   const assignment = db.findOne('assignments', a => a.id === id);
   if (!assignment) {
@@ -1134,7 +1134,7 @@ app.post('/api/assignments/submit', authenticateToken, (req, res) => {
     return res.status(403).json({ error: "Access forbidden. Only students or parents can submit homework." });
   }
 
-  const updated = db.update('assignments', id, {
+  const updated = await db.update('assignments', id, {
     status: "Submitted",
     submission: sanitizeText(submissionText),
     submittedAt: new Date().toISOString()
@@ -1146,7 +1146,7 @@ app.post('/api/assignments/submit', authenticateToken, (req, res) => {
 // --- 4. SESSION BOOKINGS & ESCROW ---
 
 // POST Book a session
-app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requireOwnerOrAdmin, (req, res) => {
+app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requireOwnerOrAdmin, async (req, res) => {
   const { teacherId, teacherName, studentId, studentName, parentId, cost, slot } = req.body;
 
   // 1. Check Parent wallet
@@ -1156,13 +1156,13 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   }
 
   // 2. Lock escrow balance
-  db.update('wallets', wallet.id, {
+  await db.update('wallets', wallet.id, {
     balance: wallet.balance - cost,
     escrow: wallet.escrow + cost
   });
 
   // 3. Create Session Record
-  const newSession = db.insert('sessions', {
+  const newSession = await db.insert('sessions', {
     teacherId,
     teacherName,
     studentId,
@@ -1176,7 +1176,7 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   });
 
   // 4. Log Transaction
-  db.insert('transactions', {
+  await db.insert('transactions', {
     amount: cost,
     amountMinorUnits: cost,
     currency: "NGN",
@@ -1190,13 +1190,13 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   });
 
   // Dispatch Notifications
-  createNotification(
+  await createNotification(
     parentId,
     "booking_secured",
     "Escrow Secured",
     `₦${cost/100} has been locked in escrow for your session with ${teacherName}.`
   );
-  createNotification(
+  await createNotification(
     teacherId,
     "booking_received",
     "New Booking Request",
@@ -1219,7 +1219,7 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
 });
 
 // POST Respond to booking requests (manual confirmation)
-app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { sessionId, action } = req.body;
   if (!sessionId || !action) {
     return res.status(400).json({ error: "Session ID and action are required." });
@@ -1235,10 +1235,10 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), (
   }
 
   if (action === "Confirm") {
-    const updated = db.update('sessions', session.id, {
+    const updated = await db.update('sessions', session.id, {
       status: "Scheduled"
     });
-    createNotification(
+    await createNotification(
       session.parentId,
       "booking_confirmed",
       "Booking Confirmed",
@@ -1249,16 +1249,16 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), (
     // Release escrow back to parent
     const wallet = db.findOne('wallets', w => w.uid === session.parentId);
     if (wallet) {
-      db.update('wallets', wallet.id, {
+      await db.update('wallets', wallet.id, {
         balance: wallet.balance + session.cost,
         escrow: Math.max(0, wallet.escrow - session.cost)
       });
     }
 
-    const updated = db.update('sessions', session.id, {
+    const updated = await db.update('sessions', session.id, {
       status: "Rejected"
     });
-    createNotification(
+    await createNotification(
       session.parentId,
       "booking_rejected",
       "Booking Declined",
@@ -1287,7 +1287,7 @@ app.get('/api/messages/:sessionId', authenticateToken, (req, res) => {
 });
 
 // POST send message
-app.post('/api/messages', authenticateToken, (req, res) => {
+app.post('/api/messages', authenticateToken, async (req, res) => {
   const { sessionId, senderId, senderName, text } = req.body;
   if (!sessionId || !senderId || !senderName || !text) {
     return res.status(400).json({ error: "Session ID, sender, and text are required." });
@@ -1305,7 +1305,7 @@ app.post('/api/messages', authenticateToken, (req, res) => {
     return res.status(403).json({ error: "Access forbidden. You are not a participant of this class." });
   }
 
-  const newMessage = db.insert('messages', {
+  const newMessage = await db.insert('messages', {
     sessionId,
     senderId,
     senderName,
@@ -1316,7 +1316,7 @@ app.post('/api/messages', authenticateToken, (req, res) => {
   const sess = db.findOne('sessions', s => s.id === sessionId);
   if (sess) {
     const recipientId = senderId === sess.teacherId ? sess.parentId : sess.teacherId;
-    createNotification(
+    await createNotification(
       recipientId,
       "message_received",
       `New Message from ${senderName}`,
@@ -1328,7 +1328,7 @@ app.post('/api/messages', authenticateToken, (req, res) => {
 });
 
 // POST Session telemetry / clock events
-app.post('/api/sessions/clock', authenticateToken, (req, res) => {
+app.post('/api/sessions/clock', authenticateToken, async (req, res) => {
   const { sessionId, eventType, timestamp } = req.body;
   if (!sessionId || !eventType) {
     return res.status(400).json({ error: "Session ID and eventType are required." });
@@ -1346,12 +1346,12 @@ app.post('/api/sessions/clock', authenticateToken, (req, res) => {
   const clockLog = session.clockLog || [];
   clockLog.push({ event: eventType, timestamp: timestamp || new Date().toISOString() });
 
-  const updated = db.update('sessions', sessionId, { clockLog });
+  const updated = await db.update('sessions', sessionId, { clockLog });
   res.json({ success: true, clockLog: updated.clockLog });
 });
 
 // POST End session and release escrow
-app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, res) => {
+app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async (req, res) => {
   const { sessionId, rating, comment } = req.body;
 
   const session = db.findOne('sessions', s => s.id === sessionId);
@@ -1368,7 +1368,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
   }
 
   // 1. Update session status
-  db.update('sessions', sessionId, {
+  await db.update('sessions', sessionId, {
     status: "Completed",
     actualEnd: new Date().toISOString()
   });
@@ -1376,7 +1376,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
   // 2. Release Escrow from Parent wallet
   const wallet = db.findOne('wallets', w => w.uid === session.parentId);
   if (wallet) {
-    db.update('wallets', wallet.id, {
+    await db.update('wallets', wallet.id, {
       escrow: Math.max(0, wallet.escrow - session.cost)
     });
   }
@@ -1385,14 +1385,14 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
   const commission = Math.round(session.cost * 0.15);
   const payout = session.cost - commission;
 
-  createNotification(
+  await createNotification(
     session.parentId,
     "session_completed",
     "Session Completed",
     `Your session with ${session.teacherName} is complete. Billed duration: 58 mins.`
   );
 
-  createNotification(
+  await createNotification(
     session.teacherId,
     "escrow_released",
     "Payout Transferred",
@@ -1400,7 +1400,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
   );
 
   // Add payout log to transactions
-  db.insert('transactions', {
+  await db.insert('transactions', {
     amount: session.cost,
     amountMinorUnits: session.cost,
     currency: "NGN",
@@ -1415,7 +1415,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
 
   // 4. Submit review if rating is supplied
   if (rating) {
-    db.insert('reviews', {
+    await db.insert('reviews', {
       sessionId,
       parentId: session.parentId,
       teacherId: session.teacherId,
@@ -1430,7 +1430,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), (req, 
     if (teacher) {
       const allReviews = db.find('reviews', r => r.teacherId === session.teacherId);
       const avg = allReviews.reduce((sum, r) => sum + r.overallRating, 0) / allReviews.length;
-      db.update('teachers', teacher.id, {
+      await db.update('teachers', teacher.id, {
         reviewsCount: allReviews.length,
         rating: parseFloat(avg.toFixed(1))
       });
@@ -1496,7 +1496,7 @@ app.get('/api/teachers/:uid/reviews', (req, res) => {
 });
 
 // POST /api/reviews/reply
-app.post('/api/reviews/reply', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/reviews/reply', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { reviewId, replyText } = req.body;
   if (!reviewId || !replyText) return res.status(400).json({ error: "Missing fields" });
   
@@ -1506,7 +1506,7 @@ app.post('/api/reviews/reply', authenticateToken, requireRole(['Teacher']), (req
   }
 
   if (review) {
-    const updated = db.update('reviews', review.id, { reply: sanitizeText(replyText) });
+    const updated = await db.update('reviews', review.id, { reply: sanitizeText(replyText) });
     res.json({ success: true, review: updated });
   } else {
     res.json({ success: true, review: { id: reviewId, reply: sanitizeText(replyText) } });
@@ -1517,7 +1517,7 @@ app.post('/api/reviews/reply', authenticateToken, requireRole(['Teacher']), (req
 // --- 5. ACADEMY & ELITE TEACHERS ACADEMY ENDPOINTS ---
 
 // POST Enroll in Academy (Subscription Paywall)
-app.post('/api/academy/enroll', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/academy/enroll', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { userId, plan, cardDetails } = req.body;
 
   if (userId !== req.user.uid) {
@@ -1533,14 +1533,14 @@ app.post('/api/academy/enroll', authenticateToken, requireRole(['Teacher']), (re
   const subscriptionFee = plan === 'annual' ? 12000000 : 1500000; // ₦120,000 annual or ₦15,000 monthly in minor kobo
   
   // Register enrollment in database
-  db.update('teachers', teacher.id, {
+  await db.update('teachers', teacher.id, {
     academyEnrolled: true,
     academyPlan: plan,
     academyEnrolledAt: new Date().toISOString()
   });
 
   // Create an academy ledger notification
-  db.insert('notifications', {
+  await db.insert('notifications', {
     userId,
     title: "Elite Academy Subscription Secured",
     message: `Welcome to the Elite Teachers Academy! Your ${plan === 'annual' ? 'annual' : 'monthly'} subscription was successfully authorized. You now have full access to all 6 modules, interactive quizzes, video courses, discussion forums, and the Gemini roleplay simulator.`,
@@ -1578,7 +1578,7 @@ app.get('/api/academy/status/:userId', authenticateToken, requireRole(['Teacher'
 });
 
 // POST Submit module quiz
-app.post('/api/academy/submit-quiz', authenticateToken, requireRole(['Teacher']), (req, res) => {
+app.post('/api/academy/submit-quiz', authenticateToken, requireRole(['Teacher']), async (req, res) => {
   const { userId, moduleId, answer } = req.body;
 
   if (userId !== req.user.uid) {
@@ -1604,7 +1604,7 @@ app.post('/api/academy/submit-quiz', authenticateToken, requireRole(['Teacher'])
   // Save progress
   const progressRecord = db.findOne('academy_progress', p => p.userId === userId && p.moduleId === moduleId);
   if (!progressRecord) {
-    db.insert('academy_progress', {
+    await db.insert('academy_progress', {
       userId,
       moduleId,
       status: "Completed",
@@ -1623,7 +1623,7 @@ app.post('/api/academy/submit-quiz', authenticateToken, requireRole(['Teacher'])
     badges.push('badge-ai-cert');
   }
 
-  db.update('teachers', teacher.id, {
+  await db.update('teachers', teacher.id, {
     badges
   });
 
@@ -1743,7 +1743,7 @@ app.get('/api/academy/forum', (req, res) => {
 });
 
 // POST create forum post or comment
-app.post('/api/academy/forum', authenticateToken, (req, res) => {
+app.post('/api/academy/forum', authenticateToken, async (req, res) => {
   const { title, content, parentId } = req.body;
   if (!content) {
     return res.status(400).json({ error: "Content is required." });
@@ -1761,7 +1761,7 @@ app.post('/api/academy/forum', authenticateToken, (req, res) => {
       createdAt: new Date().toISOString()
     };
     comments.push(newComment);
-    db.update('academy_forum', post.id, { comments });
+    await db.update('academy_forum', post.id, { comments });
     return res.json({ success: true, post: db.findOne('academy_forum', p => p.id === parentId) });
   }
 
@@ -1769,7 +1769,7 @@ app.post('/api/academy/forum', authenticateToken, (req, res) => {
     return res.status(400).json({ error: "Title is required for a new thread." });
   }
 
-  const newPost = db.insert('academy_forum', {
+  const newPost = await db.insert('academy_forum', {
     title,
     content,
     authorName: req.user.displayName || "Elite Tutor",
@@ -1792,31 +1792,31 @@ app.get('/api/notifications/:uid', authenticateToken, requireOwnerOrAdmin, (req,
 });
 
 // POST Mark notification as read
-app.post('/api/notifications/:id/read', authenticateToken, (req, res) => {
+app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const notification = db.findOne('notifications', n => n.id === id);
   if (notification) {
     if (notification.userId !== req.user.uid) {
       return res.status(403).json({ error: "Access forbidden. You do not own this notification." });
     }
-    const updated = db.update('notifications', notification.id, { read: true });
+    const updated = await db.update('notifications', notification.id, { read: true });
     return res.json(updated);
   }
   res.status(404).json({ error: "Notification not found." });
 });
 
 // POST Mark all notifications as read
-app.post('/api/notifications/read-all/:uid', authenticateToken, requireOwnerOrAdmin, (req, res) => {
+app.post('/api/notifications/read-all/:uid', authenticateToken, requireOwnerOrAdmin, async (req, res) => {
   const { uid } = req.params;
   const list = db.find('notifications', n => n.userId === uid && !n.read);
-  list.forEach(n => {
-    db.update('notifications', n.id, { read: true });
-  });
+  for (const n of list) {
+    await db.update('notifications', n.id, { read: true });
+  }
   res.json({ success: true, count: list.length });
 });
 
 // POST Create Dispute
-app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), (req, res) => {
+app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), async (req, res) => {
   const { sessionId, reason, details } = req.body;
   if (!sessionId || !reason) {
     return res.status(400).json({ error: "sessionId and reason are required." });
@@ -1833,17 +1833,17 @@ app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), (re
 
   const transaction = db.findOne('transactions', t => t.sessionId === sessionId);
   if (transaction) {
-    db.update('transactions', transaction.id, {
+    await db.update('transactions', transaction.id, {
       status: "disputed",
       payoutStatus: "frozen"
     });
   }
 
-  db.update('sessions', session.id, {
+  await db.update('sessions', session.id, {
     status: "Disputed"
   });
 
-  const dispute = db.insert('disputes', {
+  const dispute = await db.insert('disputes', {
     sessionId,
     reason,
     details: details ? sanitizeText(details) : "",
@@ -1851,14 +1851,14 @@ app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), (re
     raisedBy: session.parentId
   });
 
-  createNotification(
+  await createNotification(
     session.teacherId,
     "dispute_opened",
     "Dispute Raised on Session",
     `A dispute has been raised for the session on ${session.slot.day} at ${session.slot.time} by the parent. Payout is temporarily frozen.`
   );
 
-  createNotification(
+  await createNotification(
     session.parentId,
     "dispute_opened",
     "Dispute Registered",

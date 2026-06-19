@@ -407,6 +407,11 @@ export default function App() {
       } else {
         setCurrentView('home');
         setProfileUsername('');
+        // Refresh ScrollTrigger and reset timeline when returning home
+        setTimeout(() => {
+          gsap.globalTimeline.clear();
+          ScrollTrigger.refresh();
+        }, 100);
       }
     };
 
@@ -810,6 +815,7 @@ export default function App() {
 
   // GSAP hero entrances
   useLayoutEffect(() => {
+    if (currentView === 'teacher_profile') return;
     let ctx = gsap.context(() => {
       if (document.querySelector('.hero-fade')) {
         gsap.fromTo('.hero-fade',
@@ -823,6 +829,7 @@ export default function App() {
 
   // GSAP trust section scroll entrances
   useLayoutEffect(() => {
+    if (currentView === 'teacher_profile') return;
     let ctx = gsap.context(() => {
       if (document.querySelector('.trust-section')) {
         gsap.fromTo('.trust-fade',
@@ -847,6 +854,7 @@ export default function App() {
 
   // Protocol pin ScrollTrigger stacks
   useLayoutEffect(() => {
+    if (currentView === 'teacher_profile') return;
     let ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-stack');
       if (cards.length === 0) return;

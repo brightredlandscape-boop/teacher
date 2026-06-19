@@ -152,6 +152,20 @@ export default function ParentDashboard({
     fetchAiInsight();
   }, [selectedChild]);
 
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#marketplace') {
+        setActiveTab('marketplace');
+      } else if (window.location.hash === '#dashboard' || window.location.hash === '' || window.location.hash === '#progress') {
+        setActiveTab('progress');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   // Submit student homework submission
   const handleSubmitAssignment = async (e, assignmentId) => {
     e.preventDefault();
@@ -774,7 +788,18 @@ export default function ParentDashboard({
 
       {/* ACTIVE SECTION: TUTOR MARKETPLACE */}
       {activeTab === 'marketplace' && (
-        <div className="animate-fade-up">
+        <div className="animate-fade-up space-y-6">
+          <div className="flex justify-start px-6 md:px-16 lg:px-24 max-w-7xl mx-auto pt-6">
+            <button 
+              onClick={() => {
+                setActiveTab('progress');
+                window.location.hash = '#dashboard';
+              }} 
+              className="py-2.5 px-6 bg-white hover:bg-brand-cream border border-brand-moss/10 text-brand-moss font-sans font-bold text-xs uppercase tracking-wider rounded-full flex items-center gap-2 shadow-md transition-all"
+            >
+              ← Back to Dashboard Home
+            </button>
+          </div>
           <Marketplace 
             teachers={teachers || []} 
             selectedCurrency={selectedCurrency} 

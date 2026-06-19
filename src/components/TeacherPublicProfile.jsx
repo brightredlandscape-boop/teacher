@@ -377,7 +377,7 @@ export default function TeacherPublicProfile({
                       <div>
                         <h4 className="font-heading font-bold text-brand-moss text-sm">{rev.parentName || rev.parent || 'Verified Parent'}</h4>
                         <div className="flex gap-0.5 text-brand-clay mt-1">
-                          {Array.from({ length: Math.round(rev.overallRating || rev.score || 5) }).map((_, i) => (
+                          {Array.from({ length: Math.max(0, Math.min(5, Math.round(Number(rev.overallRating || rev.score || 5)) || 5)) }).map((_, i) => (
                             <Star key={i} className="w-3.5 h-3.5 fill-current" />
                           ))}
                         </div>

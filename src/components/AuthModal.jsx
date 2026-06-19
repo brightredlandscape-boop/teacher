@@ -171,6 +171,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       const payload = {
         email: googleUserForSetup.email,
         displayName: name,
+        username: role === 'Teacher' ? username : undefined,
         role,
         country,
         referredBy: refCode || undefined,
@@ -291,6 +292,23 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                 </button>
               </div>
             </div>
+
+            {role === 'Teacher' && (
+              <div>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Public Username</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-4 font-mono text-xs text-brand-charcoal/40">@</span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="adebayo-maths"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    className="w-full bg-white border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-mono"
+                  />
+                </div>
+              </div>
+            )}
 
             {(role === 'Parent' || role === 'Teacher') && (
               <div>

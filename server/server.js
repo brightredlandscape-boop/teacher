@@ -231,23 +231,23 @@ async function guaranteeInitialProfiles() {
   // Guarantee SEO usernames for seeded teachers
   const teacher_1 = db.findOne('teachers', t => t.uid === 'teacher_1');
   if (teacher_1 && (!teacher_1.username || teacher_1.username !== 'adebayo' || teacher_1.status !== 'verified')) {
-    await db.update('teachers', teacher_1.uid, { username: "adebayo", status: "verified" });
+    await db.update('teachers', teacher_1.id, { username: "adebayo", status: "verified" });
   }
   const teacher_2 = db.findOne('teachers', t => t.uid === 'teacher_2');
   if (teacher_2 && (!teacher_2.username || teacher_2.username !== 'kofi' || teacher_2.status !== 'verified')) {
-    await db.update('teachers', teacher_2.uid, { username: "kofi", status: "verified" });
+    await db.update('teachers', teacher_2.id, { username: "kofi", status: "verified" });
   }
   const teacher_3 = db.findOne('teachers', t => t.uid === 'teacher_3');
   if (teacher_3 && (!teacher_3.username || teacher_3.username !== 'chioma' || teacher_3.status !== 'verified')) {
-    await db.update('teachers', teacher_3.uid, { username: "chioma", status: "verified" });
+    await db.update('teachers', teacher_3.id, { username: "chioma", status: "verified" });
   }
   const teacher_4 = db.findOne('teachers', t => t.uid === 'teacher_4');
   if (teacher_4 && (!teacher_4.username || teacher_4.username !== 'aminata' || teacher_4.status !== 'verified')) {
-    await db.update('teachers', teacher_4.uid, { username: "aminata", status: "verified" });
+    await db.update('teachers', teacher_4.id, { username: "aminata", status: "verified" });
   }
   const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
   if (teacher_5 && (!teacher_5.username || teacher_5.username !== 'fatima' || teacher_5.status !== 'verified')) {
-    await db.update('teachers', teacher_5.uid, { username: "fatima", status: "verified" });
+    await db.update('teachers', teacher_5.id, { username: "fatima", status: "verified" });
   }
 }
 

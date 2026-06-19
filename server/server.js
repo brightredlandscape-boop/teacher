@@ -397,7 +397,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   });
 
   if (role === "Teacher") {
-    let finalUsername = "";
+    let finalUsername;
     if (requestedUsername) {
       const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
       if (!cleanUsername) {

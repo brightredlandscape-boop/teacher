@@ -22,11 +22,13 @@ async function run() {
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 3000)));
 
   console.log("Page title:", await page.title());
-  console.log("Body HTML structure preview:");
-  const bodyHtml = await page.evaluate(() => document.body.innerHTML);
-  console.log(bodyHtml.substring(0, 1000));
+  
+  const screenshotPath = 'C:\\Users\\USER\\.gemini\\antigravity-ide\\brain\\acd841fe-2c3a-4da9-b86c-5f4b2a8d12ae\\vercel_screenshot_final.png';
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  console.log("Screenshot saved successfully to:", screenshotPath);
 
   await browser.close();
 }
+
 
 run().catch(console.error);

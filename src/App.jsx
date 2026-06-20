@@ -409,7 +409,6 @@ export default function App() {
         setProfileUsername('');
         // Refresh ScrollTrigger and reset timeline when returning home
         setTimeout(() => {
-          gsap.globalTimeline.clear();
           ScrollTrigger.refresh();
         }, 100);
       }
@@ -432,6 +431,15 @@ export default function App() {
     window.scrollTo(0, 0);
   }, [currentView]);
 
+  // Smooth scroll helper for homepage sections
+  const scrollToSection = (id) => (e) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   // State handlers
   const handleBookClick = (teacher) => {
     if (!currentUser) {
@@ -452,7 +460,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // Force refresh ScrollTrigger after a short delay to allow DOM updates
     setTimeout(() => {
-      gsap.globalTimeline.clear();
       ScrollTrigger.refresh();
     }, 100);
   };
@@ -1215,6 +1222,7 @@ export default function App() {
           <div className="hero-fade flex flex-col sm:flex-row gap-4 justify-start md:justify-end w-full">
             <a 
               href="#marketplace"
+              onClick={scrollToSection('marketplace')}
               className="btn-magnetic group font-sans font-bold text-xs uppercase tracking-wider bg-brand-clay text-white px-8 py-4 rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
             >
               <span>{t('exploreMarketplace')}</span>
@@ -1222,6 +1230,7 @@ export default function App() {
             </a>
             <a 
               href="#session-engine" 
+              onClick={scrollToSection('session-engine')}
               className="btn-magnetic font-sans font-bold text-xs uppercase tracking-wider bg-brand-cream/10 backdrop-blur-sm text-brand-cream border border-brand-cream/30 hover:bg-brand-cream hover:text-brand-charcoal px-8 py-4 rounded-full"
             >
               {t('simulateLiveClass')}
@@ -1251,12 +1260,14 @@ export default function App() {
           <div className="trust-fade flex flex-col sm:flex-row gap-4 justify-center items-center w-full mt-10">
             <a 
               href="#marketplace"
+              onClick={scrollToSection('marketplace')}
               className="btn-magnetic group font-sans font-bold text-xs uppercase tracking-wider bg-brand-clay text-white px-8 py-4 rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2 hover:bg-brand-clay/90"
             >
               <span>Find a Teacher Now →</span>
             </a>
             <a 
               href="#protocol" 
+              onClick={scrollToSection('protocol')}
               className="btn-magnetic font-sans font-bold text-xs uppercase tracking-wider bg-white text-brand-moss hover:bg-brand-cream/90 px-8 py-4 rounded-full transition-colors"
             >
               Watch How It Works
@@ -1264,7 +1275,7 @@ export default function App() {
           </div>
 
           <div className="trust-fade my-8 flex justify-center">
-            <a href="#marketplace" className="w-12 h-12 rounded-full border border-white/20 hover:border-brand-clay hover:text-brand-clay transition-all duration-300 flex items-center justify-center text-white/60 animate-bounce">
+            <a href="#marketplace" onClick={scrollToSection('marketplace')} className="w-12 h-12 rounded-full border border-white/20 hover:border-brand-clay hover:text-brand-clay transition-all duration-300 flex items-center justify-center text-white/60 animate-bounce">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
@@ -1455,6 +1466,7 @@ export default function App() {
             <div className="pt-4">
               <a 
                 href="#marketplace"
+                onClick={scrollToSection('marketplace')}
                 className="btn-magnetic group font-sans font-bold text-xs uppercase tracking-wider bg-brand-clay text-white px-8 py-4 rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2 hover:bg-brand-clay/90 w-fit"
               >
                 <span>Find a Teacher Now</span>

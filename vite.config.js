@@ -14,5 +14,15 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  preview: {
+    allowedHosts: ['.loca.lt', '.ngrok-free.app', '.ngrok-free.dev', 'localhost'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })

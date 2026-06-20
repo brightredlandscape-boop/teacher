@@ -50,6 +50,7 @@ app.use(cors({
       !origin || 
       origin === clientOrigin || 
       origin === 'http://localhost:5173' || 
+      origin === 'http://localhost:4173' || 
       origin.endsWith('.ngrok-free.dev') || 
       origin.endsWith('.ngrok.io') || 
       origin.includes('ngrok-free.dev')
@@ -302,6 +303,7 @@ function authenticateToken(req, res, next) {
         // Fallback to local JWT verification
         jwt.verify(token, JWT_SECRET, (jwtErr, user) => {
           if (jwtErr) {
+            console.warn("JWT verification error (Firebase catch):", jwtErr.message);
             return res.status(403).json({ error: "Invalid or expired token." });
           }
           req.user = user;
@@ -311,7 +313,10 @@ function authenticateToken(req, res, next) {
   } else {
     // Normal local JWT fallback
     jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ error: "Invalid or expired token." });
+      if (err) {
+        console.warn("JWT verification error (No Firebase):", err.message);
+        return res.status(403).json({ error: "Invalid or expired token." });
+      }
       req.user = user;
       next();
     });

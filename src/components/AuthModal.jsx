@@ -57,7 +57,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
       const data = await response.json();
       if (response.ok) {
-        onSuccess({ ...data, token: token || data.token });
+        onSuccess({ ...data, token: data.token || token });
         onClose();
       } else {
         setError(data.error || 'Something went wrong.');

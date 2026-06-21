@@ -12,5 +12,19 @@
     "sentAt": "2026-06-12T13:56:14.064Z",
     "status": "failed",
     "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+  },
+  {
+    "id": "email_3ed88270-e6f7-4c83-88b3-160faad3cc79",
+    "to": "testparent_999@edubridge.com",
+    "subject": "Welcome to EduBridge Africa!",
+    "template": "welcome",
+    "body": "Hi Test Parent 999,\n\nWelcome to EduBridge Africa! Your account as a Parent has been successfully registered. Please verify your email using this link: http://localhost:5173/verify-email?token=4faa1fdf2b1285c41c3e589b90aedd79\n\nBest regards,\nThe EduBridge Support Team",
+    "data": {
+      "displayName": "Test Parent 999",
+      "role": "Parent"
+    },
+    "sentAt": "2026-06-21T16:44:43.724Z",
+    "status": "failed",
+    "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
   }
 ]

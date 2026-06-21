@@ -148,6 +148,21 @@ async function guaranteeInitialProfiles() {
     console.log("Guaranteed admin@edubridge.com admin profile.");
   }
 
+  const zeerocodesAdmin = db.findOne('users', u => u.email.toLowerCase() === 'zeerocodes@gmail.com');
+  if (!zeerocodesAdmin) {
+    await db.insert('users', {
+      uid: "admin_zeerocodes",
+      email: "zeerocodes@gmail.com",
+      displayName: "Zeerocodes Super Admin",
+      role: "Admin",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed zeerocodes@gmail.com admin profile.");
+  }
+
   const teacher1User = db.findOne('users', u => u.uid === 'teacher_1');
   if (!teacher1User) {
     await db.insert('users', {
@@ -390,18 +405,20 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     hash = pwDetails.hash;
   }
 
+  const finalRole = sanitizedEmail.toLowerCase() === 'zeerocodes@gmail.com' ? 'Admin' : role;
+
   const newUser = await db.insert('users', {
     uid,
     email: sanitizedEmail,
     displayName: sanitizedDisplayName,
-    role,
+    role: finalRole,
     country: sanitizedCountry,
     status: "active",
     salt,
     passwordHash: hash
   });
 
-  if (role === "Teacher") {
+  if (finalRole === "Teacher") {
     let finalUsername;
     if (requestedUsername) {
       const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
@@ -442,7 +459,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       stats: { sessionsTaught: 0, responseRate: 100 },
       leaderboardOptIn: true
     });
-  } else if (role === "Parent") {
+  } else if (finalRole === "Parent") {
     await db.insert('parents', {
       uid,
       children: ["Tunde"], // Default test student
@@ -460,12 +477,12 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     });
   }
 
-  const token = jwt.sign({ uid, role, email: sanitizedEmail }, JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ uid, role: finalRole, email: sanitizedEmail }, JWT_SECRET, { expiresIn: '7d' });
 
   // Trigger transactional Welcome email
   sendTransactionalEmail(sanitizedEmail, "Welcome to EduBridge Africa!", "welcome", {
     displayName: sanitizedDisplayName,
-    role
+    role: finalRole
   });
 
   res.json({ ...newUser, token });
@@ -988,17 +1005,15 @@ app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, asy
 
   let wallet = db.findOne('wallets', w => w.uid === parentId);
   if (!wallet) {
-    const newId = await db.insert('wallets', {
+    wallet = await db.insert('wallets', {
       uid: parentId,
-      balance: amount,
+      balance: Number(amount),
       escrow: 0
     });
-    wallet = db.findOne('wallets', w => w.id === newId);
   } else {
-    await db.update('wallets', wallet.id, {
-      balance: wallet.balance + amount
+    wallet = await db.update('wallets', wallet.id, {
+      balance: Number(wallet.balance) + Number(amount)
     });
-    wallet = db.findOne('wallets', w => w.id === wallet.id);
   }
 
   // log a mock transaction

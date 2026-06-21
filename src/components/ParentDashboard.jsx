@@ -42,7 +42,8 @@ export default function ParentDashboard({
   onTopupWallet,
   teachers = [],
   onBookClick,
-  onTeacherSelect
+  onTeacherSelect,
+  onBack
 }) {
   const [activeTab, setActiveTab] = useState('progress'); // 'progress' | 'marketplace' | 'billing' | 'disputes' | 'affiliate'
   const localT = t || ((key) => translations[lang]?.[key] || translations['en']?.[key] || key);
@@ -323,11 +324,27 @@ export default function ParentDashboard({
       {/* Switcher Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+            >
+              ← Back to Home
+            </button>
+          )}
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">EduBridge Parent Portal</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Platform Parent Dashboard</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
             Monitor learning cognitive insights, browse marketplace tutors, manage billing deposits, and audit lesson dispute filings.
           </p>
+          <div className="mt-4">
+            <button
+              onClick={() => setActiveTab('marketplace')}
+              className="inline-flex items-center gap-1.5 font-sans font-bold text-[11px] uppercase tracking-wider text-brand-cream bg-brand-clay hover:bg-brand-clay/90 px-4 py-2 rounded-full shadow-sm transition-all duration-300 cursor-pointer"
+            >
+              ⭐ Select a Teacher from Marketplace
+            </button>
+          </div>
         </div>
 
         {/* Tab Sub-navigation Switcher */}

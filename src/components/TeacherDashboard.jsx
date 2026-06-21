@@ -8,7 +8,8 @@ export default function TeacherDashboard({
   convertMinor,
   onOpenChat,
   onGradeHomework,
-  gradesLog
+  gradesLog,
+  onBack
 }) {
   const [teacherProfile, setTeacherProfile] = useState(null);
   const [bookingRequests, setBookingRequests] = useState([]);
@@ -310,6 +311,14 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
       {/* Dashboard Switcher Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+            >
+              ← Back to Home
+            </button>
+          )}
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Dual Portal Sandbox</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Platform Teacher Dashboard</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">

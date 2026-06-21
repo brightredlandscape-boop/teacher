@@ -35,7 +35,7 @@ import {
   Percent
 } from 'lucide-react';
 
-export default function AdminDashboard({ currentUser, selectedCurrency, formatCurrency, convertMinor }) {
+export default function AdminDashboard({ currentUser, selectedCurrency, formatCurrency, convertMinor, onBack }) {
   const API_BASE = '/api';
 
   const getAuthHeaders = () => {
@@ -693,6 +693,14 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
       {/* Header Suite */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+            >
+              ← Back to Home
+            </button>
+          )}
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">SYSTEM MONITORING SYSTEM</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Admin Control Room</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
@@ -816,7 +824,21 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                     <option value="All">All Countries</option>
                     <option value="Nigeria">Nigeria</option>
                     <option value="Ghana">Ghana</option>
-                    <option value="UK">United Kingdom</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="Uganda">Uganda</option>
+                    <option value="Rwanda">Rwanda</option>
+                    <option value="Cameroon">Cameroon</option>
+                    <option value="Tanzania">Tanzania</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Senegal">Senegal</option>
+                    <option value="Ethiopia">Ethiopia</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
                   </select>
                 </div>
               </div>

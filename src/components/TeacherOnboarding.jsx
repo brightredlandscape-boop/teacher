@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle, ShieldCheck, Video, Calendar, BookOpen, User } from 'lucide-react';
 
-export default function TeacherOnboarding({ currentUser, onComplete }) {
+export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -195,7 +195,15 @@ export default function TeacherOnboarding({ currentUser, onComplete }) {
   };
 
   return (
-    <section className="py-28 px-6 md:px-16 lg:px-24 bg-brand-cream min-h-screen flex items-center justify-center">
+    <section className="relative py-28 px-6 md:px-16 lg:px-24 bg-brand-cream min-h-screen flex items-center justify-center">
+      {onBack && (
+        <button 
+          onClick={onBack} 
+          className="absolute top-6 left-6 sm:left-12 py-2.5 px-5 bg-white/90 hover:bg-white backdrop-blur-md text-brand-moss font-sans font-bold text-xs uppercase tracking-wider rounded-full flex items-center gap-2 border border-brand-moss/10 shadow-md transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Home
+        </button>
+      )}
       <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] w-full max-w-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
         
         {/* Step Progress Indicators */}

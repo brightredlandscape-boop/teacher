@@ -67,7 +67,9 @@ export default function App() {
   const [currentView, setCurrentView] = useState(() => {
     const path = window.location.pathname;
     const match = path.match(/\/teacher\/([^/]+)/);
-    return match ? 'teacher_profile' : 'home';
+    if (match) return 'teacher_profile';
+    const saved = localStorage.getItem('edubridge_user');
+    return saved ? 'dashboard' : 'home';
   });
   const [profileUsername, setProfileUsername] = useState(() => {
     const path = window.location.pathname;
@@ -500,6 +502,20 @@ export default function App() {
     }
   };
 
+  const handleAuthSuccess = (user) => {
+    if (user.token) {
+      localStorage.setItem('edubridge_token', user.token);
+      localStorage.setItem('edubridge_user', JSON.stringify(user));
+    } else {
+      localStorage.setItem('edubridge_user', JSON.stringify(user));
+    }
+    setCurrentUser(user);
+    setCurrentView('dashboard');
+    if (user.role === 'Parent') {
+      window.location.hash = '#marketplace';
+    }
+  };
+
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -520,13 +536,7 @@ export default function App() {
 
       const data = await response.json();
       if (response.ok) {
-        if (data.token) {
-          localStorage.setItem('edubridge_token', data.token);
-          localStorage.setItem('edubridge_user', JSON.stringify(data));
-        } else {
-          localStorage.setItem('edubridge_user', JSON.stringify(data));
-        }
-        setCurrentUser(data);
+        handleAuthSuccess(data);
       } else {
         setAuthError(data.error || 'Something went wrong.');
       }
@@ -537,28 +547,24 @@ export default function App() {
         const lowerEmail = authEmail.toLowerCase();
         if (lowerEmail.includes('parent')) {
           const u = { uid: 'parent_1', displayName: 'Ngozi Adeleke', role: 'Parent', email: authEmail, country: 'Nigeria' };
-          localStorage.setItem('edubridge_user', JSON.stringify(u));
-          setCurrentUser(u);
+          handleAuthSuccess(u);
         } else if (lowerEmail.includes('teacher')) {
           const u = { uid: 'teacher_1', displayName: 'Mr. Adebayo Okafor', role: 'Teacher', email: authEmail, country: 'Nigeria' };
-          localStorage.setItem('edubridge_user', JSON.stringify(u));
-          setCurrentUser(u);
+          handleAuthSuccess(u);
         } else if (lowerEmail.includes('student')) {
           const u = { uid: 'student_1', displayName: 'Tunde Okafor', role: 'Student', email: authEmail };
-          localStorage.setItem('edubridge_user', JSON.stringify(u));
-          setCurrentUser(u);
-        } else if (lowerEmail.includes('admin')) {
-          const u = { uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email: authEmail };
-          localStorage.setItem('edubridge_user', JSON.stringify(u));
-          setCurrentUser(u);
+          handleAuthSuccess(u);
+        } else if (lowerEmail === 'zeerocodes@gmail.com' || lowerEmail.includes('admin')) {
+          const u = { uid: 'admin_zeerocodes', displayName: 'Zeerocodes Super Admin', role: 'Admin', email: authEmail };
+          handleAuthSuccess(u);
         } else {
           setAuthError('Simulated error: use parent@edubridge.com, teacher@edubridge.com, student@edubridge.com or admin@edubridge.com');
         }
       } else {
         const mockUid = `user_${Date.now()}`;
-        const u = { uid: mockUid, displayName: authName, role: authRole, email: authEmail, country: authCountry };
-        localStorage.setItem('edubridge_user', JSON.stringify(u));
-        setCurrentUser(u);
+        const finalRole = authEmail.toLowerCase() === 'zeerocodes@gmail.com' ? 'Admin' : authRole;
+        const u = { uid: mockUid, displayName: authName, role: finalRole, email: authEmail, country: authCountry };
+        handleAuthSuccess(u);
       }
     } finally {
       setAuthLoading(false);
@@ -822,7 +828,7 @@ export default function App() {
 
   // GSAP hero entrances
   useLayoutEffect(() => {
-    if (currentView === 'teacher_profile') return;
+    if (currentView !== 'home') return;
     let ctx = gsap.context(() => {
       if (document.querySelector('.hero-fade')) {
         gsap.fromTo('.hero-fade',
@@ -836,7 +842,7 @@ export default function App() {
 
   // GSAP trust section scroll entrances
   useLayoutEffect(() => {
-    if (currentView === 'teacher_profile') return;
+    if (currentView !== 'home') return;
     let ctx = gsap.context(() => {
       if (document.querySelector('.trust-section')) {
         gsap.fromTo('.trust-fade',
@@ -861,7 +867,7 @@ export default function App() {
 
   // Protocol pin ScrollTrigger stacks
   useLayoutEffect(() => {
-    if (currentView === 'teacher_profile') return;
+    if (currentView !== 'home') return;
     let ctx = gsap.context(() => {
       const cards = gsap.utils.toArray('.protocol-stack');
       if (cards.length === 0) return;
@@ -1087,11 +1093,27 @@ export default function App() {
                   </a>
                 )}
 
+                {currentView === 'dashboard' ? (
+                  <button
+                    onClick={() => setCurrentView('home')}
+                    className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border border-white text-white hover:bg-white hover:text-brand-charcoal"
+                  >
+                    Back to Home
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setCurrentView('dashboard')}
+                    className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full bg-brand-clay text-white hover:bg-brand-clay/90"
+                  >
+                    Go to Dashboard
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     localStorage.removeItem('edubridge_user');
                     localStorage.removeItem('edubridge_token');
                     setCurrentUser(null);
+                    setCurrentView('home');
                   }}
                   className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border bg-brand-cream border-brand-cream text-brand-moss hover:bg-brand-clay hover:border-brand-clay hover:text-white"
                 >
@@ -1138,7 +1160,7 @@ export default function App() {
 
       {/* Main View Wrapper (hidden when viewing teacher profile to avoid unmounting conflicts with GSAP pinning) */}
       <div className={currentView === 'teacher_profile' ? 'hidden' : ''}>
-        {currentUser && (
+        {currentUser && currentView === 'dashboard' && (
           isTutorOnboarding ? (
             <TeacherOnboarding 
               currentUser={currentUser}
@@ -1147,6 +1169,7 @@ export default function App() {
                 fetchInitialData();
                 alert("Application submitted successfully! Your account status is now Pending Approval.");
               }}
+              onBack={() => setCurrentView('home')}
             />
           ) : (
             <div className="py-6 min-h-[75vh]">
@@ -1156,6 +1179,7 @@ export default function App() {
                 selectedCurrency={selectedCurrency}
                 formatCurrency={formatCurrency}
                 convertMinor={convertMinor}
+                onBack={() => setCurrentView('home')}
               />
             ) : currentUser.role === 'Teacher' ? (
               <TeacherDashboard
@@ -1166,6 +1190,7 @@ export default function App() {
                 onOpenChat={handleOpenChat}
                 onGradeHomework={handleGradeHomework}
                 gradesLog={gradesLog}
+                onBack={() => setCurrentView('home')}
               />
             ) : currentUser.role === 'Student' ? (
               <StudentPortal
@@ -1173,6 +1198,7 @@ export default function App() {
                 selectedCurrency={selectedCurrency}
                 formatCurrency={formatCurrency}
                 convertMinor={convertMinor}
+                onBack={() => setCurrentView('home')}
               />
             ) : (
               <ParentDashboard 
@@ -1193,12 +1219,13 @@ export default function App() {
                 teachers={teachers}
                 onBookClick={handleBookClick}
                 onTeacherSelect={handleTutorProfileSelect}
+                onBack={() => setCurrentView('home')}
               />
             )}
           </div>
           )
         )}
-        <div className={currentUser ? 'hidden' : ''}>
+        <div className={currentUser && currentView === 'dashboard' ? 'hidden' : ''}>
           {/* Cinematic opening shot Hero */}
       <section className="relative h-[95dvh] w-full overflow-hidden flex items-end justify-start md:justify-end pb-20 px-6 md:px-16 lg:px-24">
         <div 
@@ -2168,16 +2195,7 @@ export default function App() {
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
-        onSuccess={(user) => {
-          if (user.token) {
-            localStorage.setItem('edubridge_token', user.token);
-            localStorage.setItem('edubridge_user', JSON.stringify(user));
-          } else {
-            // Local mock fallback support
-            localStorage.setItem('edubridge_user', JSON.stringify(user));
-          }
-          setCurrentUser(user);
-        }}
+        onSuccess={handleAuthSuccess}
       />
 
       <ChatPanel 

@@ -98,7 +98,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         } else if (lowerEmail.includes('student')) {
           onSuccess({ uid: 'student_1', displayName: 'Tunde Okafor', role: 'Student', email });
           onClose();
-        } else if (lowerEmail.includes('admin')) {
+        } else if (lowerEmail === 'zeerocodes@gmail.com' || lowerEmail.includes('admin')) {
           onSuccess({ uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email });
           onClose();
         } else {
@@ -211,7 +211,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={() => { setGoogleUserForSetup(null); onClose(); }} />
         
         {/* Modal Container */}
-        <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 overflow-hidden">
+        <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
           {/* Close Button */}
           <button onClick={() => { setGoogleUserForSetup(null); onClose(); }} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
             <X className="w-5 h-5" />
@@ -324,6 +324,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                   <option value="South Africa">South Africa</option>
                   <option value="Uganda">Uganda</option>
                   <option value="Rwanda">Rwanda</option>
+                  <option value="Cameroon">Cameroon</option>
+                  <option value="Tanzania">Tanzania</option>
+                  <option value="Egypt">Egypt</option>
+                  <option value="Senegal">Senegal</option>
+                  <option value="Ethiopia">Ethiopia</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
                 </select>
               </div>
             )}
@@ -358,7 +369,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Modal Container */}
-      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 overflow-hidden">
+      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button onClick={onClose} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
           <X className="w-5 h-5" />
@@ -524,6 +535,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                 <option value="South Africa">South Africa</option>
                 <option value="Uganda">Uganda</option>
                 <option value="Rwanda">Rwanda</option>
+                <option value="Cameroon">Cameroon</option>
+                <option value="Tanzania">Tanzania</option>
+                <option value="Egypt">Egypt</option>
+                <option value="Senegal">Senegal</option>
+                <option value="Ethiopia">Ethiopia</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="United States">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+                <option value="Germany">Germany</option>
+                <option value="France">France</option>
               </select>
             </div>
           )}
@@ -573,46 +595,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           Continue with Google
         </button>
 
-        {/* Default Credentials Helper */}
-        <div className="mt-6 border-t border-brand-moss/10 pt-4 space-y-2">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-brand-clay font-bold block">
-            Default Demo Accounts (Auto-fill)
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => { setEmail('parent@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
-              className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
-            >
-              <span className="font-heading font-extrabold text-[9px] text-brand-moss">👨‍👩‍👦 Parent</span>
-              <span className="font-mono text-[8px] text-brand-charcoal/60 mt-0.5 truncate w-full">parent@edubridge.com</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setEmail('student@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
-              className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
-            >
-              <span className="font-heading font-extrabold text-[9px] text-brand-moss">🎓 Student</span>
-              <span className="font-mono text-[8px] text-brand-charcoal/60 mt-0.5 truncate w-full">student@edubridge.com</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setEmail('teacher@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
-              className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
-            >
-              <span className="font-heading font-extrabold text-[9px] text-brand-moss">👨‍🏫 Teacher</span>
-              <span className="font-mono text-[8px] text-brand-charcoal/60 mt-0.5 truncate w-full">teacher@edubridge.com</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setEmail('admin@edubridge.com'); setPassword('password123'); setActiveTab('login'); }}
-              className="bg-white hover:bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-2 text-center transition-all duration-300 flex flex-col items-center justify-center cursor-pointer"
-            >
-              <span className="font-heading font-extrabold text-[9px] text-brand-moss">🛡️ Admin</span>
-              <span className="font-mono text-[8px] text-brand-charcoal/60 mt-0.5 truncate w-full">admin@edubridge.com</span>
-            </button>
-          </div>
-        </div>
+
 
         <div className="mt-6 flex items-center justify-center gap-1.5 text-[10px] text-brand-charcoal/50">
           <Shield className="w-3.5 h-3.5 text-brand-moss/40" />

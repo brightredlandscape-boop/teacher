@@ -145,7 +145,7 @@ export default function BookingModal({
       <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={() => { resetStates(); onClose(); }} />
       
       {/* Modal Container */}
-      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl z-10 overflow-hidden">
+      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button onClick={() => { resetStates(); onClose(); }} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
           <X className="w-5 h-5" />

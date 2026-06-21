@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Trophy, Flame, Award, BarChart3, Calendar, FileText, CheckCircle2, Clock, PlayCircle, FolderOpen, ArrowRight, User, Download } from 'lucide-react';
 
-export default function StudentPortal({ currentUser, selectedCurrency, formatCurrency, convertMinor }) {
+export default function StudentPortal({ currentUser, selectedCurrency, formatCurrency, convertMinor, onBack }) {
   const [studentData, setStudentData] = useState(null);
   const [xp, setXp] = useState(1450);
   const [streak, setStreak] = useState(7);
@@ -139,6 +139,14 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
       {/* Header Info */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+            >
+              ← Back to Home
+            </button>
+          )}
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">STUDENT PORTAL & SANDBOX</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Welcome back, {currentUser?.displayName || 'Tunde'}</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">

@@ -396,8 +396,13 @@ export default function BookingModal({
                   <div className="text-[11px] text-red-600 mt-1.5 px-3 py-2 font-sans flex justify-between items-center bg-rose-50/50 border border-rose-100 rounded-xl">
                     <span>Insufficient funds in balance wallet.</span>
                     <a
-                      href="#topup"
-                      onClick={() => onClose()}
+                      href="/#topup"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onClose();
+                        window.history.pushState(null, '', '/#topup');
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      }}
                       className="font-heading font-extrabold text-[10px] uppercase tracking-wider text-brand-clay hover:underline cursor-pointer"
                     >
                       Top Up Wallet →

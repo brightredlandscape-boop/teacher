@@ -544,7 +544,7 @@ app.post('/api/support/message', supportRateLimiter, async (req, res) => {
     if (msgLower.includes('tutor') || msgLower.includes('teacher') || msgLower.includes('instructor')) {
       reply = "Our teachers undergo government ID checks, credentials handbook verification, and a 4-week onboarding priority audit. You can explore tutors directly on our marketplace.";
     } else if (msgLower.includes('escrow') || msgLower.includes('pay') || msgLower.includes('fee') || msgLower.includes('cost')) {
-      reply = "EduBridge operates a timed escrow payment engine. When you book a lesson, funds are secured in escrow and only released to the teacher 24 hours after a class validation check. A 15% commission is kept by the platform.";
+      reply = "EduBridge operates a timed escrow payment engine. When you book a lesson, funds are secured in escrow and only released to the teacher 24 hours after a class validation check. A 20% commission is kept by the platform.";
     } else if (msgLower.includes('dispute') || msgLower.includes('refund') || msgLower.includes('cancel')) {
       reply = "If a session has an issue, you can file a dispute claim directly from the session log. Escrow funds will remain locked while an admin resolves the claim within 24 hours.";
     } else if (msgLower.includes('language') || msgLower.includes('translate') || msgLower.includes('french') || msgLower.includes('swahili')) {
@@ -575,7 +575,7 @@ app.post('/api/support/message', supportRateLimiter, async (req, res) => {
 
     const systemInstruction = {
       parts: [{
-        text: "You are the official EduBridge AI Customer Support Agent. You represent EduBridge Africa, an elite tutoring marketplace connecting verified African educators (specializing in WAEC, Cambridge, SAT, and foundational tutoring) with global parent markets. You explain concepts clearly, resolve dispute inquiries gracefully, explain escrow locks (which release 24 hours after a lesson is verified), and explain commission rates (15% commission fee). Maintain a polite, professional, and supportive tone. Keep answers under 100 words."
+        text: "You are the official EduBridge AI Customer Support Agent. You represent EduBridge Africa, an elite tutoring marketplace connecting verified African educators (specializing in WAEC, Cambridge, SAT, and foundational tutoring) with global parent markets. You explain concepts clearly, resolve dispute inquiries gracefully, explain escrow locks (which release 24 hours after a lesson is verified), and explain commission rates (20% commission fee). Maintain a polite, professional, and supportive tone. Keep answers under 100 words."
       }]
     };
 
@@ -1417,8 +1417,10 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     });
   }
 
-  // 3. Deduct commission (15%) and payout to teacher
-  const commission = Math.round(session.cost * 0.15);
+  // 3. Deduct commission (20%) and payout to teacher
+  const config = db.findOne('platform_config', c => c.id === 'default') || { commissionRate: 20 };
+  const commissionRate = config.commissionRate || 20;
+  const commission = Math.round(session.cost * (commissionRate / 100));
   const payout = session.cost - commission;
 
   await createNotification(

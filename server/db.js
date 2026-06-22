@@ -426,7 +426,7 @@ export async function seedDatabase() {
   if (configs.length === 0) {
     await db.insert('platform_config', {
       id: 'default',
-      commissionRate: 15,
+      commissionRate: 20,
       minPayoutNGN: 500000, // ₦5,000 in minor kobo
       minPayoutUSD: 2000,   // $20 in minor cents
       exchangeRates: {

@@ -650,6 +650,12 @@ export default function App() {
           const errData = await checkoutRes.json().catch(() => ({}));
           console.error("Booking checkout initiation failed:", errData);
           alert(`Booking payment failed: ${errData.error || "Payment gateway error"}`);
+          if (checkoutRes.status === 401 || checkoutRes.status === 403 || (errData.error && errData.error.toLowerCase().includes("token"))) {
+            localStorage.removeItem('edubridge_user');
+            localStorage.removeItem('edubridge_token');
+            setCurrentUser(null);
+            setCurrentView('home');
+          }
           return;
         }
       }
@@ -749,6 +755,12 @@ export default function App() {
           const errData = await checkoutRes.json().catch(() => ({}));
           console.error("Top-up checkout initiation failed:", errData);
           alert(`Top-up failed: ${errData.error || "Payment gateway error"}`);
+          if (checkoutRes.status === 401 || checkoutRes.status === 403 || (errData.error && errData.error.toLowerCase().includes("token"))) {
+            localStorage.removeItem('edubridge_user');
+            localStorage.removeItem('edubridge_token');
+            setCurrentUser(null);
+            setCurrentView('home');
+          }
           return false;
         }
       }

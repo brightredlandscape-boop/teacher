@@ -1030,7 +1030,7 @@ export default function ParentDashboard({
           <Marketplace 
             teachers={teachers || []} 
             selectedCurrency={selectedCurrency} 
-            onBookClick={onBookClick}
+            onBookClick={(teacher) => onBookClick(teacher, activeStudent)}
             formatCurrency={formatCurrency}
             convertMinor={convertMinor}
             onTeacherSelect={onTeacherSelect}

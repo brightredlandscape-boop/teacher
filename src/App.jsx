@@ -150,6 +150,7 @@ export default function App() {
 
   // Booking Modal Trigger State
   const [selectedTeacherForBooking, setSelectedTeacherForBooking] = useState(null);
+  const [selectedStudentForBooking, setSelectedStudentForBooking] = useState(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [watchingTeacherVideo, setWatchingTeacherVideo] = useState(null);
 
@@ -464,13 +465,14 @@ export default function App() {
   };
 
   // State handlers
-  const handleBookClick = (teacher) => {
+  const handleBookClick = (teacher, student) => {
     if (!currentUser) {
       setAuthTab('login');
       setIsAuthOpen(true);
       return;
     }
     setSelectedTeacherForBooking(teacher);
+    setSelectedStudentForBooking(student || null);
     setIsBookingOpen(true);
   };
 
@@ -626,6 +628,8 @@ export default function App() {
   };
 
   const handleBookingConfirm = async (costNgnMinor, slot, paymentMethod = 'wallet') => {
+    const activeStudentId = selectedStudentForBooking ? (selectedStudentForBooking.uid || selectedStudentForBooking.id) : 'student_1';
+    const activeStudentName = selectedStudentForBooking ? selectedStudentForBooking.name : 'Tunde';
     try {
       if (paymentMethod === 'card') {
         const provider = 'paystack';
@@ -638,7 +642,9 @@ export default function App() {
             currency: selectedCurrency,
             provider,
             paymentType: 'session_booking',
-            amountNgnMinor: costNgnMinor
+            amountNgnMinor: costNgnMinor,
+            studentId: activeStudentId,
+            studentName: activeStudentName
           })
         });
         if (checkoutRes.ok) {
@@ -666,8 +672,8 @@ export default function App() {
         body: JSON.stringify({
           teacherId: selectedTeacherForBooking.id || selectedTeacherForBooking.uid,
           teacherName: selectedTeacherForBooking.name,
-          studentId: 'student_1',
-          studentName: 'Tunde',
+          studentId: activeStudentId,
+          studentName: activeStudentName,
           parentId: currentUser ? currentUser.uid : 'parent_1',
           cost: costNgnMinor,
           slot
@@ -699,6 +705,8 @@ export default function App() {
         teacherName: selectedTeacherForBooking.name,
         avatar: selectedTeacherForBooking.avatar,
         subject: selectedTeacherForBooking.subjects[0] + " Class",
+        studentName: activeStudentName,
+        studentId: activeStudentId,
         slot: slot,
         cost: costNgnMinor,
         status: "Scheduled"

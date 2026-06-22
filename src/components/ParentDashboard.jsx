@@ -564,14 +564,37 @@ export default function ParentDashboard({
                           </span>
                         </div>
                         <p className="font-sans text-xs text-brand-charcoal/70 mt-0.5">
-                          Slot: <span className="font-bold">{session.slot.day} at {session.slot.time}</span> · Value: {formatCurrency(convertMinor(session.cost, selectedCurrency), selectedCurrency)}
+                          Slot: <span className="font-bold">{session.slot.day} at {session.slot.time}</span> · Value: <span className="font-bold text-brand-moss">{formatCurrency(convertMinor(session.cost, selectedCurrency), selectedCurrency)}</span>
                         </p>
+                        
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className={`font-mono text-[9px] font-bold py-0.5 px-2 rounded border uppercase tracking-wider flex items-center gap-1.5 ${
+                            session.status === 'Completed'
+                              ? 'bg-brand-moss/15 border-brand-moss/30 text-brand-moss'
+                              : session.status === 'Disputed'
+                              ? 'bg-rose-100 border-rose-300 text-rose-800'
+                              : 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                          }`}>
+                            {session.status === 'Completed' ? (
+                              <>✓ Escrow Released to Teacher</>
+                            ) : session.status === 'Disputed' ? (
+                              <>⚠️ Escrow Disputed / Held</>
+                            ) : (
+                              <>🔒 Verified Escrow: {formatCurrency(convertMinor(session.cost, selectedCurrency), selectedCurrency)} Locked</>
+                            )}
+                          </span>
+                          
+                          <span className="font-mono text-[9px] font-bold py-0.5 px-2 rounded border uppercase tracking-wider bg-brand-moss/5 border-brand-moss/15 text-brand-charcoal/70 flex items-center gap-1">
+                            ⏰ {session.slot.day} at {session.slot.time}
+                          </span>
+                        </div>
+
                         {session.recordingUrl && (
                           <a 
                             href={session.recordingUrl} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold flex items-center gap-1 mt-1 hover:underline"
+                            className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold flex items-center gap-1 mt-2.5 hover:underline"
                           >
                             🎥 Access Lesson Recording
                           </a>

@@ -615,13 +615,15 @@ export default function App() {
             parentId: currentUser ? currentUser.uid : 'parent_1',
             amount: convertMinor(costNgnMinor, selectedCurrency),
             currency: selectedCurrency,
-            provider
+            provider,
+            paymentType: 'session_booking',
+            amountNgnMinor: costNgnMinor
           })
         });
         if (checkoutRes.ok) {
           const data = await checkoutRes.json();
           appendTelemetryLog(`Initiating ${provider} checkout for ${formatCurrency(data.amount, data.currency)}`);
-          alert(`Redirecting to ${provider} checkout: ${data.checkoutUrl}`);
+          window.location.href = data.checkoutUrl;
           return;
         }
       }
@@ -692,8 +694,30 @@ export default function App() {
   };
 
   // Wallet topup sync
-  const handleTopupWallet = async (amountNgnMinor) => {
+  const handleTopupWallet = async (amountNgnMinor, method = 'bank') => {
     try {
+      if (method === 'paystack') {
+        const provider = 'paystack';
+        const checkoutRes = await fetch(`${API_BASE}/payments/checkout`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            parentId: currentUser ? currentUser.uid : 'parent_1',
+            amount: amountNgnMinor,
+            currency: 'NGN',
+            provider,
+            paymentType: 'wallet_topup',
+            amountNgnMinor
+          })
+        });
+        if (checkoutRes.ok) {
+          const data = await checkoutRes.json();
+          appendTelemetryLog(`Initiating ${provider} topup checkout for ${formatCurrency(amountNgnMinor, 'NGN')}`);
+          window.location.href = data.checkoutUrl;
+          return { redirect: true };
+        }
+      }
+
       const response = await fetch(`${API_BASE}/parents/wallet/topup`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -713,6 +737,9 @@ export default function App() {
       return false;
     } catch (err) {
       console.error("Wallet topup API error:", err);
+      if (method === 'paystack') {
+        return false;
+      }
       setWalletBalance(prev => prev + amountNgnMinor);
       appendTelemetryLog(`Wallet Topup (Local Fallback): Success adding ${formatCurrency(convertMinor(amountNgnMinor, selectedCurrency), selectedCurrency)}.`);
       return true;

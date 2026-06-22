@@ -51,6 +51,7 @@ app.use(cors({
       origin === clientOrigin || 
       origin === 'http://localhost:5173' || 
       origin === 'http://localhost:4173' || 
+      origin.endsWith('.vercel.app') || 
       origin.endsWith('.ngrok-free.dev') || 
       origin.endsWith('.ngrok.io') || 
       origin.includes('ngrok-free.dev')

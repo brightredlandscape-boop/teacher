@@ -248,22 +248,24 @@ export default function ParentDashboard({
     // convert NGN float input to minor units (e.g. 10000 NGN -> 1000000 minor)
     const amountNgnMinor = Math.round(amountNum * 100);
 
-    setTimeout(async () => {
-      if (onTopupWallet) {
-        const ok = await onTopupWallet(amountNgnMinor);
-        if (ok) {
-          setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountNgnMinor, 'NGN')} successfully credited via ${topupMethod.toUpperCase()}!`);
-          setCustomAmount('');
-          fetchDashboard();
-        } else {
-          setTopupSuccess('⚠️ Deposit processing error.');
-        }
-      } else {
-        setTopupSuccess('⚠️ Top-up wallet handler offline.');
+    if (onTopupWallet) {
+      const res = await onTopupWallet(amountNgnMinor, topupMethod);
+      if (res && res.redirect) {
+        // user is redirected, keep loading status until redirect completes
+        return;
       }
-      setTopupLoading(false);
-      setTimeout(() => setTopupSuccess(''), 4000);
-    }, 1200);
+      if (res) {
+        setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountNgnMinor, 'NGN')} successfully credited via ${topupMethod.toUpperCase()}!`);
+        setCustomAmount('');
+        fetchDashboard();
+      } else {
+        setTopupSuccess('⚠️ Deposit processing error.');
+      }
+    } else {
+      setTopupSuccess('⚠️ Top-up wallet handler offline.');
+    }
+    setTopupLoading(false);
+    setTimeout(() => setTopupSuccess(''), 4000);
   };
 
   // Attendance rate calculation based on progress database

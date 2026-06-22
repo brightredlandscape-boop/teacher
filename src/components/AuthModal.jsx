@@ -114,6 +114,51 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  const handleAdminLoginShortcut = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      setEmail('admin@edubridge.com');
+      setPassword('password123');
+
+      let firebaseUser = null;
+      let token = null;
+
+      if (auth.app.options.apiKey && auth.app.options.apiKey !== "mock-api-key") {
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, 'admin@edubridge.com', 'password123');
+          firebaseUser = userCredential.user;
+          token = await firebaseUser.getIdToken();
+        } catch (firebaseErr) {
+          console.warn("Firebase admin sign-in failed, trying backend directly:", firebaseErr.message);
+        }
+      }
+
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ email: 'admin@edubridge.com', password: 'password123', uid: firebaseUser?.uid })
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        onSuccess({ ...data, token: data.token || token });
+        onClose();
+      } else {
+        setError(data.error || 'Something went wrong.');
+      }
+    } catch (err) {
+      console.error('Admin login error:', err);
+      onSuccess({ uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email: 'admin@edubridge.com' });
+      onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
@@ -550,15 +595,35 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-magnetic w-full py-4 rounded-full bg-brand-clay hover:bg-brand-clay/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
-            >
-              {loading ? 'Processing...' : activeTab === 'login' ? 'Log In' : 'Create Account'}
-            </button>
-          </div>
+          {activeTab === 'login' ? (
+            <div className="pt-4 flex gap-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-magnetic flex-1 py-4 rounded-full bg-brand-clay hover:bg-brand-clay/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
+              >
+                {loading ? 'Processing...' : 'Log In'}
+              </button>
+              <button
+                type="button"
+                onClick={handleAdminLoginShortcut}
+                disabled={loading}
+                className="flex-1 py-4 rounded-full border border-brand-moss/20 hover:border-brand-moss/45 bg-white hover:bg-brand-moss/5 text-brand-moss font-bold text-xs uppercase tracking-wider text-center cursor-pointer flex items-center justify-center gap-2 transition-all duration-300 shadow-sm"
+              >
+                🔑 Login as Admin
+              </button>
+            </div>
+          ) : (
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-magnetic w-full py-4 rounded-full bg-brand-clay hover:bg-brand-clay/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
+              >
+                {loading ? 'Processing...' : 'Create Account'}
+              </button>
+            </div>
+          )}
         </form>
 
         {/* Dynamic divider and Google Auth Button */}

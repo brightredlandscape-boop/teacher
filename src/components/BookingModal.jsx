@@ -72,7 +72,12 @@ export default function BookingModal({
     if (!selectedSlot) return;
     
     if (paymentMethod === 'card') {
-      setShowCardForm(true);
+      setIsProcessing(true);
+      onBook(activeRateMinor, slots.find(s => s.id === selectedSlot), 'card');
+      setTimeout(() => {
+        setIsProcessing(false);
+        onClose();
+      }, 1000);
     } else {
       // Wallet payment
       setIsProcessing(true);

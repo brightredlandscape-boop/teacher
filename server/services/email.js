@@ -3,18 +3,35 @@ import path from 'path';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
-const DATA_DIR = path.join(process.cwd(), 'server', 'data');
-const EMAIL_LOG_FILE = path.join(DATA_DIR, 'sent_emails.json');
+let DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory exists (robust fallback to /tmp for read-only environments)
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn("Read-only filesystem detected for email service, falling back to /tmp/edubridge_data");
+  DATA_DIR = path.join('/tmp', 'edubridge_data');
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (tmpErr) {
+    console.error("Failed to create temp directory for email service:", tmpErr);
+  }
 }
+
+const EMAIL_LOG_FILE = path.join(DATA_DIR, 'sent_emails.json');
 
 // Helper to read sent emails log
 function readSentEmails() {
   if (!fs.existsSync(EMAIL_LOG_FILE)) {
-    fs.writeFileSync(EMAIL_LOG_FILE, JSON.stringify([], null, 2));
+    try {
+      fs.writeFileSync(EMAIL_LOG_FILE, JSON.stringify([], null, 2));
+    } catch (err) {
+      console.error("Error creating sent emails file:", err.message);
+    }
     return [];
   }
   try {

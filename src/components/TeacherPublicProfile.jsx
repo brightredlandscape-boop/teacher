@@ -14,7 +14,7 @@ export default function TeacherPublicProfile({
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState([]);
 
-  const API_BASE = '/api';
+  const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
   useEffect(() => {
     const fetchProfile = async () => {

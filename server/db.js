@@ -5,11 +5,23 @@ import mongoose from 'mongoose';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-const DATA_DIR = path.join(process.cwd(), 'server', 'data');
+let DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory exists (robust fallback to /tmp for read-only environments)
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn("Read-only filesystem detected, falling back to /tmp/edubridge_data");
+  DATA_DIR = path.join('/tmp', 'edubridge_data');
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (tmpErr) {
+    console.error("Failed to create temp directory as well:", tmpErr);
+  }
 }
 
 // Helper to get collection file path
@@ -78,7 +90,11 @@ function loadFromJsonFiles() {
     if (!fs.existsSync(filepath)) {
       // Write empty collection array encrypted
       const emptyEncrypted = encrypt(JSON.stringify([], null, 2));
-      fs.writeFileSync(filepath, emptyEncrypted, 'utf8');
+      try {
+        fs.writeFileSync(filepath, emptyEncrypted, 'utf8');
+      } catch (err) {
+        console.error(`Database Migration: Failed to write initial fallback JSON for '${col}':`, err.message);
+      }
       CACHE[col] = [];
     } else {
       try {
@@ -182,7 +198,22 @@ async function persistDocumentDelete(collection, id) {
 }
 
 function initFirestore() {
-  const serviceAccountPath = path.join(process.cwd(), 'edubridgez-firebase-adminsdk-fbsvc-d56360976c.json');
+  // Dynamically find any Firebase service account JSON file in the project root
+  let serviceAccountPath = null;
+  try {
+    const files = fs.readdirSync(process.cwd());
+    const serviceAccountFile = files.find(f => f.startsWith('edubridgez-firebase-adminsdk-') && f.endsWith('.json'));
+    if (serviceAccountFile) {
+      serviceAccountPath = path.join(process.cwd(), serviceAccountFile);
+      console.log(`Database Migration: Found Firebase service account key file: ${serviceAccountFile}`);
+    }
+  } catch (err) {
+    console.warn("Failed to dynamically search for firebase service account:", err);
+  }
+
+  if (!serviceAccountPath) {
+    serviceAccountPath = path.join(process.cwd(), 'edubridgez-firebase-adminsdk-fbsvc-d56360976c.json');
+  }
   
   if (fs.existsSync(serviceAccountPath)) {
     try {
@@ -687,7 +718,7 @@ export async function seedDatabase() {
     // Seed Wallet Balance
     await db.insert('wallets', {
       uid: "parent_1",
-      balance: 5000000, // ₦50,000 in minor kobo
+      balance: 0,
       escrow: 0
     });
 

@@ -397,28 +397,49 @@ export default function App() {
     }
   }, []);
 
-  // Handle URL path client-side routing
+  // Handle URL path client-side routing and hash checking
   useEffect(() => {
     const handleUrlCheck = () => {
       const path = window.location.pathname;
+      const hash = window.location.hash;
       const match = path.match(/\/teacher\/([^/]+)/);
+      
       if (match) {
         const username = match[1];
         setCurrentView('teacher_profile');
         setProfileUsername(username);
       } else {
-        setCurrentView('home');
-        setProfileUsername('');
-        // Refresh ScrollTrigger and reset timeline when returning home
-        setTimeout(() => {
-          ScrollTrigger.refresh();
-        }, 100);
+        const savedUser = localStorage.getItem('edubridge_user');
+        if (hash === '#topup' || hash === '#billing') {
+          if (!savedUser) {
+            setCurrentView('home');
+            setProfileUsername('');
+            setAuthTab('login');
+            setIsAuthOpen(true);
+          } else {
+            setCurrentView('dashboard');
+            setProfileUsername('');
+          }
+        } else {
+          // If no specific hash, set to dashboard if logged in, or home
+          const saved = localStorage.getItem('edubridge_user');
+          setCurrentView(saved ? 'dashboard' : 'home');
+          setProfileUsername('');
+          // Refresh ScrollTrigger and reset timeline when returning home
+          setTimeout(() => {
+            ScrollTrigger.refresh();
+          }, 100);
+        }
       }
     };
 
     handleUrlCheck();
     window.addEventListener('popstate', handleUrlCheck);
-    return () => window.removeEventListener('popstate', handleUrlCheck);
+    window.addEventListener('hashchange', handleUrlCheck);
+    return () => {
+      window.removeEventListener('popstate', handleUrlCheck);
+      window.removeEventListener('hashchange', handleUrlCheck);
+    };
   }, []);
 
   // Refresh GSAP ScrollTriggers when showing the homepage layout

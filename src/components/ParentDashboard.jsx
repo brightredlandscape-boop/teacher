@@ -157,6 +157,8 @@ export default function ParentDashboard({
     const handleHashChange = () => {
       if (window.location.hash === '#marketplace') {
         setActiveTab('marketplace');
+      } else if (window.location.hash === '#billing' || window.location.hash === '#topup') {
+        setActiveTab('billing');
       } else if (window.location.hash === '#dashboard' || window.location.hash === '' || window.location.hash === '#progress') {
         setActiveTab('progress');
       }

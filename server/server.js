@@ -894,6 +894,35 @@ app.get('/api/teachers/by-username/:username', (req, res) => {
 // --- 3. PARENT & STUDENT ENDPOINTS ---
 
 // GET Parent intelligence dashboard summary
+app.post('/api/parents/students/add', authenticateToken, requireOwnerOrAdmin, async (req, res) => {
+  const { parentId, name, dob, subjects } = req.body;
+  if (!name) {
+    return res.status(400).json({ error: "Child's name is required." });
+  }
+
+  // Create new student
+  const studentUid = `student_${Date.now()}`;
+  const newStudent = await db.insert('students', {
+    uid: studentUid,
+    parentUid: parentId,
+    name: sanitizeText(name),
+    dob: dob ? sanitizeText(dob) : "",
+    subjects: subjects || [],
+    xp: 0,
+    badges: [],
+    progressBySubject: {}
+  });
+
+  // Update parent children list in database
+  const parent = db.findOne('parents', p => p.uid === parentId);
+  if (parent) {
+    const updatedChildren = Array.isArray(parent.children) ? [...parent.children, name] : [name];
+    await db.update('parents', parent.id, { children: updatedChildren });
+  }
+
+  res.json({ success: true, student: newStudent });
+});
+
 app.get('/api/parents/dashboard/:uid', authenticateToken, requireOwnerOrAdmin, (req, res) => {
   const { uid } = req.params;
   

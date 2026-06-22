@@ -247,19 +247,28 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
                   <Calendar className="w-5 h-5 text-brand-clay" /> Upcoming Scheduled Sessions
                 </h3>
                 
-                {sessions.filter(s => s.status === 'Scheduled').length === 0 ? (
+                {sessions.filter(s => s.status === 'Scheduled' || s.status === 'Pending Confirmation').length === 0 ? (
                   <div className="text-center text-brand-charcoal/40 text-xs py-8 font-sans">
                     No upcoming scheduled sessions. Ask your parent to book a slot from the marketplace.
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {sessions.filter(s => s.status === 'Scheduled').slice(0, 3).map((session, idx) => {
+                    {sessions.filter(s => s.status === 'Scheduled' || s.status === 'Pending Confirmation').slice(0, 3).map((session, idx) => {
                       return (
                         <div key={session.id || idx} className="bg-brand-cream/20 border border-brand-moss/5 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                           <div>
-                            <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block mb-1">
-                              NEXT SESSION
-                            </span>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">
+                                NEXT SESSION
+                              </span>
+                              <span className={`font-mono text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                session.status === 'Scheduled'
+                                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                  : 'bg-amber-50 border-amber-200 text-amber-800 animate-pulse'
+                              }`}>
+                                {session.status}
+                              </span>
+                            </div>
                             <h4 className="font-heading font-bold text-brand-moss text-sm">
                               {session.subject} with {session.teacherName}
                             </h4>

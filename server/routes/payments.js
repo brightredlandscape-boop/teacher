@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { rateLimit } from 'express-rate-limit';
+import { getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { db } from '../db.js';
 
 dotenv.config();
@@ -15,11 +17,52 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: "Access token required." });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: "Invalid or expired token." });
-    req.user = user;
-    next();
-  });
+  // If Firebase Admin is initialized, verify via Firebase Auth
+  if (getApps().length > 0) {
+    getAuth().verifyIdToken(token)
+      .then((decodedToken) => {
+        const uid = decodedToken.uid;
+        // Lookup user profile in database cache
+        const user = db.findOne('users', u => u.uid === uid);
+        if (user) {
+          req.user = {
+            uid: user.uid,
+            role: user.role,
+            email: user.email,
+            displayName: user.displayName
+          };
+        } else {
+          // If profile sync hasn't occurred yet, build basic request context
+          req.user = {
+            uid: uid,
+            role: decodedToken.role || 'Parent',
+            email: decodedToken.email
+          };
+        }
+        next();
+      })
+      .catch((err) => {
+        // Fallback to local JWT verification
+        jwt.verify(token, JWT_SECRET, (jwtErr, user) => {
+          if (jwtErr) {
+            console.warn("JWT verification error (Firebase catch in payments):", jwtErr.message);
+            return res.status(403).json({ error: "Invalid or expired token." });
+          }
+          req.user = user;
+          next();
+        });
+      });
+  } else {
+    // Normal local JWT fallback
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+        console.warn("JWT verification error (No Firebase in payments):", err.message);
+        return res.status(403).json({ error: "Invalid or expired token." });
+      }
+      req.user = user;
+      next();
+    });
+  }
 }
 
 const checkoutRateLimiter = rateLimit({

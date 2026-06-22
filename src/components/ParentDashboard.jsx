@@ -66,6 +66,48 @@ export default function ParentDashboard({
   const [dashboardData, setDashboardData] = useState(null);
   const [submissionText, setSubmissionText] = useState({});
   const [submissionMessage, setSubmissionMessage] = useState('');
+
+  const [isAddChildOpen, setIsAddChildOpen] = useState(false);
+  const [newChildName, setNewChildName] = useState('');
+  const [newChildSubjects, setNewChildSubjects] = useState('');
+  const [addChildError, setAddChildError] = useState('');
+
+  const handleAddChildSubmit = async () => {
+    if (!newChildName.trim()) {
+      setAddChildError('Name is required');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/parents/students/add`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          parentId: parentUid,
+          name: newChildName.trim(),
+          subjects: newChildSubjects.split(',').map(s => s.trim()).filter(Boolean)
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIsAddChildOpen(false);
+        setNewChildName('');
+        setNewChildSubjects('');
+        setAddChildError('');
+        await fetchDashboard();
+        if (data.student) {
+          setSelectedChild(data.student.uid || data.student.id);
+        }
+      } else {
+        const err = await res.json();
+        setAddChildError(err.error || 'Failed to add student');
+      }
+    } catch (err) {
+      console.error(err);
+      setAddChildError('Connection error.');
+    }
+  };
   
   // Dispute Modal States
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
@@ -271,26 +313,38 @@ export default function ParentDashboard({
   };
 
   // Attendance rate calculation based on progress database
-  const activeStudent = selectedChild === 'tunde'
-    ? { name: "Timi Okafor", uid: "student_1", xp: 1450, badges: ["Perfect Attendance", "Assignment Champion", "Streak Master"] }
-    : { name: "Zara Okafor", uid: "student_2", xp: 950, badges: ["Consistent Learner", "Top Scorer"] };
+  const activeStudent = students.find(s => s.uid === selectedChild || s.id === selectedChild || s.name.toLowerCase() === selectedChild.toLowerCase()) || {
+    name: selectedChild === 'yinka' ? 'Zara Okafor' : 'Timi Okafor',
+    uid: selectedChild === 'yinka' ? 'student_2' : 'student_1',
+    xp: selectedChild === 'yinka' ? 950 : 1450,
+    badges: selectedChild === 'yinka' ? ["Consistent Learner", "Top Scorer"] : ["Perfect Attendance", "Assignment Champion", "Streak Master"]
+  };
 
-  const studentSessions = (dashboardData?.sessions || parentBookedSessions).filter(s => 
-    s.studentName === (selectedChild === 'tunde' ? 'Tunde' : 'Zara') || s.studentName === activeStudent.name
-  );
+  const studentSessions = (dashboardData?.sessions || parentBookedSessions).filter(s => {
+    const sNameLower = s.studentName ? s.studentName.toLowerCase() : '';
+    const activeNameLower = activeStudent.name ? activeStudent.name.toLowerCase() : '';
+    const selectedChildLower = typeof selectedChild === 'string' ? selectedChild.toLowerCase() : '';
+    return sNameLower === activeNameLower || sNameLower === selectedChildLower || (selectedChildLower === 'tunde' && sNameLower === 'tunde') || (selectedChildLower === 'yinka' && sNameLower === 'zara');
+  });
   
   const totalBooked = studentSessions.length;
   const totalAttended = studentSessions.filter(s => s.status === 'Completed' || s.status === 'Scheduled').length;
   const attendanceRate = totalBooked > 0 ? Math.round((totalAttended / totalBooked) * 100) : 89;
 
   // Assignments filter per student
-  const studentGrades = (dashboardData?.gradesLog || parentGradesLog).filter(g => 
-    g.student === (selectedChild === 'tunde' ? 'Tunde' : 'Zara') || g.student === activeStudent.name
-  );
+  const studentGrades = (dashboardData?.gradesLog || parentGradesLog).filter(g => {
+    const gNameLower = g.student ? g.student.toLowerCase() : '';
+    const activeNameLower = activeStudent.name ? activeStudent.name.toLowerCase() : '';
+    const selectedChildLower = typeof selectedChild === 'string' ? selectedChild.toLowerCase() : '';
+    return gNameLower === activeNameLower || gNameLower === selectedChildLower || (selectedChildLower === 'tunde' && gNameLower === 'tunde') || (selectedChildLower === 'yinka' && gNameLower === 'zara');
+  });
 
-  const studentPending = (dashboardData?.pendingAssignments || parentPendingAssignments).filter(p =>
-    p.studentName === (selectedChild === 'tunde' ? 'Tunde' : 'Zara') || p.studentName === activeStudent.name
-  );
+  const studentPending = (dashboardData?.pendingAssignments || parentPendingAssignments).filter(p => {
+    const pNameLower = p.studentName ? p.studentName.toLowerCase() : '';
+    const activeNameLower = activeStudent.name ? activeStudent.name.toLowerCase() : '';
+    const selectedChildLower = typeof selectedChild === 'string' ? selectedChild.toLowerCase() : '';
+    return pNameLower === activeNameLower || pNameLower === selectedChildLower || (selectedChildLower === 'tunde' && pNameLower === 'tunde') || (selectedChildLower === 'yinka' && pNameLower === 'zara');
+  });
 
   const avgGrade = studentGrades.length > 0
     ? Math.round(studentGrades.reduce((sum, g) => sum + (g.grade?.score || g.score), 0) / studentGrades.length)
@@ -410,34 +464,149 @@ export default function ParentDashboard({
             </div>
           </div>
           
+          {/* Parent Onboarding Protocol Checklist */}
+          <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 md:p-8 shadow-sm">
+            <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-2">QUICKSTART GUIDE</span>
+            <h3 className="font-heading font-bold text-xl text-brand-moss mb-4">How to Setup & Manage Classes (Step-by-Step)</h3>
+            <p className="font-sans text-xs text-brand-charcoal/70 mb-6 leading-relaxed">
+              Welcome to EduBridge Africa! As a parent, you control your children's learning journey, booking schedules, and payments. Here is how the system links you, your children, and the teachers together:
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {[
+                {
+                  step: "1",
+                  title: "Add Child Profile",
+                  desc: "Click 'Add Child Profile' under Select Student. Enter their name and subjects to create their profile.",
+                  expect: "Creates a separate dashboard with individual gradebooks, XP tracker, study groups, and badges."
+                },
+                {
+                  step: "2",
+                  title: "Top-up Wallet",
+                  desc: "Go to 'Billing & Topup'. Fund your balance via Paystack card or bank transfer.",
+                  expect: "Deposits funds. Payments are locked in an escrow lockbox when booking, protecting your money."
+                },
+                {
+                  step: "3",
+                  title: "Book a Teacher",
+                  desc: "Go to 'Find & Book Tutors'. Filter by subject, pick a teacher, and select an available slot.",
+                  expect: "Secures the lesson and places it under 'Pending Confirmation' status on your dashboard."
+                },
+                {
+                  step: "4",
+                  title: "Join Class",
+                  desc: "The teacher approves. On lesson day, click 'Join Session' next to the scheduled slot.",
+                  expect: "Launches the virtual Zoom classroom directly. The link is available to you and your child."
+                },
+                {
+                  step: "5",
+                  title: "Confirm Completion",
+                  desc: "After the session ends, click 'Confirm Release' or raise a dispute if there is an issue.",
+                  expect: "Releases the escrowed funds to the teacher's bank balance, completing the transaction."
+                }
+              ].map((item) => (
+                <div key={item.step} className="bg-brand-cream/15 border border-brand-moss/5 rounded-2xl p-4 flex flex-col justify-between hover-lift">
+                  <div>
+                    <span className="font-heading font-black text-2xl text-brand-clay block mb-1">0{item.step}</span>
+                    <h4 className="font-heading font-bold text-xs text-brand-moss mb-2">{item.title}</h4>
+                    <p className="font-sans text-[11px] text-brand-charcoal/75 leading-relaxed mb-3">{item.desc}</p>
+                  </div>
+                  <div className="border-t border-brand-moss/5 pt-2 mt-auto">
+                    <span className="font-mono text-[8px] uppercase tracking-wider text-brand-moss/65 block font-bold">What to expect:</span>
+                    <p className="font-sans text-[10px] text-brand-charcoal/60 leading-normal mt-1">{item.expect}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Child Selection and AI Insight Banner */}
           <div className="flex flex-col lg:flex-row justify-between items-stretch gap-6">
             
             {/* Child Selector & Overview */}
             <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 lg:w-1/3 flex flex-col justify-between shadow-sm">
               <div>
-                <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-3">SELECT STUDENT</span>
-                <div className="flex gap-2 mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">SELECT STUDENT</span>
                   <button
-                    onClick={() => setSelectedChild('tunde')}
-                    className={`flex-1 py-3 px-4 rounded-xl border text-center font-heading font-bold text-xs transition-all duration-300 ${
-                      selectedChild === 'tunde'
-                        ? 'border-brand-moss bg-brand-moss/5 text-brand-moss'
-                        : 'border-brand-moss/10 hover:border-brand-moss/20 text-brand-charcoal'
-                    }`}
+                    onClick={() => setIsAddChildOpen(true)}
+                    className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold hover:underline"
                   >
-                    👦 Timi Okafor
+                    <PlusCircle className="w-3.5 h-3.5" /> Add Child Profile
                   </button>
-                  <button
-                    onClick={() => setSelectedChild('yinka')}
-                    className={`flex-1 py-3 px-4 rounded-xl border text-center font-heading font-bold text-xs transition-all duration-300 ${
-                      selectedChild === 'yinka'
-                        ? 'border-brand-moss bg-brand-moss/5 text-brand-moss'
-                        : 'border-brand-moss/10 hover:border-brand-moss/20 text-brand-charcoal'
-                    }`}
-                  >
-                    👧 Zara Okafor
-                  </button>
+                </div>
+
+                {isAddChildOpen && (
+                  <div className="bg-brand-cream/40 border border-brand-moss/10 rounded-2xl p-4 mb-4 space-y-4 font-sans text-xs">
+                    <h4 className="font-heading font-bold text-xs text-brand-moss">Create Child Profile</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-mono text-brand-charcoal/60 mb-1">Child's Name</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Timi"
+                          value={newChildName}
+                          onChange={(e) => setNewChildName(e.target.value)}
+                          className="w-full bg-white border border-brand-moss/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-mono text-brand-charcoal/60 mb-1">Subjects (comma separated)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Mathematics, English"
+                          value={newChildSubjects}
+                          onChange={(e) => setNewChildSubjects(e.target.value)}
+                          className="w-full bg-white border border-brand-moss/10 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    {addChildError && <p className="text-rose-600 text-[10px] font-mono">{addChildError}</p>}
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddChildOpen(false);
+                          setNewChildName('');
+                          setNewChildSubjects('');
+                          setAddChildError('');
+                        }}
+                        className="py-1 px-3 border border-brand-moss/10 hover:bg-brand-moss/5 rounded-xl font-heading text-brand-charcoal font-bold text-[9px] uppercase tracking-wider"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleAddChildSubmit}
+                        className="py-1 px-3 bg-brand-moss text-white hover:bg-brand-clay rounded-xl font-heading font-bold text-[9px] uppercase tracking-wider"
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {students.map((student) => {
+                    const sId = student.uid || student.id || student.name.toLowerCase();
+                    const isSelected = selectedChild === sId || selectedChild === student.name.toLowerCase();
+                    return (
+                      <button
+                        key={sId}
+                        onClick={() => setSelectedChild(sId)}
+                        className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl border text-center font-heading font-bold text-xs transition-all duration-300 ${
+                          isSelected
+                            ? 'border-brand-moss bg-brand-moss/5 text-brand-moss'
+                            : 'border-brand-moss/10 hover:border-brand-moss/20 text-brand-charcoal'
+                        }`}
+                      >
+                        {student.name.toLowerCase().includes('zara') || student.name.toLowerCase().includes('yinka') ? '👧' : '👦'} {student.name}
+                      </button>
+                    );
+                  })}
+                  {students.length === 0 && (
+                    <span className="text-[10px] text-brand-charcoal/50 w-full text-center py-2 italic">No children registered yet. Click Add Child to start.</span>
+                  )}
                 </div>
               </div>
 
@@ -642,13 +811,27 @@ export default function ParentDashboard({
                         )}
   
                         {(session.status === 'Scheduled' || session.status === 'Pending Confirmation') && (
-                          <button
-                            onClick={() => onOpenChat(session)}
-                            className="btn-magnetic w-9 h-9 rounded-full bg-brand-moss/5 border border-brand-moss/10 flex items-center justify-center text-brand-moss hover:bg-brand-clay hover:text-white transition-colors"
-                            title="Open Chat"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => alert('Starting Zoom session... Redirecting to virtual classroom...')}
+                              className="py-1.5 px-3 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-[10px] uppercase tracking-wider text-center transition-colors"
+                            >
+                              Join Session
+                            </button>
+                            <button
+                              onClick={() => alert('Event added to Google Calendar!')}
+                              className="py-1.5 px-3 border border-brand-moss/10 hover:bg-brand-moss/5 rounded-xl font-heading text-brand-charcoal font-bold text-[10px] uppercase tracking-wider text-center transition-colors"
+                            >
+                              Add to Calendar
+                            </button>
+                            <button
+                              onClick={() => onOpenChat(session)}
+                              className="btn-magnetic w-9 h-9 rounded-full bg-brand-moss/5 border border-brand-moss/10 flex items-center justify-center text-brand-moss hover:bg-brand-clay hover:text-white transition-colors"
+                              title="Open Chat"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

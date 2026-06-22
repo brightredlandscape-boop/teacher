@@ -367,7 +367,7 @@ function requireRole(roles) {
 
 // Security Middleware: Owner Check
 function requireOwnerOrAdmin(req, res, next) {
-  const requestedUid = req.params.uid || req.body.uid || req.query.uid;
+  const requestedUid = req.params.uid || req.body.uid || req.query.uid || req.body.parentId || req.body.userId;
   if (!requestedUid) {
     return res.status(400).json({ error: "User identity parameter is required." });
   }

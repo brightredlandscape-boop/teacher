@@ -1183,7 +1183,12 @@ export default function App() {
                   </button>
                 )}
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    try {
+                      await auth.signOut();
+                    } catch (e) {
+                      console.warn("Failed to sign out of Firebase:", e);
+                    }
                     localStorage.removeItem('edubridge_user');
                     localStorage.removeItem('edubridge_token');
                     setCurrentUser(null);

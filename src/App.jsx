@@ -646,6 +646,11 @@ export default function App() {
           appendTelemetryLog(`Initiating ${provider} checkout for ${formatCurrency(data.amount, data.currency)}`);
           window.location.href = data.checkoutUrl;
           return;
+        } else {
+          const errData = await checkoutRes.json().catch(() => ({}));
+          console.error("Booking checkout initiation failed:", errData);
+          alert(`Booking payment failed: ${errData.error || "Payment gateway error"}`);
+          return;
         }
       }
 
@@ -740,6 +745,11 @@ export default function App() {
           appendTelemetryLog(`Initiating ${provider} topup checkout for ${formatCurrency(amountNgnMinor, 'NGN')}`);
           window.location.href = data.checkoutUrl;
           return { redirect: true };
+        } else {
+          const errData = await checkoutRes.json().catch(() => ({}));
+          console.error("Top-up checkout initiation failed:", errData);
+          alert(`Top-up failed: ${errData.error || "Payment gateway error"}`);
+          return false;
         }
       }
 

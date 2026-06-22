@@ -392,6 +392,18 @@ export default function BookingModal({
                     </span>
                   )}
                 </button>
+                {isWalletInsufficient && (
+                  <div className="text-[11px] text-red-600 mt-1.5 px-3 py-2 font-sans flex justify-between items-center bg-rose-50/50 border border-rose-100 rounded-xl">
+                    <span>Insufficient funds in balance wallet.</span>
+                    <a
+                      href="#topup"
+                      onClick={() => onClose()}
+                      className="font-heading font-extrabold text-[10px] uppercase tracking-wider text-brand-clay hover:underline cursor-pointer"
+                    >
+                      Top Up Wallet →
+                    </a>
+                  </div>
+                )}
 
                 {/* Credit Card Option (Paystack simulation) */}
                 <button

@@ -95,10 +95,11 @@ router.post('/checkout', authenticateToken, checkoutRateLimiter, async (req, res
         });
       } else {
         console.error("[PAYMENTS] Paystack initialization failed:", resData);
-        throw new Error(resData.message || "Paystack API error");
+        return res.status(400).json({ error: resData.message || "Paystack initialization failed." });
       }
     } catch (err) {
-      console.warn("[PAYMENTS] Live Paystack checkout failed, falling back to simulation:", err.message);
+      console.error("[PAYMENTS] Live Paystack checkout error:", err);
+      return res.status(500).json({ error: err.message || "Internal payment gateway error." });
     }
   }
 

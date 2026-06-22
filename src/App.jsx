@@ -675,6 +675,10 @@ export default function App() {
       }
     } catch (err) {
       console.error("Booking API error:", err);
+      if (paymentMethod === 'card') {
+        alert(`Payment initialization failed: ${err.message || "Please check your connection."}`);
+        return;
+      }
       // Fallback local operation
       setWalletBalance(prev => prev - costNgnMinor);
       setEscrowBalance(prev => prev + costNgnMinor);

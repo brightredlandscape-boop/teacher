@@ -29,7 +29,7 @@ export default function BookingModal({
 
   const trialRateNgnMinor = 350000; // ₦3,500
   const rateNgnMinor = teacher?.rate || 0;
-  const isTrial = true; // Booking is trial by default for landing conversion
+  const isTrial = teacher?.id !== 'teacher_test_pay' && teacher?.uid !== 'teacher_test_pay'; // Booking is trial by default for landing conversion, except for testpay teacher
 
   const activeRateMinor = isTrial ? trialRateNgnMinor : rateNgnMinor;
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);

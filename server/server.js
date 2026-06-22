@@ -179,6 +179,21 @@ async function guaranteeInitialProfiles() {
     console.log("Guaranteed teacher@edubridge.com teacher profile.");
   }
 
+  const testPayTeacherUser = db.findOne('users', u => u.uid === 'teacher_test_pay');
+  if (!testPayTeacherUser) {
+    await db.insert('users', {
+      uid: "teacher_test_pay",
+      email: "testpay@edubridge.com",
+      displayName: "Test Pay Teacher",
+      role: "Teacher",
+      country: "Nigeria",
+      status: "active",
+      salt: defaultCreds.salt,
+      passwordHash: defaultCreds.hash
+    });
+    console.log("Guaranteed testpay@edubridge.com teacher profile.");
+  }
+
   const parent1User = db.findOne('users', u => u.uid === 'parent_1');
   if (!parent1User) {
     await db.insert('users', {

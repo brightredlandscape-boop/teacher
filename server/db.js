@@ -445,6 +445,31 @@ export async function seedDatabase() {
   if (teachers.length === 0) {
     const initialTeachers = [
       {
+        id: "teacher_test_pay",
+        uid: "teacher_test_pay",
+        username: "testpay",
+        status: "verified",
+        name: "Test Pay Teacher (₦100)",
+        location: "Lagos, Nigeria",
+        subjects: ["Mathematics"],
+        curricula: ["Primary (Ages 6-11)"],
+        rate: 10000, // ₦100/hr in minor units
+        rating: 5.0,
+        reviewsCount: 1,
+        badges: ["badge-verified"],
+        bio: "Seeded account to test live Paystack payment integrations with low transaction fees.",
+        avatar: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=200&auto=format&fit=crop",
+        coverImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop",
+        online: true,
+        availability: {
+          Tomorrow: ["9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"]
+        },
+        languages: ["English"],
+        verified: true,
+        stats: { sessionsTaught: 1, responseRate: 100 },
+        leaderboardOptIn: true
+      },
+      {
         id: "teacher_1",
         uid: "teacher_1",
         username: "adebayo",

@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -14,6 +15,7 @@ import { sendTransactionalEmail } from './services/email.js';
 dotenv.config();
 
 const app = express();
+app.use(helmet()); // Apply HTTP security headers globally
 const PORT = process.env.PORT || 5000;
 
 let dbInitialized = false;
@@ -71,6 +73,45 @@ app.use(express.json({
   }
 }));
 
+// Global Input Sanitizer Helper
+function sanitizeText(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
+function sanitizeObject(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => sanitizeObject(v));
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((result, key) => {
+      // Don't sanitize passwords or explicitly raw fields
+      if (key.toLowerCase().includes('password') || key === 'rawBody' || key === 'bio') {
+        result[key] = obj[key];
+      } else {
+        result[key] = sanitizeObject(obj[key]);
+      }
+      return result;
+    }, {});
+  } else if (typeof obj === 'string') {
+    return sanitizeText(obj);
+  }
+  return obj;
+}
+
+// Global Input Sanitization Middleware to prevent XSS
+app.use((req, res, next) => {
+  if (req.body) req.body = sanitizeObject(req.body);
+  if (req.query) req.query = sanitizeObject(req.query);
+  if (req.params) req.params = sanitizeObject(req.params);
+  next();
+});
+
 const JWT_SECRET = process.env.JWT_SECRET || 'edubridge_jwt_secret_2026';
 
 const authRateLimiter = rateLimit({
@@ -96,6 +137,24 @@ const paymentRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+const publicActionRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: "Too many actions from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const globalRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: { error: "Too many overall requests from this IP, please try again after 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(globalRateLimiter);
 
 app.use('/api/payments', paymentRoutes);
 app.use('/api/b2b/schools', b2bRoutes);
@@ -380,17 +439,6 @@ function requireOwnerOrAdmin(req, res, next) {
   next();
 }
 
-// Input Sanitizer Helper
-function sanitizeText(str) {
-  if (typeof str !== 'string') return str;
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-}
 
 // --- 1. AUTH & USER ENDPOINTS ---
 
@@ -707,7 +755,7 @@ app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), r
 });
 
 // POST waitlist submission
-app.post('/api/waitlist', async (req, res) => {
+app.post('/api/waitlist', publicActionRateLimiter, async (req, res) => {
   const { email, name, role } = req.body;
   if (!email || !name) {
     return res.status(400).json({ error: "Email and name are required." });
@@ -1124,7 +1172,7 @@ app.post('/api/parents/wallet/topup', authenticateToken, paymentRateLimiter, asy
 });
 
 // POST register referral link hit
-app.post('/api/parents/referral/hit', async (req, res) => {
+app.post('/api/parents/referral/hit', publicActionRateLimiter, async (req, res) => {
   const { ref } = req.body;
   if (!ref) {
     return res.status(400).json({ error: "Referral code is required." });

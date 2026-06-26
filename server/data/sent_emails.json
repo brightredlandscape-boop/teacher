@@ -26,5 +26,24 @@
     "sentAt": "2026-06-21T16:44:43.724Z",
     "status": "failed",
     "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+  },
+  {
+    "id": "email_92c04e7a-f366-4d2f-812f-1fe46373538d",
+    "to": "edeteffiong20002@gmail.com",
+    "subject": "EduBridge: Session Escrow Secured",
+    "template": "booking_secured",
+    "body": "Hello Parent,\n\nYour session with Test Pay Teacher (₦100) has been booked. A payment of ₦100 has been safely locked in the EduBridge Timed Escrow Engine for the slot: Today at 3:30 PM.\n\nEscrow details: https://localhost:5173/dashboard/billing\n\nThanks,\nEduBridge Billing",
+    "data": {
+      "teacherName": "Test Pay Teacher (₦100)",
+      "formattedCost": "₦100",
+      "slot": {
+        "id": 1,
+        "day": "Today",
+        "time": "3:30 PM"
+      }
+    },
+    "sentAt": "2026-06-26T20:12:36.227Z",
+    "status": "failed",
+    "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
   }
 ]

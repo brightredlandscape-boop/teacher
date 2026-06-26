@@ -627,7 +627,7 @@ export default function App() {
     }
   };
 
-  const handleBookingConfirm = async (costNgnMinor, slot, paymentMethod = 'wallet') => {
+  const handleBookingConfirm = async (costNgnMinor, slots, paymentMethod = 'wallet') => {
     const activeStudentId = selectedStudentForBooking ? (selectedStudentForBooking.uid || selectedStudentForBooking.id) : 'student_1';
     const activeStudentName = selectedStudentForBooking ? selectedStudentForBooking.name : 'Tunde';
     try {
@@ -675,8 +675,8 @@ export default function App() {
           studentId: activeStudentId,
           studentName: activeStudentName,
           parentId: currentUser ? currentUser.uid : 'parent_1',
-          cost: costNgnMinor,
-          slot
+          costPerSession: Math.floor(costNgnMinor / slots.length),
+          slots
         })
       });
 
@@ -700,7 +700,7 @@ export default function App() {
       setWalletBalance(prev => prev - costNgnMinor);
       setEscrowBalance(prev => prev + costNgnMinor);
       
-      const newSession = {
+      const newSessions = slots.map(slot => ({
         teacherId: selectedTeacherForBooking.id,
         teacherName: selectedTeacherForBooking.name,
         avatar: selectedTeacherForBooking.avatar,
@@ -708,11 +708,11 @@ export default function App() {
         studentName: activeStudentName,
         studentId: activeStudentId,
         slot: slot,
-        cost: costNgnMinor,
+        cost: Math.floor(costNgnMinor / slots.length),
         status: "Scheduled"
-      };
-      setBookedSessions(prev => [...prev, newSession]);
-      appendTelemetryLog(`Escrow Locked (Local Fallback): ${formatCurrency(convertMinor(costNgnMinor, selectedCurrency), selectedCurrency)} secured for ${selectedTeacherForBooking.name}`);
+      }));
+      setBookedSessions(prev => [...prev, ...newSessions]);
+      appendTelemetryLog(`Escrow Locked (Local Fallback): ${formatCurrency(convertMinor(costNgnMinor, selectedCurrency), selectedCurrency)} secured for ${selectedTeacherForBooking.name} (${slots.length} sessions)`);
     }
   };
 

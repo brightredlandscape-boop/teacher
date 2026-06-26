@@ -11,7 +11,7 @@ export default function BookingModal({
   formatCurrency, 
   convertMinor 
 }) {
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -34,6 +34,10 @@ export default function BookingModal({
   const activeRateMinor = isTrial ? trialRateNgnMinor : rateNgnMinor;
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
   const formattedRate = formatCurrency(convertedRateMinor, selectedCurrency);
+
+  const numSelected = selectedSlots.length > 0 ? selectedSlots.length : 1;
+  const totalRateMinor = activeRateMinor * numSelected;
+  const formattedTotalRate = formatCurrency(convertMinor(totalRateMinor, selectedCurrency), selectedCurrency);
 
   const slots = [
     { id: 1, day: "Today", time: "3:30 PM" },
@@ -69,20 +73,16 @@ export default function BookingModal({
   };
 
   const handlePay = () => {
-    if (!selectedSlot) return;
+    if (selectedSlots.length === 0) return;
     
     if (paymentMethod === 'card') {
-      setIsProcessing(true);
-      onBook(activeRateMinor, slots.find(s => s.id === selectedSlot), 'card');
-      setTimeout(() => {
-        setIsProcessing(false);
-        onClose();
-      }, 1000);
+      setShowCardForm(true);
     } else {
       // Wallet payment
       setIsProcessing(true);
       setTimeout(() => {
-        onBook(activeRateMinor, slots.find(s => s.id === selectedSlot), paymentMethod);
+        const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
+        onBook(totalRateMinor, slotsData, paymentMethod);
         setIsProcessing(false);
         resetStates();
         onClose();
@@ -121,7 +121,8 @@ export default function BookingModal({
       setPaymentStatusText("Securing escrow booking deposit...");
       setTimeout(() => {
         // Successful payment booking release
-        onBook(activeRateMinor, slots.find(s => s.id === selectedSlot), 'card');
+        const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
+        onBook(totalRateMinor, slotsData, 'card');
         setIsProcessing(false);
         resetStates();
         onClose();
@@ -140,7 +141,7 @@ export default function BookingModal({
     setPaymentStatusText('');
   };
 
-  const isWalletInsufficient = paymentMethod === 'wallet' && walletBalance < activeRateMinor;
+  const isWalletInsufficient = paymentMethod === 'wallet' && walletBalance < totalRateMinor;
 
   if (!isOpen || !teacher) return null;
 
@@ -349,22 +350,31 @@ export default function BookingModal({
                 </span>
               </span>
               <div className="grid grid-cols-2 gap-3">
-                {slots.map(slot => (
-                  <button
-                    key={slot.id}
-                    onClick={() => setSelectedSlot(slot.id)}
-                    className={`py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 ${
-                      setSelectedSlot && selectedSlot === slot.id
-                        ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-1 ring-brand-clay'
-                        : 'border-brand-moss/10 bg-white hover:border-brand-moss/40 text-brand-charcoal/80'
-                    }`}
-                  >
-                    <span className="text-xs font-bold block">{slot.day}</span>
-                    <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-brand-moss/40" /> {slot.time}
-                    </span>
-                  </button>
-                ))}
+                {slots.map(slot => {
+                  const isSelected = selectedSlots.includes(slot.id);
+                  return (
+                    <button
+                      key={slot.id}
+                      onClick={() => {
+                        setSelectedSlots(prev => 
+                          prev.includes(slot.id) 
+                            ? prev.filter(id => id !== slot.id) 
+                            : [...prev, slot.id]
+                        );
+                      }}
+                      className={`py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 ${
+                        isSelected
+                          ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-1 ring-brand-clay'
+                          : 'border-brand-moss/10 bg-white hover:border-brand-moss/40 text-brand-charcoal/80'
+                      }`}
+                    >
+                      <span className="text-xs font-bold block">{slot.day}</span>
+                      <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-brand-moss/40" /> {slot.time}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -438,20 +448,20 @@ export default function BookingModal({
             <div className="space-y-3">
               <button
                 onClick={handlePay}
-                disabled={!selectedSlot || isWalletInsufficient || isProcessing}
+                disabled={selectedSlots.length === 0 || isWalletInsufficient || isProcessing}
                 className={`btn-magnetic w-full py-4 rounded-full font-sans font-bold text-xs uppercase tracking-wider text-white shadow-lg ${
-                  !selectedSlot || isWalletInsufficient 
+                  selectedSlots.length === 0 || isWalletInsufficient 
                     ? 'bg-brand-moss/40 cursor-not-allowed shadow-none'
                     : 'bg-brand-clay hover:bg-brand-clay/90 shadow-brand-clay/20'
                 }`}
               >
                 {isProcessing 
                   ? "Securing Escrow..." 
-                  : selectedSlot 
+                  : selectedSlots.length > 0
                     ? paymentMethod === 'card' 
                       ? "Enter Card Details" 
-                      : `Pay ${formattedRate} & Lock Escrow`
-                    : "Select a slot first"
+                      : `Pay ${formattedTotalRate} & Lock Escrow`
+                    : "Select at least one slot"
                 }
               </button>
               

@@ -1295,38 +1295,48 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
 
 // POST Book a session
 app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requireOwnerOrAdmin, async (req, res) => {
-  const { teacherId, teacherName, studentId, studentName, parentId, cost, slot } = req.body;
+  const { teacherId, teacherName, studentId, studentName, parentId, costPerSession, slots } = req.body;
+
+  if (!slots || !Array.isArray(slots) || slots.length === 0) {
+    return res.status(400).json({ error: "No slots selected." });
+  }
+
+  const totalCost = costPerSession * slots.length;
 
   // 1. Check Parent wallet
   const wallet = db.findOne('wallets', w => w.uid === parentId);
-  if (!wallet || wallet.balance < cost) {
+  if (!wallet || wallet.balance < totalCost) {
     return res.status(400).json({ error: "Insufficient wallet balance." });
   }
 
   // 2. Lock escrow balance
   await db.update('wallets', wallet.id, {
-    balance: wallet.balance - cost,
-    escrow: wallet.escrow + cost
+    balance: wallet.balance - totalCost,
+    escrow: wallet.escrow + totalCost
   });
 
-  // 3. Create Session Record
-  const newSession = await db.insert('sessions', {
-    teacherId,
-    teacherName,
-    studentId,
-    studentName,
-    parentId,
-    cost,
-    slot,
-    status: "Pending Confirmation",
-    clockLog: [],
-    recordingConsent: { teacher: true, parent: true }
-  });
+  // 3. Create Session Records
+  const createdSessions = [];
+  for (const slot of slots) {
+    const newSession = await db.insert('sessions', {
+      teacherId,
+      teacherName,
+      studentId,
+      studentName,
+      parentId,
+      cost: costPerSession,
+      slot,
+      status: "Pending Confirmation",
+      clockLog: [],
+      recordingConsent: { teacher: true, parent: true }
+    });
+    createdSessions.push(newSession);
+  }
 
   // 4. Log Transaction
   await db.insert('transactions', {
-    amount: cost,
-    amountMinorUnits: cost,
+    amount: totalCost,
+    amountMinorUnits: totalCost,
     currency: "NGN",
     commission: 0,
     status: "secured",
@@ -1496,6 +1506,29 @@ app.post('/api/sessions/clock', authenticateToken, async (req, res) => {
 
   const updated = await db.update('sessions', sessionId, { clockLog });
   res.json({ success: true, clockLog: updated.clockLog });
+});
+
+// POST Update session class link
+app.post('/api/sessions/link', authenticateToken, requireRole(['Teacher']), async (req, res) => {
+  const { sessionId, classLink } = req.body;
+  if (!sessionId || !classLink) {
+    return res.status(400).json({ error: "Session ID and class link are required." });
+  }
+
+  const session = db.findOne('sessions', s => s.id === sessionId);
+  if (!session) {
+    return res.status(404).json({ error: "Session not found." });
+  }
+  
+  if (session.teacherId !== req.user.uid) {
+    return res.status(403).json({ error: "Access forbidden. Not your session." });
+  }
+
+  const updated = await db.update('sessions', sessionId, { 
+    classLink: sanitizeText(classLink)
+  });
+  
+  res.json(updated);
 });
 
 // POST End session and release escrow

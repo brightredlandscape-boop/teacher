@@ -21,6 +21,8 @@ export default function TeacherDashboard({
   const [commission, setCommission] = useState(0);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [transactions, setTransactions] = useState([]);
+  const [classLinkInputs, setClassLinkInputs] = useState({});
+  const [submittingClassLink, setSubmittingClassLink] = useState(null);
 
   // Tab State
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'profile' | 'students' | 'earnings' | 'reputation' | 'academy'
@@ -294,6 +296,35 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
     setIsGraded(true);
     setTimeout(() => setIsGraded(false), 3000);
   };
+
+  const handleSubmitClassLink = async (sessionId) => {
+    const classLink = classLinkInputs[sessionId];
+    if (!classLink) {
+      alert("Please enter a valid class link.");
+      return;
+    }
+    setSubmittingClassLink(sessionId);
+    try {
+      const res = await fetch(`${API_BASE}/sessions/link`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ sessionId, classLink })
+      });
+      if (res.ok) {
+        fetchData();
+        alert("Class link saved successfully!");
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || "Failed to submit link.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting class link.");
+    } finally {
+      setSubmittingClassLink(null);
+    }
+  };
+
 
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
@@ -591,8 +622,33 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                         <span className="font-mono text-[9px] text-emerald-600 font-bold block mt-1 uppercase">
                           ✓ {session.status}
                         </span>
+                        
+                        <div className="mt-3 w-full sm:w-80">
+                          {(!session.classLink && session.status !== 'Completed') ? (
+                            <div className="flex gap-2">
+                              <input
+                                type="url"
+                                placeholder="Paste Class Link (e.g. Zoom/Meet)"
+                                value={classLinkInputs[session.id] || ''}
+                                onChange={e => setClassLinkInputs({ ...classLinkInputs, [session.id]: e.target.value })}
+                                className="flex-1 text-[10px] px-3 py-2 bg-white border border-brand-moss/20 rounded-xl outline-none focus:border-brand-moss"
+                              />
+                              <button
+                                onClick={() => handleSubmitClassLink(session.id)}
+                                disabled={submittingClassLink === session.id}
+                                className="px-3 py-2 bg-brand-moss hover:bg-brand-clay text-white rounded-xl text-[9px] uppercase tracking-wider font-bold shrink-0 disabled:opacity-50"
+                              >
+                                Submit Link
+                              </button>
+                            </div>
+                          ) : session.classLink ? (
+                            <div className="w-full text-[10px] text-brand-moss bg-brand-moss/5 border border-brand-moss/10 px-3 py-2 rounded-xl truncate">
+                              <b>Class Link:</b> <a href={session.classLink} target="_blank" rel="noreferrer" className="underline font-mono">{session.classLink}</a>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 self-start md:self-center">
                         {session.status === 'Completed' && (
                           <button
                             onClick={() => {

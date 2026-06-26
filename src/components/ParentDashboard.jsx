@@ -812,12 +812,24 @@ export default function ParentDashboard({
   
                         {(session.status === 'Scheduled' || session.status === 'Pending Confirmation') && (
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => alert('Starting Zoom session... Redirecting to virtual classroom...')}
-                              className="py-1.5 px-3 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-[10px] uppercase tracking-wider text-center transition-colors"
-                            >
-                              Join Session
-                            </button>
+                            {session.classLink ? (
+                              <a
+                                href={session.classLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="py-1.5 px-3 bg-brand-moss hover:bg-brand-clay text-white rounded-xl font-heading font-bold text-[10px] uppercase tracking-wider text-center transition-colors"
+                              >
+                                Join Session
+                              </a>
+                            ) : (
+                              <button
+                                disabled
+                                className="py-1.5 px-3 bg-brand-charcoal/10 text-brand-charcoal/40 rounded-xl font-heading font-bold text-[10px] uppercase tracking-wider text-center cursor-not-allowed"
+                                title="Waiting for teacher to submit the class link"
+                              >
+                                Link Pending
+                              </button>
+                            )}
                             <button
                               onClick={() => alert('Event added to Google Calendar!')}
                               className="py-1.5 px-3 border border-brand-moss/10 hover:bg-brand-moss/5 rounded-xl font-heading text-brand-charcoal font-bold text-[10px] uppercase tracking-wider text-center transition-colors"

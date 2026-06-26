@@ -342,8 +342,11 @@ export default function BookingModal({
 
             {/* Select Slots */}
             <div className="mb-6">
-              <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-brand-clay" /> 1. Select Availability Slot
+              <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3 flex items-center justify-between">
+                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-brand-clay" /> 1. Select Availability Slot</span>
+                <span className="font-mono text-[9px] bg-brand-moss/10 px-2 py-0.5 rounded-full text-brand-charcoal/70">
+                  {teacher?.timezone || 'WAT (GMT+1)'}
+                </span>
               </span>
               <div className="grid grid-cols-2 gap-3">
                 {slots.map(slot => (

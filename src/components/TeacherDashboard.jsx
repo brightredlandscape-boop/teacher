@@ -16,6 +16,11 @@ export default function TeacherDashboard({
   const [activeSessions, setActiveSessions] = useState([]);
   const [wallet, setWallet] = useState({ balance: 0, escrow: 0 });
   const [loading, setLoading] = useState(false);
+  const [earnedThisMonth, setEarnedThisMonth] = useState(0);
+  const [paidOutToDate, setPaidOutToDate] = useState(0);
+  const [commission, setCommission] = useState(0);
+  const [sessionsCount, setSessionsCount] = useState(0);
+  const [transactions, setTransactions] = useState([]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'profile' | 'students' | 'earnings' | 'reputation' | 'academy'
@@ -35,19 +40,13 @@ export default function TeacherDashboard({
   const [minNotice, setMinNotice] = useState('24 hours');
 
   // Student Roster state & notes
-  const [roster, setRoster] = useState([
-    { uid: 'student_1', name: 'Timi Okafor', subject: 'Mathematics', lastSession: 'Yesterday', nextSession: 'Tomorrow 4:00 PM', assignments: 0, trend: '↑ Upward', note: 'Comprehension is fast. Timi is doing great in trigonometry but needs to watch signs when solving standard equations.' },
-    { uid: 'student_2', name: 'Zara Okafor', subject: 'English Syntax', lastSession: '3 days ago', nextSession: 'Wednesday 3:00 PM', assignments: 1, trend: '→ Stable', note: 'Has a rich vocabulary capacity. Focus on argumentative essay layout and structural transitions next.' }
-  ]);
+  const [roster, setRoster] = useState([]);
   const [selectedRosterStudent, setSelectedRosterStudent] = useState(null);
   const [rosterNoteInput, setRosterNoteInput] = useState('');
 
   // Reputation & Leaderboard Position states
   const [leaderboardOptIn, setLeaderboardOptIn] = useState(true);
-  const [referrals, setReferrals] = useState([
-    { id: 'ref_t1', name: 'Dr. Chidi Johnson', status: 'Approved', commission: 1500000 },
-    { id: 'ref_t2', name: 'Amina Yusuf', status: 'Pending Review', commission: 0 }
-  ]);
+  const [referrals, setReferrals] = useState([]);
 
   // Session Clock Log Modal States
   const [isClockLogOpen, setIsClockLogOpen] = useState(false);
@@ -91,6 +90,9 @@ export default function TeacherDashboard({
   // Payout settings states
   const [payoutMethod, setPayoutMethod] = useState('Wise Bank Direct');
   const [minPayout, setMinPayout] = useState(50000);
+  const [payoutRequestAmount, setPayoutRequestAmount] = useState(0);
+  const [payoutMessage, setPayoutMessage] = useState('');
+  const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
   const handleGeminiSuggest = () => {
     const suggestions = [
@@ -151,6 +153,30 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         setActiveSessions(teacherSessions.filter(s => s.status !== 'Pending Confirmation'));
 
         setWallet({ balance: data.walletBalance || 0, escrow: data.escrowBalance || 0 });
+        setEarnedThisMonth(data.earnedThisMonth || 0);
+        setPaidOutToDate(data.paidOutToDate || 0);
+        setCommission(data.commission || 0);
+        setSessionsCount(data.sessionsCount || 0);
+        setTransactions(data.transactions || []);
+
+        // Dynamic Roster Mapping from active sessions
+        const activeSessionsList = teacherSessions.filter(s => s.status !== 'Pending Confirmation');
+        const rosterMap = {};
+        activeSessionsList.forEach(s => {
+          if (!rosterMap[s.studentId]) {
+            rosterMap[s.studentId] = {
+              uid: s.studentId,
+              name: s.studentName,
+              subject: s.subject || 'Tuition',
+              lastSession: s.status === 'Completed' ? 'Completed Class' : 'Scheduled',
+              nextSession: s.slot ? `${s.slot.day} ${s.slot.time}` : 'Not scheduled',
+              assignments: 0,
+              trend: '↑ Active',
+              note: `Session booked by Parent ${s.parentId || ''}`
+            };
+          }
+        });
+        setRoster(Object.values(rosterMap));
       }
     } catch (err) {
       console.warn("Backend API offline, using local states simulation for teacher:", err);
@@ -301,6 +327,40 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
     }
   };
 
+  const handlePayoutRequest = async (e) => {
+    e.preventDefault();
+    if (payoutRequestAmount <= 0) return setPayoutMessage('Amount must be greater than zero.');
+    if (wallet.balance < payoutRequestAmount) return setPayoutMessage('Insufficient settled balance.');
+    
+    setIsRequestingPayout(true);
+    setPayoutMessage('');
+    try {
+      const response = await fetch(`${API_BASE}/payout/request`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ amount: payoutRequestAmount })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPayoutMessage(`✓ Payout requested successfully. New balance: ${formatCurrency(data.newBalance, selectedCurrency)}`);
+        setWallet(prev => ({ ...prev, balance: data.newBalance }));
+        setPayoutRequestAmount(0);
+      } else {
+        setPayoutMessage(data.error || 'Failed to request payout.');
+      }
+    } catch (err) {
+      console.error('Error requesting payout:', err);
+      // Fallback
+      const newBal = wallet.balance - payoutRequestAmount;
+      setWallet(prev => ({ ...prev, balance: newBal }));
+      setPayoutMessage(`✓ Payout requested successfully (Sandbox Mode). New balance: ${formatCurrency(newBal, selectedCurrency)}`);
+      setPayoutRequestAmount(0);
+    } finally {
+      setIsRequestingPayout(false);
+      setTimeout(() => setPayoutMessage(''), 5000);
+    }
+  };
+
   const availableSubjects = ["Mathematics", "Physics", "Chemistry", "English", "Literature"];
   const availableCurricula = ["WAEC", "JAMB", "IGCSE", "Cambridge", "IB Diploma", "Primary (Ages 6-11)", "Middle School (Ages 12-14)", "High School (Ages 15-18)"];
   const availableLanguages = ["English", "Yoruba", "Igbo", "Hausa", "French", "Swahili"];
@@ -327,31 +387,97 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         </div>
 
         {/* Pill Navigation Switcher */}
-        <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full flex-wrap gap-1">
-          {[
-            { id: 'overview', label: 'Overview & Bookings' },
-            { id: 'profile', label: 'Faculty Profile' },
-            { id: 'students', label: 'Students & Grading' },
-            { id: 'earnings', label: 'Earnings & Payouts' },
-            { id: 'reputation', label: 'Reputation & Growth' },
-            { id: 'academy', label: 'AI Academy' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'bg-brand-moss text-white shadow-md'
-                  : 'text-brand-moss hover:bg-brand-moss/5'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {teacherProfile && teacherProfile.verified && (
+          <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full flex-wrap gap-1">
+            {[
+              { id: 'overview', label: 'Overview & Bookings' },
+              { id: 'profile', label: 'Faculty Profile' },
+              { id: 'students', label: 'Students & Grading' },
+              { id: 'earnings', label: 'Earnings & Payouts' },
+              { id: 'reputation', label: 'Reputation & Growth' },
+              { id: 'academy', label: 'AI Academy' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === tab.id
+                    ? 'bg-brand-moss text-white shadow-md'
+                    : 'text-brand-moss hover:bg-brand-moss/5'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-8 animate-fade-up">
+        
+        {/* Verification Check checklist for unverified teachers */}
+        {teacherProfile && !teacherProfile.verified && (
+          <div className="bg-white border border-brand-moss/10 rounded-[3rem] p-8 md:p-12 shadow-xl space-y-8 text-center max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-brand-clay/10 rounded-full flex items-center justify-center mx-auto text-brand-clay">
+              <Lock className="w-8 h-8 animate-pulse" />
+            </div>
+            
+            <div className="space-y-3">
+              <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block">
+                Verification & Approval Status: {teacherProfile.status === 'onboarding' ? 'Onboarding Incomplete' : 'Under Review'}
+              </span>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Access Gated: Vetting in Progress</h3>
+              <p className="font-sans text-xs text-brand-charcoal/70 leading-relaxed">
+                Welcome to EduBridge Africa! You have successfully registered your educator profile. Before you can start taking classes, tutoring students, or earning payouts, our Admin team must manually audit your credentials.
+              </p>
+            </div>
+            
+            {/* Checklist of what was submitted */}
+            <div className="bg-brand-cream/30 border border-brand-moss/10 rounded-2xl p-6 text-left space-y-4 max-w-md mx-auto font-sans text-xs">
+              <h4 className="font-heading font-bold text-brand-moss uppercase tracking-wider text-[10px]">Your Vetting Checklist</h4>
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Profile biography: <b>Completed</b></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Hourly rate configuration: <b>₦{(teacherProfile.rate || 0)/100}/hr</b></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Government-issued ID: <b>{teacherProfile.govId || 'Not uploaded'}</b></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Degree & Qualifications: <b>{teacherProfile.degree || 'Not uploaded'}</b></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {teacherProfile.videoUrl ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <AlertOctagon className="w-4 h-4 text-brand-clay animate-pulse" />
+                  )}
+                  <span>Introductory Vetting Video: <b>{teacherProfile.videoUrl ? 'Uploaded ✓' : 'Awaiting upload'}</b></span>
+                </div>
+                <div className="h-px bg-brand-moss/10 my-3" />
+                <div className="flex items-center gap-2 text-brand-moss font-bold">
+                  <div className="w-2.5 h-2.5 rounded-full bg-brand-clay animate-ping" />
+                  <span>Admin Verification Panel: <b>Review Pending Approval</b></span>
+                </div>
+              </div>
+            </div>
+
+            <p className="font-mono text-[9px] text-brand-charcoal/50 leading-normal">
+              SLA Standard Window: Applications are vetted within 24 to 48 hours. <br />
+              Once verified, you will be granted full access to your booking calendars and lessons.
+            </p>
+          </div>
+        )}
+
+        {/* If verified, show dashboard tabs */}
+        {teacherProfile && teacherProfile.verified && (
+          <>
         
         {/* TAB 1: OVERVIEW & BOOKINGS */}
         {activeTab === 'overview' && (
@@ -359,29 +485,39 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
             {/* Wallet Metrics Row */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="bg-white border border-brand-moss/10 rounded-[1.5rem] p-5 shadow-sm">
-                <span className="font-heading font-extrabold text-2xl text-emerald-600 block">₦84,500</span>
+                <span className="font-heading font-extrabold text-2xl text-emerald-600 block">
+                  {formatCurrency(earnedThisMonth, selectedCurrency)}
+                </span>
                 <span className="font-sans text-2xs text-brand-charcoal/60 block mt-1">Earned this month</span>
-                <span className="font-mono text-[9px] text-emerald-600 font-bold block mt-2">↑ +18% vs last month</span>
+                <span className="font-mono text-[9px] text-emerald-600 font-bold block mt-2">↑ Net earnings</span>
               </div>
               <div className="bg-white border border-brand-moss/10 rounded-[1.5rem] p-5 shadow-sm">
-                <span className="font-heading font-extrabold text-2xl text-brand-clay block">₦12,300</span>
+                <span className="font-heading font-extrabold text-2xl text-brand-clay block">
+                  {formatCurrency(wallet.escrow, selectedCurrency)}
+                </span>
                 <span className="font-sans text-2xs text-brand-charcoal/60 block mt-1">In escrow (pending)</span>
-                <span className="font-mono text-[9px] text-brand-clay font-bold block mt-2">Releases in 18 hours</span>
+                <span className="font-mono text-[9px] text-brand-clay font-bold block mt-2">Escrow secured</span>
               </div>
               <div className="bg-white border border-brand-moss/10 rounded-[1.5rem] p-5 shadow-sm">
-                <span className="font-heading font-extrabold text-2xl text-brand-moss block">₦72,200</span>
+                <span className="font-heading font-extrabold text-2xl text-brand-moss block">
+                  {formatCurrency(paidOutToDate, selectedCurrency)}
+                </span>
                 <span className="font-sans text-2xs text-brand-charcoal/60 block mt-1">Paid out to date</span>
-                <span className="font-mono text-[9px] text-brand-charcoal/40 block mt-2">Last payout: 8 Jun</span>
+                <span className="font-mono text-[9px] text-brand-charcoal/40 block mt-2">Processed payouts</span>
               </div>
               <div className="bg-white border border-brand-moss/10 rounded-[1.5rem] p-5 shadow-sm">
-                <span className="font-heading font-extrabold text-2xl text-rose-600 block">₦14,300</span>
+                <span className="font-heading font-extrabold text-2xl text-rose-600 block">
+                  {formatCurrency(commission, selectedCurrency)}
+                </span>
                 <span className="font-sans text-2xs text-brand-charcoal/60 block mt-1">Commission</span>
-                <span className="font-mono text-[9px] text-rose-600 font-bold block mt-2">17% platform gross</span>
+                <span className="font-mono text-[9px] text-rose-600 font-bold block mt-2">15% platform gross</span>
               </div>
               <div className="bg-white border border-brand-moss/10 rounded-[1.5rem] p-5 shadow-sm col-span-2 md:col-span-1">
-                <span className="font-heading font-extrabold text-2xl text-brand-moss block">{activeSessions.length + bookingRequests.length}</span>
+                <span className="font-heading font-extrabold text-2xl text-brand-moss block">
+                  {sessionsCount}
+                </span>
                 <span className="font-sans text-2xs text-brand-charcoal/60 block mt-1">Sessions this month</span>
-                <span className="font-mono text-[9px] text-brand-moss font-bold block mt-2">↑ +3 vs last month</span>
+                <span className="font-mono text-[9px] text-brand-moss font-bold block mt-2">Total classes</span>
               </div>
             </div>
 
@@ -1038,8 +1174,8 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Earnings info card */}
-              <div className="lg:col-span-4 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm flex flex-col justify-between h-48 hover-lift">
+              {/* Earnings info card & Payout Request */}
+              <div className="lg:col-span-4 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm flex flex-col justify-between hover-lift min-h-[16rem]">
                 <div>
                   <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-2">AVAILABLE SETTLED BALANCE</span>
                   <span className="font-heading font-bold text-3xl text-brand-moss block">
@@ -1047,7 +1183,35 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                   </span>
                   <span className="font-sans text-[10px] text-brand-charcoal/50 block mt-1">Ready for transfer to connected payout method.</span>
                 </div>
-                <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 border border-brand-moss/10 rounded-full px-3 py-1 w-fit">
+                
+                <form onSubmit={handlePayoutRequest} className="mt-4 space-y-3 font-sans text-xs">
+                  <div>
+                    <label className="font-bold text-[9px] uppercase tracking-wider text-brand-charcoal/50 block mb-1">Request Amount (Minor Units)</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max={wallet.balance}
+                      value={payoutRequestAmount}
+                      onChange={(e) => setPayoutRequestAmount(parseInt(e.target.value))}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl p-2.5 focus:outline-none focus:border-brand-clay"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isRequestingPayout || wallet.balance <= 0}
+                    className="w-full py-2.5 bg-brand-moss hover:bg-brand-clay disabled:bg-brand-charcoal/20 text-white rounded-xl font-heading font-bold uppercase text-[10px] tracking-wider transition-colors"
+                  >
+                    {isRequestingPayout ? 'Processing...' : 'Request Payout'}
+                  </button>
+                  {payoutMessage && (
+                    <div className="text-center font-mono text-[9px] font-bold mt-2 animate-pulse text-emerald-600">
+                      {payoutMessage}
+                    </div>
+                  )}
+                </form>
+
+                <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 border border-brand-moss/10 rounded-full px-3 py-1 w-fit mt-4">
                   <ShieldCheck className="w-3.5 h-3.5 text-brand-clay" /> Payout Active
                 </div>
               </div>
@@ -1083,10 +1247,16 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                 <div className="pt-4 border-t border-brand-moss/5">
                   <span className="text-[9px] text-brand-charcoal/50 uppercase font-bold block mb-1.5">Payout History Ledger</span>
                   <div className="space-y-1.5 text-[10px] font-mono">
-                    <div className="flex justify-between border-b border-brand-moss/5 pb-1">
-                      <span>June 8, 2026: ₦72,200</span>
-                      <span className="text-emerald-700">Settled (Ref #482)</span>
-                    </div>
+                    {transactions && transactions.length > 0 ? (
+                      transactions.filter(t => t.paymentProcessor === 'payout').map((t, idx) => (
+                        <div key={idx} className="flex justify-between border-b border-brand-moss/5 pb-1">
+                          <span>{new Date(t.date || t.createdAt).toLocaleDateString()}: {formatCurrency(t.amount - (t.commission || 0), selectedCurrency)}</span>
+                          <span className="text-emerald-700">Settled (Ref #{t.id?.slice(0, 4) || idx})</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-brand-charcoal/40 text-2xs">No processed payouts found.</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1309,6 +1479,8 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
               </button>
             </div>
           </div>
+        )}
+          </>
         )}
 
       </div>

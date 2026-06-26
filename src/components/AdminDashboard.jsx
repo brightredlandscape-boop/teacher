@@ -51,51 +51,22 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [b2bSubTab, setB2bSubTab] = useState('accounts'); // 'accounts' | 'api_manager'
   
   // Interactive mock lists
-  const [applications, setApplications] = useState([
-    {
-      uid: "teacher_fresh_1",
-      name: "Dr. Chidi Johnson",
-      location: "Enugu, Nigeria",
-      subjects: ["Mathematics", "Physics"],
-      curricula: ["WAEC", "JAMB"],
-      rate: 400000,
-      status: "pending_approval",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      bio: "Passionate WAEC tutoring expert with 10 years of school instruction experience.",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
-      govId: "NGA-ID-8840294",
-      degree: "B.Sc. Mathematics, University of Nigeria Nsukka (2016)",
-      geminiBioScore: 92,
-      idMatch: "Passed",
-      duplicateCheck: "Clear",
-      slaHoursElapsed: 31, // SLA Escalation 24h triggered
-      submittedTime: "31 hours ago"
-    },
-    {
-      uid: "teacher_fresh_2",
-      name: "Amina Yusuf",
-      location: "Kano, Nigeria",
-      subjects: ["English Language", "Literature"],
-      curricula: ["WAEC", "NECO"],
-      rate: 350000,
-      status: "pending_approval",
-      videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-      bio: "English instruction focus. Helping students speak and write with confidence.",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
-      govId: "NGA-ID-9182049",
-      degree: "B.Ed. English, Ahmadu Bello University (2018)",
-      geminiBioScore: 78,
-      idMatch: "Passed",
-      duplicateCheck: "Clear",
-      slaHoursElapsed: 49, // Exceeded 48h SLA
-      submittedTime: "49 hours ago"
-    }
-  ]);
+  const [applications, setApplications] = useState([]);
   
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectReason, setRejectReason] = useState('Blurry ID document');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [vetId, setVetId] = useState(false);
+  const [vetDegree, setVetDegree] = useState(false);
+  const [vetVideo, setVetVideo] = useState(false);
+
+  useEffect(() => {
+    setVetId(false);
+    setVetDegree(false);
+    setVetVideo(false);
+  }, [selectedApp]);
 
   // Financial Stats & Chart Currency Filter
   const [chartCurrency, setChartCurrency] = useState('NGN');
@@ -104,49 +75,13 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [revenueCountryFilter, setRevenueCountryFilter] = useState('All');
 
   // Payout Queue State
-  const [payouts, setPayouts] = useState([
-    { id: 'pay_1', name: 'Mr. Adebayo Okafor', amount: 7220000, processor: 'Paystack', status: 'Scheduled', date: 'June 11, 2026' },
-    { id: 'pay_2', name: 'Mrs. Chioma', amount: 1500000, processor: 'Wise', status: 'Pending', date: 'June 11, 2026' },
-    { id: 'pay_3', name: 'Mr. Kofi Mensah', amount: 2500000, processor: 'Paystack', status: 'Failed', date: 'June 8, 2026', error: 'Invalid Bank Account Code' }
-  ]);
+  const [payouts, setPayouts] = useState([]);
 
   // Disputes State
-  const [disputes, setDisputes] = useState([
-    { 
-      id: 'disp_1', 
-      sessionId: 'Session #3048', 
-      parentName: 'Ngozi Adeleke', 
-      teacherName: 'Mrs. Chioma', 
-      reason: 'Incorrect billing time', 
-      description: 'The tutor registered 15 minutes of excess time after the zoom session crashed.', 
-      evidenceUrl: 'session_clock_log.pdf',
-      status: 'Pending Admin Review',
-      hoursOpen: 31,
-      clockLog: 'Scheduled: 60 mins. Billed: 75 mins (15 mins disconnect overlap).',
-      teacherResponse: "The internet disconnected on the student's end, and I waited for 15 minutes in the classroom. My logs show I remained connected until the official end time.",
-      teacherEvidenceUrl: "tutor_connection_screenshot.jpg"
-    },
-    {
-      id: 'disp_2',
-      sessionId: 'Session #2844',
-      parentName: 'Sarah M.',
-      teacherName: 'Mr. Adebayo Okafor',
-      reason: 'No-show',
-      description: 'Teacher did not connect. I waited for 25 minutes and logged off.',
-      evidenceUrl: 'parent_screenshot.png',
-      status: 'Awaiting Teacher Response',
-      hoursOpen: 12,
-      clockLog: 'Scheduled: 60 mins. Billed: 0 mins (Tutor connection failure log).',
-      teacherResponse: "I had a sudden power outage in Lagos mainland which disrupted my router connection. I sent an email to support 5 minutes after the session start.",
-      teacherEvidenceUrl: "utility_outage_receipt.png"
-    }
-  ]);
+  const [disputes, setDisputes] = useState([]);
 
   // B2B school partnerships
-  const [b2bSchools, setB2bSchools] = useState([
-    { id: 'sch_1', name: 'Corona Schools Trust', contact: 'Dr. Alabi', contractValue: 120000000, flatFee: 40000000, studentsCount: 50, studentsLimit: 100, teachersCount: 8, assignedTeachers: ["Mr. Adebayo Okafor", "Mrs. Chioma"], portalAccess: true, renewalDate: '2026-06-30', reporting: { totalSessions: 320, subjectsUsed: ["Mathematics", "Physics", "Chemistry"], avgProgress: "84%" }, apiKey: "eb_b2b_corona_key_8a3f12", apiKeyStatus: "active" },
-    { id: 'sch_2', name: 'British International School', contact: 'Mr. Davies', contractValue: 250000000, flatFee: 80000000, studentsCount: 120, studentsLimit: 150, teachersCount: 15, assignedTeachers: ["Mr. Kofi Mensah", "Dr. Chidi Johnson"], portalAccess: true, renewalDate: '2026-07-15', reporting: { totalSessions: 610, subjectsUsed: ["Biology", "Chemistry", "English"], avgProgress: "88%" }, apiKey: "eb_b2b_british_key_cf890d", apiKeyStatus: "active" }
-  ]);
+  const [b2bSchools, setB2bSchools] = useState([]);
   const [selectedB2bSchool, setSelectedB2bSchool] = useState(null);
   const [newSchoolName, setNewSchoolName] = useState('');
   const [newSchoolContact, setNewSchoolContact] = useState('');
@@ -225,6 +160,22 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
           }));
           setB2bSchools(mappedSchools);
         }
+
+        // Fetch Payout Requests
+        const payoutsRes = await fetch(`${API_BASE}/admin/payouts`, { headers });
+        if (payoutsRes.ok) {
+          const rawPayouts = await payoutsRes.json();
+          const mappedPayouts = rawPayouts.map(p => ({
+            id: p.id,
+            name: p.teacherName || p.teacherId,
+            amount: p.amount,
+            processor: 'Wallet/Bank', // Add real processor logic if any
+            status: p.status === 'pending' ? 'Pending' : (p.status === 'approved' ? 'Scheduled' : 'Failed'),
+            date: new Date(p.requestedAt).toLocaleDateString(),
+            error: null
+          }));
+          setPayouts(mappedPayouts);
+        }
       } catch (err) {
         console.warn("Failed to fetch admin data from backend:", err);
       }
@@ -240,61 +191,26 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [policyModFee, setPolicyModFee] = useState(25); // mod fee
   const [policyStrictFee, setPolicyStrictFee] = useState(50); // strict fee
 
-  const [refunds, setRefunds] = useState([
-    { id: 'ref_1', parentName: 'Kehinde A.', subject: 'WAEC Math Trial', fee: 400000, slaDays: 2, status: 'Pending' },
-    { id: 'ref_2', parentName: 'Damilola S.', subject: 'Chemistry Trial', fee: 550000, slaDays: 4, status: 'Pending' }
-  ]);
-  const [refundAudits, setRefundAudits] = useState([
-    { id: 'aud_1', parentName: 'Tunde O.', amount: 400000, reason: 'Trial Lesson Dissatisfaction', adminId: 'admin_1', timestamp: '2026-06-08 14:22' }
-  ]);
+  const [refunds, setRefunds] = useState([]);
+  const [refundAudits, setRefundAudits] = useState([]);
 
   // Groups and Subscription Bundles
-  const [groups, setGroups] = useState([
-    { id: 'grp_1', name: 'WAEC Prep Group Algebra', teacher: 'Mr. Adebayo Okafor', enrolled: 8, fee: 250000, revenue: 2000000, attendance: '92%', schedule: 'Tues / Thurs 4 PM', studentRoster: ["Timi Adeleke", "Ayo Balogun", "Femi Kuti", "Bisi Alimi", "Chika Ike", "Funke Akindele", "Chidi Johnson", "Amara Okafor"] },
-    { id: 'grp_2', name: 'IGCSE Chemistry Lab Live', teacher: 'Mr. Kofi Mensah', enrolled: 11, fee: 450000, revenue: 4950000, attendance: '88%', schedule: 'Mon / Wed 5 PM', studentRoster: ["Zara Damilola", "Tunde Okafor", "Emeka Uzo", "Sade Bello", "Kofi Mensah Jr.", "Amina Yusuf", "Fatima Abubakar", "Chidimma Nwachukwu", "Yusuf Ibrahim", "Oluwaseun Adewale", "Ngozi Adeleke"] } // Over max limit 10
-  ]);
-
-  const [bundles, setBundles] = useState([
-    { id: 'bun_1', parentName: 'Ngozi Adeleke', child: 'Timi', pack: '12-Session Pack', used: 8, remaining: 4, expiry: '2026-06-30', autoRenew: true, refundRequested: false },
-    { id: 'bun_2', parentName: 'Damilola S.', child: 'Zara', pack: '20-Session Pack', used: 17, remaining: 3, expiry: '2026-07-15', autoRenew: false, refundRequested: true, refundReason: 'Relocating to another country' }
-  ]);
+  const [groups, setGroups] = useState([]);
+  const [bundles, setBundles] = useState([]);
 
   // GDPR compliance panel
-  const [gdprRequests, setGdprRequests] = useState([
-    { id: 'gdpr_1', user: 'parent_920 (Sarah M.)', type: 'Data Deletion', submitted: '24 hours ago', slaRemaining: '48h', status: 'Pending' },
-    { id: 'gdpr_2', user: 'teacher_3 (Mrs. Chioma)', type: 'Data Download', submitted: '12 hours ago', slaRemaining: '60h', status: 'Pending' }
-  ]);
-  const [cookieConsentLogs, setCookieConsentLogs] = useState([
-    { id: 'cook_1', ip: '102.89.43.12', consent: 'All Accepted', date: '2026-06-10 10:48' },
-    { id: 'cook_2', ip: '197.210.8.44', consent: 'Necessary Only', date: '2026-06-10 09:15' }
-  ]);
+  const [gdprRequests, setGdprRequests] = useState([]);
+  const [cookieConsentLogs, setCookieConsentLogs] = useState([]);
   const [policyVersions, setPolicyVersions] = useState([
-    { version: 'v2.1', date: '2026-04-12', status: 'Active (NITDA Approved)' },
-    { version: 'v2.0', date: '2025-10-08', status: 'Archived' }
+    { version: 'v2.1', date: '2026-04-12', status: 'Active (NITDA Approved)' }
   ]);
-  const [breachLogs, setBreachLogs] = useState([
-    { id: 'brch_1', date: '2026-05-18', incident: 'Minor OAuth Token renewal expiry failure', status: 'Mitigated', reportedToNitda: 'No notification required (Zero leak)' }
-  ]);
+  const [breachLogs, setBreachLogs] = useState([]);
 
   // Background Checks
-  const [backgroundChecks, setBackgroundChecks] = useState([
-    { id: 'bc_1', name: 'Mr. Adebayo Okafor', checkType: 'Extended Academic & Criminal', verifiedDate: '2026-05-12', premiumTier: true, expiryDate: '2027-05-12' },
-    { id: 'bc_2', name: 'Dr. Chidi Johnson', checkType: 'Extended Professional Vetting', verifiedDate: 'Pending', premiumTier: false, expiryDate: 'N/A' }
-  ]);
+  const [backgroundChecks, setBackgroundChecks] = useState([]);
 
   // Flagged Reviews Moderation Queue
-  const [flaggedReviews, setFlaggedReviews] = useState([
-    { 
-      id: 'rev_1', 
-      author: 'Parent Kehinde A.', 
-      score: 1, 
-      text: 'Teacher was rude and didn\'t speak clearly during audio checkout.', 
-      teacherName: 'Mrs. Chioma', 
-      flagReason: 'Disputed claim, student had poor internet connection and missed session.', 
-      date: '3 days ago',
-      sessionContext: 'Session #3048 - WAEC Chemistry Prep'
-    }
-  ]);
+  const [flaggedReviews, setFlaggedReviews] = useState([]);
   const [clarificationRequestedId, setClarificationRequestedId] = useState(null);
   const [moderationAuditLogs, setModerationAuditLogs] = useState([]);
 
@@ -316,19 +232,17 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
   // Rejection reason analytics database
   const [rejectionReasons, setRejectionReasons] = useState([
-    { reason: 'Blurry credentials', count: 42, color: 'bg-brand-clay' }, // >40% threshold warning triggers!
-    { reason: 'Poor video presentation', count: 31, color: 'bg-brand-moss' },
-    { reason: 'Incomplete bio', count: 18, color: 'bg-brand-moss' },
-    { reason: 'Duplicate account detection', count: 9, color: 'bg-brand-moss' }
+    { reason: 'Blurry credentials', count: 0, color: 'bg-brand-clay' }, // >40% threshold warning triggers!
+    { reason: 'Poor video presentation', count: 0, color: 'bg-brand-moss' },
+    { reason: 'Incomplete bio', count: 0, color: 'bg-brand-moss' },
+    { reason: 'Duplicate account detection', count: 0, color: 'bg-brand-moss' }
   ]);
 
   // Dispute Recording Vow Request Form (Two-person authorization)
-  const [recordingDisputeId, setRecordingDisputeId] = useState('disp_1');
-  const [recordingReason, setRecordingReason] = useState('Verify teacher audio connectivity claim');
+  const [recordingDisputeId, setRecordingDisputeId] = useState('');
+  const [recordingReason, setRecordingReason] = useState('');
   const [recordingApprover, setRecordingApprover] = useState('Admin Sarah Connor');
-  const [recordingRequests, setRecordingRequests] = useState([
-    { id: 'rec_req_1', disputeId: 'disp_3', reason: 'Review no-show dispute logs', adminId: 'admin_1', status: 'Approved & Active (Expires in 42h)', timestamp: '2026-06-09 11:30' }
-  ]);
+  const [recordingRequests, setRecordingRequests] = useState([]);
 
   // Bulk invite code generation
   const [bulkInviteSchoolId, setBulkInviteSchoolId] = useState(null);
@@ -336,15 +250,11 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [generatedBulkCodes, setGeneratedBulkCodes] = useState([]);
 
   // B2B school invoices
-  const [invoices, setInvoices] = useState([
-    { id: 'inv_1', schoolName: 'Corona Schools Trust', invoiceNo: 'EB-26-06-01', amount: 40000000, date: '2026-06-01', status: 'Paid' },
-    { id: 'inv_2', schoolName: 'British International School', invoiceNo: 'EB-26-06-02', amount: 80000000, date: '2026-06-01', status: 'Paid' },
-    { id: 'inv_3', schoolName: 'Corona Schools Trust', invoiceNo: 'EB-26-05-01', amount: 40000000, date: '2026-05-01', status: 'Paid' },
-  ]);
+  const [invoices, setInvoices] = useState([]);
 
   // Vetting stats
-  const approvalRate = 84.5;
-  const avgDecisionTime = 19.4;
+  const approvalRate = 0;
+  const avgDecisionTime = 0;
 
   // Credential document viewer modal
   const [viewingCredential, setViewingCredential] = useState(null);
@@ -366,10 +276,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [expandedGroupRosterId, setExpandedGroupRosterId] = useState(null);
 
   // Review moderation - flagged mass reviewer list
-  const [flaggedReviewers, setFlaggedReviewers] = useState([
-    { username: 'Parent Kehinde A.', negativeCount: 4, status: 'Flagged / High Risk' },
-    { username: 'Parent Sarah M.', negativeCount: 1, status: 'Normal' }
-  ]);
+  const [flaggedReviewers, setFlaggedReviewers] = useState([]);
 
   // Feedback Toasts
   const [toastMessage, setToastMessage] = useState('');
@@ -452,14 +359,30 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
     triggerToast('Bulk approval registered: payout transfers scheduled on Paystack/Wise processors.');
   };
 
-  const handlePayoutAction = (payoutId, action) => {
-    setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: action } : p));
-    triggerToast(`Payout ${payoutId} updated to: ${action}`);
+  const handlePayoutAction = async (payoutId, action) => {
+    try {
+      const response = await fetch(`${API_BASE}/admin/payouts/${payoutId}/respond`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: action === 'Scheduled' ? 'approve' : 'reject' })
+      });
+      if (response.ok) {
+        setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: action } : p));
+        triggerToast(`Payout ${payoutId} updated to: ${action}`);
+      } else {
+        triggerToast(`Failed to process payout ${payoutId}.`);
+      }
+    } catch (err) {
+      console.warn("Failed to process payout:", err);
+      // Fallback
+      setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: action } : p));
+      triggerToast(`Payout ${payoutId} updated to: ${action} (Sandbox Mode)`);
+    }
   };
 
   const handleRetryPayout = (payoutId) => {
     setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: 'Processing', error: null } : p));
-    triggerToast(`Retrying failed payout ID ${payoutId} via Paystack API...`);
+    triggerToast(`Retrying failed payout ID ${payoutId} via API...`);
   };
 
   const handleResolveDispute = (disputeId, decision) => {
@@ -741,17 +664,17 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-white border border-brand-moss/10 rounded-3xl p-5 shadow-sm">
               <span className="font-mono text-[9px] uppercase tracking-wider text-brand-charcoal/50 block">Platform Net Commission</span>
-              <span className="font-heading font-bold text-2xl text-brand-moss block mt-1">₦4.2M</span>
+              <span className="font-heading font-bold text-2xl text-brand-moss block mt-1">₦0</span>
               <span className="font-mono text-[9px] text-emerald-600 font-bold block mt-1">✓ This Month (Escrow cut)</span>
             </div>
             <div className="bg-white border border-brand-moss/10 rounded-3xl p-5 shadow-sm">
               <span className="font-mono text-[9px] uppercase tracking-wider text-brand-charcoal/50 block">Disbursed to date</span>
-              <span className="font-heading font-bold text-2xl text-brand-moss block mt-1">₦3.1M</span>
+              <span className="font-heading font-bold text-2xl text-brand-moss block mt-1">₦0</span>
               <span className="font-mono text-[9px] text-brand-charcoal/40 block mt-1">To verified teacher accounts</span>
             </div>
             <div className="bg-white border border-brand-moss/10 rounded-3xl p-5 shadow-sm">
               <span className="font-mono text-[9px] uppercase tracking-wider text-brand-charcoal/50 block">Held in Live Escrow</span>
-              <span className="font-heading font-bold text-2xl text-brand-clay block mt-1">₦840K</span>
+              <span className="font-heading font-bold text-2xl text-brand-clay block mt-1">₦0</span>
               <span className="font-mono text-[9px] text-brand-charcoal/40 block mt-1">Pending student clock verification</span>
             </div>
             <div className="bg-white border border-brand-moss/10 rounded-3xl p-5 shadow-sm">
@@ -1311,14 +1234,52 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                     )}
                   </div>
 
+                  {/* Vetting Criteria Checklists */}
+                  {selectedApp.status === 'pending_approval' && (
+                    <div className="bg-brand-cream/30 border border-brand-moss/10 rounded-2xl p-4 space-y-3 font-sans text-xs">
+                      <h5 className="font-heading font-bold text-brand-moss uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-brand-clay" /> Required Vetting Verification
+                      </h5>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={vetId}
+                            onChange={(e) => setVetId(e.target.checked)}
+                            className="rounded border-brand-moss/20 text-brand-moss focus:ring-brand-moss w-4 h-4"
+                          />
+                          <span>Verify government ID matches candidate identity</span>
+                        </label>
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={vetDegree}
+                            onChange={(e) => setVetDegree(e.target.checked)}
+                            className="rounded border-brand-moss/20 text-brand-moss focus:ring-brand-moss w-4 h-4"
+                          />
+                          <span>Verify university degree credentials and qualifications</span>
+                        </label>
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={vetVideo}
+                            onChange={(e) => setVetVideo(e.target.checked)}
+                            className="rounded border-brand-moss/20 text-brand-moss focus:ring-brand-moss w-4 h-4"
+                          />
+                          <span>Verify and approve introductory video quality</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Approve/Reject Controls */}
                   {selectedApp.status === 'pending_approval' && (
                     <div className="flex flex-col gap-2.5 pt-4 border-t border-brand-moss/5">
                       <div className="flex gap-2.5">
                         <button
                           onClick={() => handleRespond(selectedApp.uid, 'Approve')}
-                          disabled={loading}
-                          className="flex-1 btn-magnetic py-3 px-5 bg-brand-moss hover:bg-brand-moss/95 text-white rounded-full font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-colors"
+                          disabled={loading || !(vetId && vetDegree && vetVideo)}
+                          className="flex-1 btn-magnetic py-3 px-5 bg-brand-moss hover:bg-brand-moss/95 text-white rounded-full font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <UserCheck className="w-4 h-4" /> Approve
                         </button>

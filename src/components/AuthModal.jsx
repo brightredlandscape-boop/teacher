@@ -256,7 +256,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={() => { setGoogleUserForSetup(null); onClose(); }} />
         
         {/* Modal Container */}
-        <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[85vh] overflow-y-auto">
           {/* Close Button */}
           <button onClick={() => { setGoogleUserForSetup(null); onClose(); }} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
             <X className="w-5 h-5" />
@@ -414,7 +414,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Modal Container */}
-      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl z-10 max-h-[85vh] overflow-y-auto">
         {/* Close Button */}
         <button onClick={onClose} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
           <X className="w-5 h-5" />

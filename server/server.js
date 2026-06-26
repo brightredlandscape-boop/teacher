@@ -246,14 +246,14 @@ async function guaranteeInitialProfiles() {
       rate: 0,
       rating: 5.0,
       reviewsCount: 0,
-      badges: ["badge-verified"],
+      badges: [],
       bio: "",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
       online: true,
       availability: {},
       languages: [],
       verified: false,
-      status: "onboarding",
+      status: "pending_approval",
       stats: { sessionsTaught: 0, responseRate: 100 },
       leaderboardOptIn: true
     });
@@ -463,7 +463,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       rate: 0,
       rating: 5.0,
       reviewsCount: 0,
-      badges: ["badge-verified"],
+      badges: [],
       bio: "",
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
       coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
@@ -725,7 +725,7 @@ app.post('/api/waitlist', async (req, res) => {
 
 // POST onboarding submissions (Teacher Onboarding)
 app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, async (req, res) => {
-  const { uid, name, username: requestedUsername, location, rate, bio, subjects, curricula, languages, availability, videoUrl, avatar, govId, degree } = req.body;
+  const { uid, name, username: requestedUsername, location, whatsapp, linkedin, currency, rate, timezone, classroomLink, recordingTool, bio, subjects, curricula, languages, availability, videoUrl, avatar, govIdUrl, degreeUrl, cvUrl } = req.body;
   if (!uid || !name) {
     return res.status(400).json({ error: "Teacher UID and Display Name are required." });
   }
@@ -762,6 +762,12 @@ app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), r
     name: sanitizeText(name),
     username: finalUsername,
     location: location ? sanitizeText(location) : "Nigeria",
+    whatsapp: whatsapp ? sanitizeText(whatsapp) : "",
+    linkedin: linkedin ? sanitizeText(linkedin) : "",
+    currency: currency ? sanitizeText(currency) : "NGN",
+    timezone: timezone ? sanitizeText(timezone) : "Africa/Lagos",
+    classroomLink: classroomLink ? sanitizeText(classroomLink) : "",
+    recordingTool: recordingTool ? sanitizeText(recordingTool) : "",
     rate: rate ? parseInt(rate, 10) : 0,
     bio: bio ? sanitizeText(bio) : "",
     subjects: subjects || [],
@@ -770,11 +776,21 @@ app.post('/api/teachers/onboard', authenticateToken, requireRole(['Teacher']), r
     availability: availability || {},
     videoUrl: videoUrl || "",
     avatar: avatar || teacher.avatar,
-    govId: govId ? sanitizeText(govId) : "",
-    degree: degree ? sanitizeText(degree) : "",
+    govIdUrl: govIdUrl ? sanitizeText(govIdUrl) : "",
+    degreeUrl: degreeUrl ? sanitizeText(degreeUrl) : "",
+    cvUrl: cvUrl ? sanitizeText(cvUrl) : "",
     status: "pending_approval", // Submitting onboarding triggers review status
     verified: false
   });
+
+  // Notify Admins of the new registration
+  const adminUsers = db.find('users', u => u.role === 'Admin');
+  for (const admin of adminUsers) {
+    await createNotification(admin.uid, 'system', 'New Teacher Application', `${sanitizeText(name)} has submitted a new teacher application.`);
+    sendTransactionalEmail(admin.email, "New Teacher Registration", "alert", {
+      message: `A new teacher, ${sanitizeText(name)}, has completed onboarding and is pending approval. Please review their profile.`
+    });
+  }
 
   res.json(updated);
 });
@@ -1024,15 +1040,31 @@ app.get('/api/teachers/dashboard/:uid', authenticateToken, (req, res) => {
   }
 
   const teacherSessions = db.find('sessions', s => s.teacherId === uid);
-  const teacherAssignments = db.find('assignments', a => a.teacherName === teacher.name || a.studentName === 'Tunde'); // Fallback mock student Tunde
+  const teacherAssignments = db.find('assignments', a => a.teacherId === uid || (a.teacherName === teacher.name && teacher.name));
 
   const wallet = db.findOne('wallets', w => w.uid === uid) || { balance: 0, escrow: 0 };
   const teacherTransactions = db.find('transactions', t => t.toUserId === uid);
 
+  // Compute dynamic stats
+  const completedSessions = teacherSessions.filter(s => s.status === 'Completed');
+  const activeEscrowSessions = teacherSessions.filter(s => s.status === 'Scheduled' || s.status === 'Pending Confirmation');
+  
+  const config = db.findOne('platform_config', c => c.id === 'default') || { commissionRate: 15 };
+  const commissionRate = config.commissionRate || 15;
+
+  const earnedThisMonth = completedSessions.reduce((sum, s) => sum + (s.cost - Math.round(s.cost * (commissionRate / 100))), 0);
+  const escrowBalance = activeEscrowSessions.reduce((sum, s) => sum + (s.cost - Math.round(s.cost * (commissionRate / 100))), 0);
+  const paidOutToDate = completedSessions.reduce((sum, s) => sum + (s.cost - Math.round(s.cost * (commissionRate / 100))), 0);
+  const commission = completedSessions.reduce((sum, s) => sum + Math.round(s.cost * (commissionRate / 100)), 0);
+
   res.json({
     teacher,
     walletBalance: wallet.balance,
-    escrowBalance: wallet.escrow,
+    escrowBalance,
+    earnedThisMonth,
+    paidOutToDate,
+    commission,
+    sessionsCount: completedSessions.length + activeEscrowSessions.length,
     sessions: teacherSessions,
     assignments: teacherAssignments,
     transactions: teacherTransactions
@@ -1526,6 +1558,79 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     payoutAmount: payout,
     commissionAmount: commission
   });
+});
+
+// --- PAYOUT ENDPOINTS ---
+
+// POST Request Payout (Teacher)
+app.post('/api/payout/request', authenticateToken, requireRole(['Teacher']), async (req, res) => {
+  const { amount } = req.body;
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: "Valid amount is required." });
+  }
+
+  const wallet = db.findOne('wallets', w => w.uid === req.user.uid);
+  if (!wallet || wallet.balance < amount) {
+    return res.status(400).json({ error: "Insufficient wallet balance." });
+  }
+
+  // Deduct from wallet balance to prevent double requests
+  await db.update('wallets', wallet.id, { balance: wallet.balance - amount });
+
+  const payoutReq = await db.insert('payout_requests', {
+    teacherId: req.user.uid,
+    amount,
+    status: 'pending',
+    requestedAt: new Date().toISOString()
+  });
+
+  // Notify admins
+  const admins = db.find('users', u => u.role === 'Admin');
+  for (const admin of admins) {
+    await createNotification(admin.uid, 'system', 'Payout Request', `Teacher ${req.user.displayName || req.user.uid} requested a payout of ₦${amount/100}.`);
+  }
+
+  res.json({ success: true, payoutRequest: payoutReq, newBalance: wallet.balance - amount });
+});
+
+// GET Payout Requests (Admin)
+app.get('/api/admin/payouts', authenticateToken, requireRole(['Admin']), (req, res) => {
+  const payouts = db.find('payout_requests');
+  // Enhance with teacher info
+  const enhanced = payouts.map(p => {
+    const t = db.findOne('teachers', t => t.uid === p.teacherId) || {};
+    return { ...p, teacherName: t.name || p.teacherId };
+  });
+  enhanced.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+  res.json(enhanced);
+});
+
+// POST Approve/Reject Payout (Admin)
+app.post('/api/admin/payouts/:id/respond', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  const { action } = req.body;
+  const payoutReq = db.findOne('payout_requests', p => p.id === req.params.id);
+  
+  if (!payoutReq || payoutReq.status !== 'pending') {
+    return res.status(400).json({ error: "Invalid or already processed payout request." });
+  }
+
+  if (action === 'approve') {
+    await db.update('payout_requests', payoutReq.id, { status: 'approved', processedAt: new Date().toISOString() });
+    await createNotification(payoutReq.teacherId, 'payout_approved', 'Payout Approved', `Your payout of ₦${payoutReq.amount/100} has been processed and sent to your bank account.`);
+  } else if (action === 'reject') {
+    await db.update('payout_requests', payoutReq.id, { status: 'rejected', processedAt: new Date().toISOString() });
+    
+    // Refund to wallet
+    const wallet = db.findOne('wallets', w => w.uid === payoutReq.teacherId);
+    if (wallet) {
+      await db.update('wallets', wallet.id, { balance: wallet.balance + payoutReq.amount });
+    }
+    await createNotification(payoutReq.teacherId, 'payout_rejected', 'Payout Rejected', `Your payout of ₦${payoutReq.amount/100} was rejected and refunded to your wallet.`);
+  } else {
+    return res.status(400).json({ error: "Action must be approve or reject." });
+  }
+
+  res.json({ success: true, status: action === 'approve' ? 'approved' : 'rejected' });
 });
 
 

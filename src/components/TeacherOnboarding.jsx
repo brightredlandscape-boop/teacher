@@ -10,6 +10,8 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [name, setName] = useState(currentUser?.displayName || '');
   const [username, setUsername] = useState('');
   const [location, setLocation] = useState('Lagos, Nigeria');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [linkedin, setLinkedin] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop');
 
@@ -20,20 +22,43 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [customCurriculumInput, setCustomCurriculumInput] = useState('');
 
   // Step 3: Rates & Availability
+  const [currency, setCurrency] = useState('NGN');
+  const [timezone, setTimezone] = useState('Africa/Lagos');
+  const [classroomLink, setClassroomLink] = useState('');
+  const [recordingTool, setRecordingTool] = useState('');
   const [rate, setRate] = useState(4000); // ₦4,000 hourly default
   const [availability, setAvailability] = useState({
-    Tomorrow: ["4:00 PM", "5:00 PM"],
-    Wednesday: ["3:00 PM", "4:00 PM"]
+    Monday: [],
+    Tuesday: [],
+    Wednesday: [],
+    Thursday: [],
+    Friday: [],
+    Saturday: [],
+    Sunday: []
   });
 
-  // Step 4: Video Intro Upload
-  const [videoUrl, setVideoUrl] = useState('');
-  const [govId, setGovId] = useState('');
-  const [degree, setDegree] = useState('');
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const hourlySlots = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM'];
 
-  const handleVideoUpload = async (e) => {
+  const toggleSlot = (day, hour) => {
+    setAvailability(prev => {
+      const daySlots = prev[day] || [];
+      const updatedSlots = daySlots.includes(hour)
+        ? daySlots.filter(h => h !== hour)
+        : [...daySlots, hour];
+      return { ...prev, [day]: updatedSlots };
+    });
+  };
+
+  // Step 4: Uploads
+  const [videoUrl, setVideoUrl] = useState('');
+  const [govIdUrl, setGovIdUrl] = useState('');
+  const [degreeUrl, setDegreeUrl] = useState('');
+  const [cvUrl, setCvUrl] = useState('');
+  
+  const [uploadingState, setUploadingState] = useState({ type: null, progress: 0 });
+
+  const handleFileUpload = async (e, type, setter) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -41,49 +66,50 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
     if (!uploadPreset) {
-      alert("Cloudinary upload preset is not configured in VITE_CLOUDINARY_UPLOAD_PRESET. Pasting a direct URL is supported as a fallback.");
+      alert("Cloudinary upload preset is not configured. Pasting a direct URL is supported as a fallback.");
       return;
     }
 
-    setUploadingVideo(true);
-    setUploadProgress(0);
+    setUploadingState({ type, progress: 0 });
 
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);
 
+    const resourceType = type === 'video' ? 'video' : (type === 'raw' ? 'raw' : 'auto');
+
     try {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, true);
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, true);
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const percent = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(percent);
+          setUploadingState({ type, progress: percent });
         }
       };
 
       xhr.onload = () => {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
-          setVideoUrl(response.secure_url);
+          setter(response.secure_url);
         } else {
           console.error(xhr.responseText);
           alert("Cloudinary upload failed: " + xhr.statusText);
         }
-        setUploadingVideo(false);
+        setUploadingState({ type: null, progress: 0 });
       };
 
       xhr.onerror = () => {
         alert("Network error occurred during upload.");
-        setUploadingVideo(false);
+        setUploadingState({ type: null, progress: 0 });
       };
 
       xhr.send(formData);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Error occurred during upload.");
-      setUploadingVideo(false);
+      setUploadingState({ type: null, progress: 0 });
     }
   };
 
@@ -120,6 +146,10 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
         setError('Please fill out your display name and short bio.');
         return;
       }
+      if (!whatsapp || !linkedin) {
+        setError('Please provide your WhatsApp number and LinkedIn profile URL.');
+        return;
+      }
       if (!username) {
         setError('Please choose a unique public username.');
         return;
@@ -133,9 +163,16 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
       setError('Please select at least one subject to proceed.');
       return;
     }
-    if (step === 3 && (!rate || rate <= 0)) {
-      setError('Please enter a valid hourly rate.');
-      return;
+    if (step === 3) {
+      if (!rate || rate <= 0) {
+        setError('Please enter a valid hourly rate.');
+        return;
+      }
+      const hasSlots = Object.values(availability).some(slots => slots.length > 0);
+      if (!hasSlots) {
+        setError('Please select at least one available hour slot on the booking calendar.');
+        return;
+      }
     }
     setStep(prev => prev + 1);
   };
@@ -155,7 +192,13 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
       name,
       username,
       location,
-      rate: Math.round(rate * 100), // convert to minor units (kobo)
+      whatsapp,
+      linkedin,
+      currency,
+      rate: Math.round(rate * 100), // convert to minor units
+      timezone,
+      classroomLink,
+      recordingTool,
       bio,
       subjects: selectedSubjects,
       curricula: selectedCurricula,
@@ -163,8 +206,9 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
       availability,
       videoUrl,
       avatar,
-      govId,
-      degree
+      govIdUrl,
+      degreeUrl,
+      cvUrl
     };
 
     try {
@@ -204,7 +248,7 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </button>
       )}
-      <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] w-full max-w-2xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+      <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] w-full max-w-2xl p-8 md:p-12 shadow-2xl relative overflow-y-auto max-h-[85vh]">
         
         {/* Step Progress Indicators */}
         <div className="flex justify-between items-center mb-8 border-b border-brand-moss/5 pb-6">
@@ -284,16 +328,48 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">WhatsApp Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    placeholder="+234 800 000 0000"
+                  />
+                </div>
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">LinkedIn Profile URL</label>
+                  <input
+                    type="url"
+                    required
+                    value={linkedin}
+                    onChange={(e) => setLinkedin(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Profile Avatar URL</label>
-                <input
-                  type="text"
-                  required
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
-                  placeholder="https://example.com/avatar.jpg"
-                />
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Profile Avatar</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-brand-moss/20 shrink-0">
+                    <img src={avatar} alt="Avatar Preview" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e, 'image', setAvatar)}
+                      disabled={uploadingState.type === 'image'}
+                      className="text-xs text-brand-charcoal/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-brand-moss/5 file:text-brand-moss hover:file:bg-brand-moss/10"
+                    />
+                    {uploadingState.type === 'image' && <span className="text-xs text-brand-clay ml-2">Uploading... {uploadingState.progress}%</span>}
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -448,35 +524,99 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
 
             <div className="space-y-6 font-sans text-xs">
               <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Hourly Rate (₦ / NGN)</label>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Hourly Rate</label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-4 font-heading font-bold text-brand-moss">₦</span>
+                  <select 
+                    value={currency} 
+                    onChange={(e) => setCurrency(e.target.value)} 
+                    className="absolute left-0 bg-transparent text-brand-moss font-heading font-bold pl-3 pr-2 py-3 focus:outline-none border-r border-brand-moss/10"
+                  >
+                    <option value="NGN">₦ NGN</option>
+                    <option value="USD">$ USD</option>
+                    <option value="GBP">£ GBP</option>
+                  </select>
                   <input
                     type="number"
                     required
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
-                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-8 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-bold"
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-[5.5rem] pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-bold"
                   />
                   <span className="absolute right-4 font-sans text-2xs text-brand-charcoal/50">/ hour</span>
                 </div>
               </div>
 
-              <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3">Pre-Configured Availability Slots</label>
-                <div className="bg-brand-cream/30 border border-brand-moss/10 rounded-2xl p-4 space-y-3 font-mono text-[10px]">
-                  <div className="flex justify-between items-center py-1 border-b border-brand-moss/5">
-                    <span className="font-bold">Tomorrow (Tuesday)</span>
-                    <span className="text-brand-clay">4:00 PM · 5:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="font-bold">Wednesday</span>
-                    <span className="text-brand-clay">3:00 PM · 4:00 PM</span>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Timezone</label>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                  >
+                    <option value="Africa/Lagos">West Africa Time (WAT)</option>
+                    <option value="Africa/Nairobi">East Africa Time (EAT)</option>
+                    <option value="Africa/Johannesburg">South Africa Standard Time (SAST)</option>
+                    <option value="Europe/London">Greenwich Mean Time (GMT)</option>
+                    <option value="America/New_York">Eastern Standard Time (EST)</option>
+                  </select>
                 </div>
-                <p className="font-sans text-[10px] text-brand-charcoal/50 mt-2">
-                  * Note: You can customize your weekly days and hours calendars anytime from your profile builder dashboard.
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Preferred Classroom Link</label>
+                  <input
+                    type="url"
+                    value={classroomLink}
+                    onChange={(e) => setClassroomLink(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    placeholder="https://zoom.us/j/..."
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Recording Tool Preference</label>
+                  <input
+                    type="text"
+                    value={recordingTool}
+                    onChange={(e) => setRecordingTool(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    placeholder="e.g. Recordly.site, Zoom Cloud"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3">Weekly Booking Hours Calendar</label>
+                <p className="font-sans text-[11px] text-brand-charcoal/60 mb-4">
+                  Select the hours you are available to teach for each day of the week.
                 </p>
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 border border-brand-moss/10 rounded-2xl p-4 bg-brand-cream/10">
+                  {daysOfWeek.map(day => {
+                    const selectedHours = availability[day] || [];
+                    return (
+                      <div key={day} className="border-b border-brand-moss/5 pb-3 last:border-b-0 last:pb-0">
+                        <span className="font-heading font-bold text-xs text-brand-moss block mb-2">{day}</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {hourlySlots.map(hour => {
+                            const isSelected = selectedHours.includes(hour);
+                            return (
+                              <button
+                                key={hour}
+                                type="button"
+                                onClick={() => toggleSlot(day, hour)}
+                                className={`py-1.5 px-3 rounded-lg border text-[10px] font-mono tracking-tight transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+                                  isSelected
+                                    ? 'bg-brand-clay text-white border-brand-clay font-bold shadow-sm'
+                                    : 'bg-white border-brand-moss/10 text-brand-charcoal/70 hover:border-brand-moss/30'
+                                }`}
+                              >
+                                {hour}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -492,33 +632,50 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
             </div>
 
             <div className="space-y-4 font-sans text-xs">
-              <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Government-Issued ID / Passport Number</label>
-                <div className="relative flex items-center">
-                  <User className="absolute left-4 w-4 h-4 text-brand-moss/45" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. NGA-ID-9823741 or Document URL"
-                    value={govId}
-                    onChange={(e) => setGovId(e.target.value)}
-                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Government ID (NIN/Passport)</label>
+                  <div className="relative border border-dashed border-brand-moss/30 rounded-xl p-3 text-center bg-brand-cream/10">
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => handleFileUpload(e, 'raw', setGovIdUrl)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="text-xs text-brand-moss font-bold">
+                      {govIdUrl ? 'ID Uploaded ✓' : (uploadingState.type === 'raw' ? `Uploading ${uploadingState.progress}%` : 'Upload ID Document')}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">CV / Resume</label>
+                  <div className="relative border border-dashed border-brand-moss/30 rounded-xl p-3 text-center bg-brand-cream/10">
+                    <input
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={(e) => handleFileUpload(e, 'raw', setCvUrl)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <div className="text-xs text-brand-moss font-bold">
+                      {cvUrl ? 'CV Uploaded ✓' : (uploadingState.type === 'raw' ? `Uploading ${uploadingState.progress}%` : 'Upload Resume')}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">University Degree Credentials</label>
-                <div className="relative flex items-center">
-                  <BookOpen className="absolute left-4 w-4 h-4 text-brand-moss/45" />
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">University Degree / Qualifications</label>
+                <div className="relative border border-dashed border-brand-moss/30 rounded-xl p-3 text-center bg-brand-cream/10">
                   <input
-                    type="text"
-                    required
-                    placeholder="e.g. B.Sc. Mathematics, University of Lagos (2018)"
-                    value={degree}
-                    onChange={(e) => setDegree(e.target.value)}
-                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                    type="file"
+                    accept=".pdf,image/*"
+                    onChange={(e) => handleFileUpload(e, 'raw', setDegreeUrl)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
+                  <div className="text-xs text-brand-moss font-bold">
+                    {degreeUrl ? 'Qualifications Uploaded ✓' : (uploadingState.type === 'raw' ? `Uploading ${uploadingState.progress}%` : 'Upload Credentials')}
+                  </div>
                 </div>
               </div>
 
@@ -530,22 +687,22 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
                     <input
                       type="file"
                       accept="video/*"
-                      onChange={handleVideoUpload}
-                      disabled={uploadingVideo}
+                      onChange={(e) => handleFileUpload(e, 'video', setVideoUrl)}
+                      disabled={uploadingState.type === 'video'}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Video className="w-8 h-8 text-brand-clay" />
                       <span className="font-heading font-bold text-xs text-brand-moss">
-                        {uploadingVideo ? `Uploading to Cloudinary: ${uploadProgress}%` : "Drag & Drop or Click to Upload Intro Video"}
+                        {uploadingState.type === 'video' ? `Uploading to Cloudinary: ${uploadingState.progress}%` : "Drag & Drop or Click to Upload Intro Video"}
                       </span>
                       <span className="font-sans text-[10px] text-brand-charcoal/50">MP4, WebM up to 50MB</span>
                     </div>
                     
                     {/* Progress Bar */}
-                    {uploadingVideo && (
+                    {uploadingState.type === 'video' && (
                       <div className="w-full bg-brand-moss/10 rounded-full h-1.5 mt-3 overflow-hidden">
-                        <div className="bg-brand-clay h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        <div className="bg-brand-clay h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadingState.progress}%` }} />
                       </div>
                     )}
                   </div>
@@ -575,8 +732,9 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
                   <div>Hourly rate: <b>₦{rate}/hr</b></div>
                   <div>Subjects count: <b>{selectedSubjects.length} selected</b></div>
                   <div>Curriculums: <b>{selectedCurricula.length} selected</b></div>
-                  <div className="col-span-2">Government ID: <b className="truncate block max-w-xs">{govId}</b></div>
-                  <div className="col-span-2">University Degree: <b className="truncate block max-w-xs">{degree}</b></div>
+                  <div className="col-span-2">Government ID: <b className="truncate block max-w-xs">{govIdUrl ? 'Uploaded' : 'Missing'}</b></div>
+                  <div className="col-span-2">University Degree: <b className="truncate block max-w-xs">{degreeUrl ? 'Uploaded' : 'Missing'}</b></div>
+                  <div className="col-span-2">CV / Resume: <b className="truncate block max-w-xs">{cvUrl ? 'Uploaded' : 'Missing'}</b></div>
                 </div>
               </div>
             </div>
@@ -606,7 +764,7 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={loading || !videoUrl || !govId || !degree}
+              disabled={loading || !videoUrl || !govIdUrl || !degreeUrl || !cvUrl}
               className="flex-1 py-3 px-6 rounded-full bg-brand-clay hover:bg-brand-clay/95 text-white font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-brand-clay/10 transition-all disabled:opacity-40"
             >
               {loading ? 'Submitting Application...' : 'Submit Teacher Application'} <CheckCircle className="w-4 h-4" />

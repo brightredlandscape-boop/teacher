@@ -2469,6 +2469,14 @@ export default function App() {
         </div>
       )}
 
+      {/* Chat Panel */}
+      <ChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        session={selectedChatSession}
+        currentUser={currentUser}
+      />
+
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes slide-up {
           from { transform: translateY(100px); opacity: 0; }

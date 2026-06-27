@@ -107,8 +107,26 @@ function sanitizeObject(obj) {
 // Global Input Sanitization Middleware to prevent XSS
 app.use((req, res, next) => {
   if (req.body) req.body = sanitizeObject(req.body);
-  if (req.query) req.query = sanitizeObject(req.query);
-  if (req.params) req.params = sanitizeObject(req.params);
+  if (req.query) {
+    try {
+      const sanitizedQuery = sanitizeObject(req.query);
+      for (const key of Object.keys(req.query)) {
+        req.query[key] = sanitizedQuery[key];
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (req.params) {
+    try {
+      const sanitizedParams = sanitizeObject(req.params);
+      for (const key of Object.keys(req.params)) {
+        req.params[key] = sanitizedParams[key];
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
   next();
 });
 

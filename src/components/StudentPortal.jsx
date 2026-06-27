@@ -142,7 +142,7 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
           {onBack && (
             <button 
               onClick={onBack}
-              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+              className="mb-4 hidden lg:inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
             >
               ← Back to Home
             </button>
@@ -217,12 +217,12 @@ export default function StudentPortal({ currentUser, selectedCurrency, formatCur
         </div>
 
         {/* Tab switch navigation */}
-        <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 max-w-md">
+        <div className="flex overflow-x-auto whitespace-nowrap bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 max-w-md scrollbar-none">
           {['overview', 'assignments', 'portfolio'].map(t => (
             <button
               key={t}
               onClick={() => setActiveTab(t)}
-              className={`flex-1 py-2.5 rounded-full font-heading font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+              className={`flex-1 py-2.5 rounded-full font-heading font-bold text-xs uppercase tracking-wider shrink-0 transition-all duration-300 ${
                 activeTab === t
                   ? 'bg-brand-moss text-white shadow-md'
                   : 'text-brand-moss hover:bg-brand-moss/5'

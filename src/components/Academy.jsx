@@ -625,7 +625,7 @@ export default function Academy({
           </div>
 
           {enrolled && (
-            <div className="flex items-center gap-2 bg-brand-cream/5 border border-brand-cream/10 rounded-full px-2.5 py-1.5 self-end md:self-auto">
+            <div className="flex items-center gap-2 bg-brand-cream/5 border border-brand-cream/10 rounded-full px-2.5 py-1.5 self-end md:self-auto overflow-x-auto whitespace-nowrap max-w-full scrollbar-none">
               {['modules', 'roleplay', 'forum', 'certificate'].map(tab => {
                 const isCertLocked = tab === 'certificate' && completedModules.length < 6;
                 return (
@@ -633,7 +633,7 @@ export default function Academy({
                     key={tab}
                     disabled={isCertLocked}
                     onClick={() => setActiveTab(tab)}
-                    className={`py-1.5 px-4 rounded-full font-mono text-[9px] uppercase tracking-wider font-bold transition-all duration-300 flex items-center gap-1 ${
+                    className={`py-1.5 px-4 rounded-full font-mono text-[9px] uppercase tracking-wider font-bold shrink-0 transition-all duration-300 flex items-center gap-1 ${
                       isCertLocked 
                         ? 'opacity-40 cursor-not-allowed text-brand-cream/30' 
                         : activeTab === tab

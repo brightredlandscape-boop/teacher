@@ -157,7 +157,7 @@ export default function Marketplace({
           {/* Subject Filter */}
           <div>
             <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3">Subjects</span>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex overflow-x-auto md:flex-wrap whitespace-nowrap pb-2 md:pb-0 gap-2 scrollbar-none">
               {[
                 'All', 
                 'Mathematics', 
@@ -174,7 +174,7 @@ export default function Marketplace({
                 <button
                   key={subj}
                   onClick={() => setSubjectFilter(subj)}
-                  className={`py-1.5 px-4 rounded-full border font-sans text-xs font-semibold transition-all duration-300 ${
+                  className={`py-1.5 px-4 rounded-full border font-sans text-xs font-semibold shrink-0 transition-all duration-300 ${
                     subjectFilter === subj
                       ? 'bg-brand-moss border-brand-moss text-white shadow-sm'
                       : 'bg-brand-cream/20 border-brand-moss/10 hover:border-brand-moss/30 text-brand-moss/80'
@@ -189,7 +189,7 @@ export default function Marketplace({
           {/* Curriculum Filter */}
           <div>
             <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3">Curriculum Standard</span>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex overflow-x-auto md:flex-wrap whitespace-nowrap pb-2 md:pb-0 gap-2 scrollbar-none">
               {[
                 'All', 
                 'Nursery (Ages 2-5)', 
@@ -210,7 +210,7 @@ export default function Marketplace({
                 <button
                   key={curr}
                   onClick={() => setCurriculumFilter(curr)}
-                  className={`py-1.5 px-4 rounded-full border font-sans text-xs font-semibold transition-all duration-300 ${
+                  className={`py-1.5 px-4 rounded-full border font-sans text-xs font-semibold shrink-0 transition-all duration-300 ${
                     curriculumFilter === curr
                       ? 'bg-brand-moss border-brand-moss text-white shadow-sm'
                       : 'bg-brand-cream/20 border-brand-moss/10 hover:border-brand-moss/30 text-brand-moss/80'
@@ -284,28 +284,28 @@ export default function Marketplace({
                       {(teacher.badges || []).map(badge => {
                         if (badge === 'badge-top-rated') {
                           return (
-                            <span key={badge} className="bg-[#FEF3C7] text-[#92400E] font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-[#FDE68A] shadow-sm">
+                            <span key={badge} className="bg-[#FEF3C7] text-[#92400E] font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-[#FDE68A] shadow-sm whitespace-nowrap">
                               ★ TOP RATED
                             </span>
                           );
                         }
                         if (badge === 'badge-ai-cert') {
                           return (
-                            <span key={badge} className="bg-emerald-50 text-emerald-800 font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-emerald-200 shadow-sm">
+                            <span key={badge} className="bg-emerald-50 text-emerald-800 font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-emerald-200 shadow-sm whitespace-nowrap">
                               ELITE CERTIFIED
                             </span>
                           );
                         }
                         if (badge === 'badge-verified') {
                           return (
-                            <span key={badge} className="bg-blue-50 text-blue-800 font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-blue-200 shadow-sm flex items-center gap-1">
+                            <span key={badge} className="bg-blue-50 text-blue-800 font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full border border-blue-200 shadow-sm flex items-center gap-1 whitespace-nowrap">
                               <ShieldCheck className="w-2.5 h-2.5" /> VERIFIED
                             </span>
                           );
                         }
                         if (badge === 'badge-bg-checked') {
                           return (
-                            <span key={badge} className="bg-amber-50/80 border border-brand-clay/30 text-brand-clay font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full shadow-sm flex items-center gap-1">
+                            <span key={badge} className="bg-amber-50/80 border border-brand-clay/30 text-brand-clay font-mono text-[8px] uppercase tracking-wider font-bold py-0.5 px-2 rounded-full shadow-sm flex items-center gap-1 whitespace-nowrap">
                               <ShieldCheck className="w-2.5 h-2.5 text-brand-clay fill-brand-clay/10" /> BACKGROUND CHECKED
                             </span>
                           );

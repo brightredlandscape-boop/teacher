@@ -399,13 +399,14 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
   return (
     <section id="dashboard" className="py-24 px-6 md:px-16 lg:px-24 bg-brand-cream max-w-7xl mx-auto border-t border-brand-moss/10">
       
+
       {/* Dashboard Switcher Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
           {onBack && (
             <button 
               onClick={onBack}
-              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+              className="mb-4 hidden lg:inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
             >
               ← Back to Home
             </button>
@@ -419,7 +420,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
 
         {/* Pill Navigation Switcher */}
         {teacherProfile && teacherProfile.verified && (
-          <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full flex-wrap gap-1">
+          <div className="flex overflow-x-auto md:flex-wrap whitespace-nowrap bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full gap-1 scrollbar-none">
             {[
               { id: 'overview', label: 'Overview & Bookings' },
               { id: 'profile', label: 'Faculty Profile' },
@@ -431,7 +432,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider transition-all duration-300 ${
+                className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider shrink-0 transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-brand-moss text-white shadow-md'
                     : 'text-brand-moss hover:bg-brand-moss/5'

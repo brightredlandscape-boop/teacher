@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -23,27 +23,54 @@ import {
   X,
   HelpCircle,
   Mail,
-  User
+  User,
+  Play
 } from 'lucide-react';
 
-import BookingModal from './components/BookingModal';
-import Marketplace from './components/Marketplace';
-import SessionEngine from './components/SessionEngine';
-import ParentDashboard from './components/ParentDashboard';
-import Academy from './components/Academy';
-import AuthModal from './components/AuthModal';
-import ChatPanel from './components/ChatPanel';
-import TeacherDashboard from './components/TeacherDashboard';
-import TeacherOnboarding from './components/TeacherOnboarding';
-import AdminDashboard from './components/AdminDashboard';
-import TeacherPublicProfile from './components/TeacherPublicProfile';
-import StudentPortal from './components/StudentPortal';
 import heroImage from './assets/hero.jpg';
 import { translations } from './locales/i18n';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
+const BookingModal = lazy(() => import('./components/BookingModal'));
+const Marketplace = lazy(() => import('./components/Marketplace'));
+const SessionEngine = lazy(() => import('./components/SessionEngine'));
+const ParentDashboard = lazy(() => import('./components/ParentDashboard'));
+const Academy = lazy(() => import('./components/Academy'));
+const AuthModal = lazy(() => import('./components/AuthModal'));
+const ChatPanel = lazy(() => import('./components/ChatPanel'));
+const TeacherDashboard = lazy(() => import('./components/TeacherDashboard'));
+const TeacherOnboarding = lazy(() => import('./components/TeacherOnboarding'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const TeacherPublicProfile = lazy(() => import('./components/TeacherPublicProfile'));
+const StudentPortal = lazy(() => import('./components/StudentPortal'));
+
 gsap.registerPlugin(ScrollTrigger);
+
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center p-12 w-full min-h-[200px]">
+      <div className="relative w-10 h-10 flex items-center justify-center">
+        <div className="absolute inset-0 border-2 border-dashed border-brand-clay rounded-full animate-spin" />
+        <span className="font-mono text-[9px] uppercase tracking-wider text-brand-moss font-bold">EB</span>
+      </div>
+    </div>
+  );
+}
+
+function ModalLoadingFallback() {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-charcoal/40 backdrop-blur-2xs">
+      <div className="bg-white border border-brand-moss/10 rounded-3xl p-8 flex flex-col items-center justify-center shadow-2xl">
+        <div className="relative w-12 h-12 flex items-center justify-center mb-3">
+          <div className="absolute inset-0 border-2 border-dashed border-brand-clay rounded-full animate-[spin_3s_linear_infinite]" />
+          <span className="font-mono text-xs uppercase tracking-wider text-brand-moss font-bold">EB</span>
+        </div>
+        <span className="font-sans text-[10px] text-brand-moss font-bold uppercase tracking-wider">Loading secure panel...</span>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [lang, setLang] = useState('en');
@@ -79,6 +106,7 @@ export default function App() {
   const [isTutorOnboarding, setIsTutorOnboarding] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedChatSession, setSelectedChatSession] = useState(null);
 
   // Waitlist form states
@@ -1008,7 +1036,10 @@ export default function App() {
       <nav className="w-full bg-brand-charcoal text-white py-4 px-6 md:px-12 border-b border-brand-cream/10 z-50 relative">
         <div className="flex items-center justify-between">
           <div 
-            onClick={() => setCurrentView('home')}
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              setCurrentView('home');
+            }}
             className="flex items-center gap-2 cursor-pointer select-none"
           >
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-heading font-extrabold bg-brand-cream text-brand-moss">
@@ -1029,13 +1060,14 @@ export default function App() {
           )}
 
           <div className="flex items-center gap-4">
-            {/* Multilingual Selector */}
-            <div className="flex items-center gap-1.5">
-              <span className="hidden lg:inline font-mono text-[9px] font-bold uppercase tracking-wider text-white/65">
-                Lang:
-              </span>
-              <div className="flex items-center bg-black/15 border border-white/10 rounded-full p-1 select-none">
-                <div className="hidden sm:flex items-center">
+            {/* Desktop selectors (hidden on mobile/tablet) */}
+            <div className="hidden lg:flex items-center gap-4">
+              {/* Multilingual Selector */}
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white/65">
+                  Lang:
+                </span>
+                <div className="flex items-center bg-black/15 border border-white/10 rounded-full p-1 select-none">
                   {[
                     { code: 'en', label: 'EN' },
                     { code: 'fr', label: 'FR' },
@@ -1055,25 +1087,14 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <select
-                  value={lang}
-                  onChange={(e) => setLang(e.target.value)}
-                  className="flex sm:hidden bg-transparent text-[10px] font-bold outline-none border-none py-0.5 px-1.5 cursor-pointer text-white"
-                >
-                  <option value="en" className="text-black">EN</option>
-                  <option value="fr" className="text-black">FR</option>
-                  <option value="sw" className="text-black">SW</option>
-                </select>
               </div>
-            </div>
 
-            {/* Multi-currency Selector */}
-            <div className="flex items-center gap-2">
-              <span className="hidden md:inline font-mono text-[9px] font-bold uppercase tracking-wider text-white/65">
-                {t('chooseCurrency')}
-              </span>
-              <div className="flex items-center bg-black/15 border border-white/10 rounded-full p-1 select-none">
-                <div className="hidden md:flex items-center">
+              {/* Multi-currency Selector */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white/65">
+                  {t('chooseCurrency')}
+                </span>
+                <div className="flex items-center bg-black/15 border border-white/10 rounded-full p-1 select-none">
                   {['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'CAD'].map(curr => (
                     <button
                       key={curr}
@@ -1089,15 +1110,6 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="flex md:hidden bg-transparent text-[10px] font-bold outline-none border-none py-0.5 px-1.5 cursor-pointer text-white"
-                >
-                  {['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'CAD'].map(curr => (
-                    <option key={curr} value={curr} className="text-black">{curr}</option>
-                  ))}
-                </select>
               </div>
             </div>
 
@@ -1159,7 +1171,7 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="hidden sm:flex flex-col text-right">
+                <div className="hidden lg:flex flex-col text-right">
                   <span className="text-[10px] font-bold text-white">
                     {currentUser.displayName}
                   </span>
@@ -1171,7 +1183,7 @@ export default function App() {
                 {currentUser.role === 'Teacher' && (
                   <a 
                     href="#academy" 
-                    className="btn-magnetic bg-brand-clay hover:bg-brand-clay/90 text-white font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full flex items-center gap-1.5"
+                    className="hidden lg:flex btn-magnetic bg-brand-clay hover:bg-brand-clay/90 text-white font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full items-center gap-1.5"
                   >
                     <Sparkles className="w-3.5 h-3.5 animate-pulse" />
                     Academy Enrollment
@@ -1180,15 +1192,15 @@ export default function App() {
 
                 {currentView === 'dashboard' ? (
                   <button
-                    onClick={() => setCurrentView('home')}
-                    className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border border-white text-white hover:bg-white hover:text-brand-charcoal"
+                    onClick={handleBackToHome}
+                    className="hidden lg:inline-block btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border border-white text-white hover:bg-white hover:text-brand-charcoal"
                   >
                     Back to Home
                   </button>
                 ) : (
                   <button
                     onClick={() => setCurrentView('dashboard')}
-                    className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full bg-brand-clay text-white hover:bg-brand-clay/90"
+                    className="hidden lg:inline-block btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full bg-brand-clay text-white hover:bg-brand-clay/90"
                   >
                     Go to Dashboard
                   </button>
@@ -1204,14 +1216,15 @@ export default function App() {
                     localStorage.removeItem('edubridge_token');
                     setCurrentUser(null);
                     setCurrentView('home');
+                    setIsMobileMenuOpen(false);
                   }}
-                  className="btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border bg-brand-cream border-brand-cream text-brand-moss hover:bg-brand-clay hover:border-brand-clay hover:text-white"
+                  className="hidden lg:inline-block btn-magnetic font-sans text-[10px] uppercase tracking-wider font-bold py-2 px-4 rounded-full border bg-brand-cream border-brand-cream text-brand-moss hover:bg-brand-clay hover:border-brand-clay hover:text-white"
                 >
                   Logout
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-3">
                 <button
                   onClick={() => {
                     setAuthTab('login');
@@ -1232,87 +1245,266 @@ export default function App() {
                 </button>
               </div>
             )}
+
+            {/* Mobile Hamburger menu toggle */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2 rounded-full text-white hover:bg-white/10 transition-colors z-50 focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <div className="flex flex-col gap-1.5 w-5 h-5 justify-center items-end">
+                  <span className="w-5 h-0.5 bg-white rounded-full"></span>
+                  <span className="w-4 h-0.5 bg-white rounded-full"></span>
+                  <span className="w-3.5 h-0.5 bg-white rounded-full"></span>
+                </div>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu drawer */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden mt-4 pt-4 border-t border-white/10 flex flex-col gap-4 animate-slide-down">
+            {/* Lang & Currency selectors */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white/50">Language</span>
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="w-full bg-brand-charcoal border border-white/15 rounded-xl py-2 px-3 text-xs font-bold text-white outline-none cursor-pointer"
+                >
+                  <option value="en" className="text-white bg-brand-charcoal">EN (English)</option>
+                  <option value="fr" className="text-white bg-brand-charcoal">FR (French)</option>
+                  <option value="sw" className="text-white bg-brand-charcoal">SW (Swahili)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white/50">Currency</span>
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="w-full bg-brand-charcoal border border-white/15 rounded-xl py-2 px-3 text-xs font-bold text-white outline-none cursor-pointer"
+                >
+                  {['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'CAD'].map(curr => (
+                    <option key={curr} value={curr} className="text-white bg-brand-charcoal">{curr}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Mobile Nav Links */}
+            {currentUser && (
+              <div className="flex flex-col gap-2.5 font-sans font-bold text-xs uppercase tracking-wider text-white/80 border-t border-white/5 pt-3">
+                {currentUser.role === 'Parent' && (
+                  <a 
+                    href="#marketplace" 
+                    onClick={(e) => {
+                      setIsMobileMenuOpen(false);
+                      const el = document.getElementById('marketplace');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }} 
+                    className="hover:text-brand-clay transition-colors py-1"
+                  >
+                    {t('navFindTeachers')}
+                  </a>
+                )}
+                {currentUser.role === 'Teacher' && (
+                  <a 
+                    href="#academy" 
+                    onClick={(e) => {
+                      setIsMobileMenuOpen(false);
+                      const el = document.getElementById('academy');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }} 
+                    className="hover:text-brand-clay transition-colors py-1"
+                  >
+                    {t('navAcademy')}
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Profile & Action items */}
+            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-3">
+              {currentUser ? (
+                <>
+                  <div className="bg-white/5 rounded-2xl p-3 flex flex-col">
+                    <span className="text-xs font-bold text-white">
+                      {currentUser.displayName}
+                    </span>
+                    <span className="text-[9px] font-mono opacity-70 uppercase tracking-widest text-brand-clay mt-0.5">
+                      {currentUser.role}
+                    </span>
+                  </div>
+
+                  {currentUser.role === 'Teacher' && (
+                    <a 
+                      href="#academy" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="bg-brand-clay hover:bg-brand-clay/90 text-white font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 text-center"
+                    >
+                      <Sparkles className="w-4 h-4 animate-pulse" />
+                      Academy Enrollment
+                    </a>
+                  )}
+
+                  {currentView === 'dashboard' ? (
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleBackToHome();
+                      }}
+                      className="w-full font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl border border-white text-white hover:bg-white hover:text-brand-charcoal text-center"
+                    >
+                      Back to Home
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setCurrentView('dashboard');
+                      }}
+                      className="w-full font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl bg-brand-clay text-white hover:bg-brand-clay/90 text-center"
+                    >
+                      Go to Dashboard
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={async () => {
+                      setIsMobileMenuOpen(false);
+                      try {
+                        await auth.signOut();
+                      } catch (e) {
+                        console.warn("Failed to sign out of Firebase:", e);
+                      }
+                      localStorage.removeItem('edubridge_user');
+                      localStorage.removeItem('edubridge_token');
+                      setCurrentUser(null);
+                      setCurrentView('home');
+                    }}
+                    className="w-full font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl bg-white text-brand-moss hover:bg-brand-clay hover:text-white text-center"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setAuthTab('login');
+                      setIsAuthOpen(true);
+                    }}
+                    className="font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl border border-white/20 text-white hover:bg-white/10 text-center"
+                  >
+                    Log In
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setAuthTab('register');
+                      setIsAuthOpen(true);
+                    }}
+                    className="font-sans text-xs uppercase tracking-wider font-bold py-3 px-4 rounded-xl bg-brand-clay text-white hover:bg-brand-clay/90 text-center"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Teacher Public Profile View */}
       {currentView === 'teacher_profile' && (
-        <TeacherPublicProfile 
-          username={profileUsername}
-          onBack={handleBackToHome}
-          onBookClick={handleBookClick}
-          selectedCurrency={selectedCurrency}
-          formatCurrency={formatCurrency}
-          convertMinor={convertMinor}
-        />
+        <Suspense fallback={<LoadingFallback />}>
+          <TeacherPublicProfile 
+            username={profileUsername}
+            onBack={handleBackToHome}
+            onBookClick={handleBookClick}
+            selectedCurrency={selectedCurrency}
+            formatCurrency={formatCurrency}
+            convertMinor={convertMinor}
+          />
+        </Suspense>
       )}
 
       {/* Main View Wrapper (hidden when viewing teacher profile to avoid unmounting conflicts with GSAP pinning) */}
       <div className={currentView === 'teacher_profile' ? 'hidden' : ''}>
         {currentUser && currentView === 'dashboard' && (
           isTutorOnboarding ? (
-            <TeacherOnboarding 
-              currentUser={currentUser}
-              onComplete={(profile) => {
-                setIsTutorOnboarding(false);
-                fetchInitialData();
-                alert("Application submitted successfully! Your account status is now Pending Approval.");
-              }}
-              onBack={() => setCurrentView('home')}
-            />
+            <Suspense fallback={<LoadingFallback />}>
+              <TeacherOnboarding 
+                currentUser={currentUser}
+                onComplete={(profile) => {
+                  setIsTutorOnboarding(false);
+                  fetchInitialData();
+                  alert("Application submitted successfully! Your account status is now Pending Approval.");
+                }}
+                onBack={() => setCurrentView('home')}
+              />
+            </Suspense>
           ) : (
             <div className="py-6 min-h-[75vh]">
-            {currentUser.role === 'Admin' ? (
-              <AdminDashboard
-                currentUser={currentUser}
-                selectedCurrency={selectedCurrency}
-                formatCurrency={formatCurrency}
-                convertMinor={convertMinor}
-                onBack={() => setCurrentView('home')}
-              />
-            ) : currentUser.role === 'Teacher' ? (
-              <TeacherDashboard
-                currentUser={currentUser}
-                selectedCurrency={selectedCurrency}
-                formatCurrency={formatCurrency}
-                convertMinor={convertMinor}
-                onOpenChat={handleOpenChat}
-                onGradeHomework={handleGradeHomework}
-                gradesLog={gradesLog}
-                onBack={() => setCurrentView('home')}
-              />
-            ) : currentUser.role === 'Student' ? (
-              <StudentPortal
-                currentUser={currentUser}
-                selectedCurrency={selectedCurrency}
-                formatCurrency={formatCurrency}
-                convertMinor={convertMinor}
-                onBack={() => setCurrentView('home')}
-              />
-            ) : (
-              <ParentDashboard 
-                currentUser={currentUser}
-                lang={lang}
-                t={t}
-                selectedCurrency={selectedCurrency}
-                formatCurrency={formatCurrency}
-                convertMinor={convertMinor}
-                gradesLog={gradesLog}
-                onGradeHomework={handleGradeHomework}
-                walletBalance={walletBalance}
-                escrowBalance={escrowBalance}
-                bookedSessions={bookedSessions}
-                onOpenChat={handleOpenChat}
-                pendingAssignments={pendingAssignments}
-                onTopupWallet={handleTopupWallet}
-                teachers={teachers}
-                onBookClick={handleBookClick}
-                onTeacherSelect={handleTutorProfileSelect}
-                onBack={() => setCurrentView('home')}
-              />
-            )}
-          </div>
+              <Suspense fallback={<LoadingFallback />}>
+                {currentUser.role === 'Admin' ? (
+                  <AdminDashboard
+                    currentUser={currentUser}
+                    selectedCurrency={selectedCurrency}
+                    formatCurrency={formatCurrency}
+                    convertMinor={convertMinor}
+                    onBack={() => setCurrentView('home')}
+                  />
+                ) : currentUser.role === 'Teacher' ? (
+                  <TeacherDashboard
+                    currentUser={currentUser}
+                    selectedCurrency={selectedCurrency}
+                    formatCurrency={formatCurrency}
+                    convertMinor={convertMinor}
+                    onOpenChat={handleOpenChat}
+                    onGradeHomework={handleGradeHomework}
+                    gradesLog={gradesLog}
+                    onBack={() => setCurrentView('home')}
+                  />
+                ) : currentUser.role === 'Student' ? (
+                  <StudentPortal
+                    currentUser={currentUser}
+                    selectedCurrency={selectedCurrency}
+                    formatCurrency={formatCurrency}
+                    convertMinor={convertMinor}
+                    onBack={() => setCurrentView('home')}
+                  />
+                ) : (
+                  <ParentDashboard 
+                    currentUser={currentUser}
+                    lang={lang}
+                    t={t}
+                    selectedCurrency={selectedCurrency}
+                    formatCurrency={formatCurrency}
+                    convertMinor={convertMinor}
+                    gradesLog={gradesLog}
+                    onGradeHomework={handleGradeHomework}
+                    walletBalance={walletBalance}
+                    escrowBalance={escrowBalance}
+                    bookedSessions={bookedSessions}
+                    onOpenChat={handleOpenChat}
+                    pendingAssignments={pendingAssignments}
+                    onTopupWallet={handleTopupWallet}
+                    teachers={teachers}
+                    onBookClick={handleBookClick}
+                    onTeacherSelect={handleTutorProfileSelect}
+                    onBack={() => setCurrentView('home')}
+                  />
+                )}
+              </Suspense>
+            </div>
           )
         )}
         <div className={currentUser && currentView === 'dashboard' ? 'hidden' : ''}>
@@ -1765,39 +1957,44 @@ export default function App() {
       </section>
 
       {/* Marketplace Find Teachers Component */}
-      <Marketplace 
-        teachers={teachers} 
-        selectedCurrency={selectedCurrency} 
-        onBookClick={handleBookClick}
-        formatCurrency={formatCurrency}
-        convertMinor={convertMinor}
-        onTeacherSelect={handleTutorProfileSelect}
-        onWatchVideo={(teacher) => setWatchingTeacherVideo(teacher)}
-      />
-
-
+      <Suspense fallback={<LoadingFallback />}>
+        <Marketplace 
+          teachers={teachers} 
+          selectedCurrency={selectedCurrency} 
+          onBookClick={handleBookClick}
+          formatCurrency={formatCurrency}
+          convertMinor={convertMinor}
+          onTeacherSelect={handleTutorProfileSelect}
+          onWatchVideo={(teacher) => setWatchingTeacherVideo(teacher)}
+        />
+      </Suspense>
 
       {/* Live Session Classroom Sandbox */}
-      <SessionEngine 
-        bookedSessions={bookedSessions} 
-        onEndSession={handleEndSession}
-        escrowBalance={escrowBalance}
-        formatCurrency={formatCurrency}
-        selectedCurrency={selectedCurrency}
-        convertMinor={convertMinor}
-      />
+      <Suspense fallback={<LoadingFallback />}>
+        <SessionEngine 
+          bookedSessions={bookedSessions} 
+          onEndSession={handleEndSession}
+          escrowBalance={escrowBalance}
+          formatCurrency={formatCurrency}
+          selectedCurrency={selectedCurrency}
+          convertMinor={convertMinor}
+        />
+      </Suspense>
+
       {/* AI Academy */}
-      <Academy 
-        currentUser={currentUser}
-        selectedCurrency={selectedCurrency}
-        formatCurrency={formatCurrency}
-        convertMinor={convertMinor}
-        onUnlockBadge={handleUnlockBadge}
-        onRegisterClick={() => {
-          setAuthTab('register');
-          setIsAuthOpen(true);
-        }}
-      />
+      <Suspense fallback={<LoadingFallback />}>
+        <Academy 
+          currentUser={currentUser}
+          selectedCurrency={selectedCurrency}
+          formatCurrency={formatCurrency}
+          convertMinor={convertMinor}
+          onUnlockBadge={handleUnlockBadge}
+          onRegisterClick={() => {
+            setAuthTab('register');
+            setIsAuthOpen(true);
+          }}
+        />
+      </Suspense>
 
       {/* Manifesto */}
       <section id="manifesto" className="relative py-32 bg-brand-charcoal text-brand-cream overflow-hidden">
@@ -2270,34 +2467,40 @@ export default function App() {
         </div>
       </footer>
 
-            {/* Interactive Booking Modal */}
-      <BookingModal
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
-        teacher={selectedTeacherForBooking}
-        selectedCurrency={selectedCurrency}
-        walletBalance={walletBalance}
-        onBook={handleBookingConfirm}
-        formatCurrency={formatCurrency}
-        convertMinor={convertMinor}
-        bookedSessions={bookedSessions}
-      />
+      {/* Interactive Booking Modal */}
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <BookingModal
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+          teacher={selectedTeacherForBooking}
+          selectedCurrency={selectedCurrency}
+          walletBalance={walletBalance}
+          onBook={handleBookingConfirm}
+          formatCurrency={formatCurrency}
+          convertMinor={convertMinor}
+          bookedSessions={bookedSessions}
+        />
+      </Suspense>
 
-      <AuthModal 
-        isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
-        onSuccess={handleAuthSuccess}
-      />
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <AuthModal 
+          isOpen={isAuthOpen} 
+          onClose={() => setIsAuthOpen(false)} 
+          onSuccess={handleAuthSuccess}
+        />
+      </Suspense>
 
-      <ChatPanel 
-        isOpen={isChatOpen} 
-        onClose={() => {
-          setIsChatOpen(false);
-          setSelectedChatSession(null);
-        }} 
-        session={selectedChatSession} 
-        currentUser={currentUser} 
-      />
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <ChatPanel 
+          isOpen={isChatOpen} 
+          onClose={() => {
+            setIsChatOpen(false);
+            setSelectedChatSession(null);
+          }} 
+          session={selectedChatSession} 
+          currentUser={currentUser} 
+        />
+      </Suspense>
 
       {/* Real-time Toast Notifications */}
       {activeToast && (

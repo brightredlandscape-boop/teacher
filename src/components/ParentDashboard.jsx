@@ -386,7 +386,7 @@ export default function ParentDashboard({
             {onBack && (
               <button 
                 onClick={onBack}
-                className="inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+                className="mb-4 hidden lg:inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
               >
                 ← Back to Home
               </button>
@@ -419,7 +419,7 @@ export default function ParentDashboard({
         </div>
 
         {/* Tab Sub-navigation Switcher */}
-        <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full flex-wrap gap-1">
+        <div className="flex overflow-x-auto md:flex-wrap whitespace-nowrap bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1.5 self-center max-w-full gap-1 scrollbar-none">
           {[
             { id: 'progress', label: 'Academic Progress' },
             { id: 'marketplace', label: 'Find & Book Tutors' },
@@ -430,7 +430,7 @@ export default function ParentDashboard({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider transition-all duration-300 ${
+              className={`py-2 px-4 rounded-full font-heading font-bold text-[10px] uppercase tracking-wider shrink-0 transition-all duration-300 ${
                 activeTab === tab.id
                   ? 'bg-brand-moss text-white shadow-md'
                   : 'text-brand-moss hover:bg-brand-moss/5'

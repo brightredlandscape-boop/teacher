@@ -8,7 +8,8 @@ export default function Marketplace({
   formatCurrency, 
   convertMinor,
   onTeacherSelect,
-  onWatchVideo
+  onWatchVideo,
+  isNested = false
 }) {
   const [subjectFilter, setSubjectFilter] = useState('All');
   const [curriculumFilter, setCurriculumFilter] = useState('All');
@@ -72,7 +73,7 @@ export default function Marketplace({
   });
 
   return (
-    <section id="marketplace" className="py-24 px-6 md:px-16 lg:px-24 bg-brand-cream max-w-7xl mx-auto">
+    <section id="marketplace" className={`${isNested ? 'pt-6 pb-24' : 'py-24'} px-6 md:px-16 lg:px-24 bg-brand-cream max-w-7xl mx-auto`}>
       <div className="text-center max-w-3xl mx-auto mb-12">
         <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">EduBridge Marketplace</span>
         <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss tracking-tight">

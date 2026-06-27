@@ -382,14 +382,27 @@ export default function ParentDashboard({
       {/* Switcher Header */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-12 border-b border-brand-moss/10 pb-8">
         <div>
-          {onBack && (
-            <button 
-              onClick={onBack}
-              className="mb-4 inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
-            >
-              ← Back to Home
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {onBack && (
+              <button 
+                onClick={onBack}
+                className="inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+              >
+                ← Back to Home
+              </button>
+            )}
+            {activeTab !== 'progress' && (
+              <button 
+                onClick={() => {
+                  setActiveTab('progress');
+                  window.location.hash = '#dashboard';
+                }}
+                className="inline-flex items-center gap-1.5 font-sans font-bold text-[10px] uppercase tracking-wider text-brand-moss bg-brand-moss/5 hover:bg-brand-moss/10 px-3.5 py-1.5 rounded-full border border-brand-moss/10 transition-colors"
+              >
+                ← Back to Dashboard Home
+              </button>
+            )}
+          </div>
           <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">EduBridge Parent Portal</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Platform Parent Dashboard</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
@@ -1027,18 +1040,7 @@ export default function ParentDashboard({
 
       {/* ACTIVE SECTION: TUTOR MARKETPLACE */}
       {activeTab === 'marketplace' && (
-        <div className="animate-fade-up space-y-6">
-          <div className="flex justify-start px-6 md:px-16 lg:px-24 max-w-7xl mx-auto pt-6">
-            <button 
-              onClick={() => {
-                setActiveTab('progress');
-                window.location.hash = '#dashboard';
-              }} 
-              className="py-2.5 px-6 bg-white hover:bg-brand-cream border border-brand-moss/10 text-brand-moss font-sans font-bold text-xs uppercase tracking-wider rounded-full flex items-center gap-2 shadow-md transition-all"
-            >
-              ← Back to Dashboard Home
-            </button>
-          </div>
+        <div className="animate-fade-up">
           <Marketplace 
             teachers={teachers || []} 
             selectedCurrency={selectedCurrency} 
@@ -1046,6 +1048,7 @@ export default function ParentDashboard({
             formatCurrency={formatCurrency}
             convertMinor={convertMinor}
             onTeacherSelect={onTeacherSelect}
+            isNested={true}
           />
         </div>
       )}

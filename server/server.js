@@ -1301,6 +1301,15 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
     return res.status(400).json({ error: "No slots selected." });
   }
 
+  // Double-booking check
+  const existingBookings = db.find('sessions', s => s.teacherId === teacherId && s.status !== 'Cancelled');
+  for (const slot of slots) {
+    const isDoubleBooked = existingBookings.some(eb => eb.slot && eb.slot.day === slot.day && eb.slot.time === slot.time);
+    if (isDoubleBooked) {
+      return res.status(400).json({ error: `The slot "${slot.day} at ${slot.time}" is already booked for this teacher.` });
+    }
+  }
+
   const totalCost = costPerSession * slots.length;
 
   // 1. Check Parent wallet
@@ -1346,6 +1355,9 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
     paymentProcessor: "escrow",
     payoutStatus: "locked"
   });
+
+  const cost = costPerSession;
+  const slot = slots[0];
 
   // Dispatch Notifications
   await createNotification(

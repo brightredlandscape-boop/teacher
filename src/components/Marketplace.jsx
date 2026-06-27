@@ -233,7 +233,7 @@ export default function Marketplace({
           if (!aHasElite && bHasElite) return 1;
           return 0;
         }).map(teacher => {
-          const rateValue = teacher.rate || 0;
+          const rateValue = 350000; // ₦3,500 across board for trial class
           const convertedRate = convertMinor(rateValue, selectedCurrency);
           const formattedRate = formatCurrency(convertedRate, selectedCurrency);
           const teacherId = teacher.username || teacher.uid || teacher.id;
@@ -368,10 +368,10 @@ export default function Marketplace({
               {/* Hourly Rate & CTA buttons */}
               <div>
                 <div className="flex justify-between items-baseline mb-4">
-                  <span className="text-xs text-brand-charcoal/50">Rate:</span>
+                  <span className="text-xs text-brand-charcoal/50">Trial Rate:</span>
                   <div className="text-right">
                     <span className="font-heading font-bold text-xl text-brand-moss">{formattedRate}</span>
-                    <span className="font-sans text-2xs text-brand-charcoal/50 block">/ hour</span>
+                    <span className="font-sans text-2xs text-brand-charcoal/50 block">/ class</span>
                   </div>
                 </div>
 

@@ -428,12 +428,12 @@ export default function TeacherPublicProfile({
         {/* Right Column: Rate Card & Slot booking */}
         <div className="lg:col-span-4 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-lg space-y-6 lg:sticky lg:top-28">
           <div>
-            <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-1">TUTORING SERVICE</span>
+            <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-1">TRIAL CLASS RATE</span>
             <div className="flex items-baseline gap-1">
               <span className="font-heading text-4xl font-extrabold text-brand-moss">
-                {formatCurrency(convertMinor(teacher.rate, selectedCurrency), selectedCurrency)}
+                {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)}
               </span>
-              <span className="font-mono text-xs text-brand-charcoal/50">/ hour</span>
+              <span className="font-mono text-xs text-brand-charcoal/50">/ class</span>
             </div>
           </div>
 

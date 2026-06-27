@@ -9,7 +9,8 @@ export default function BookingModal({
   walletBalance, 
   onBook, 
   formatCurrency, 
-  convertMinor 
+  convertMinor,
+  bookedSessions = []
 }) {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('wallet');
@@ -28,10 +29,7 @@ export default function BookingModal({
   const [paymentStatusText, setPaymentStatusText] = useState('');
 
   const trialRateNgnMinor = 350000; // ₦3,500
-  const rateNgnMinor = teacher?.rate || 0;
-  const isTrial = teacher?.id !== 'teacher_test_pay' && teacher?.uid !== 'teacher_test_pay'; // Booking is trial by default for landing conversion, except for testpay teacher
-
-  const activeRateMinor = isTrial ? trialRateNgnMinor : rateNgnMinor;
+  const activeRateMinor = trialRateNgnMinor; // ₦3,500 across board
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
   const formattedRate = formatCurrency(convertedRateMinor, selectedCurrency);
 
@@ -39,12 +37,34 @@ export default function BookingModal({
   const totalRateMinor = activeRateMinor * numSelected;
   const formattedTotalRate = formatCurrency(convertMinor(totalRateMinor, selectedCurrency), selectedCurrency);
 
-  const slots = [
-    { id: 1, day: "Today", time: "3:30 PM" },
-    { id: 2, day: "Tomorrow", time: "10:00 AM" },
-    { id: 3, day: "Wednesday", time: "4:00 PM" },
-    { id: 4, day: "Thursday", time: "11:30 AM" }
-  ];
+  // Generate slots based on teacher availability
+  const slots = [];
+  let slotId = 1;
+  if (teacher && teacher.availability && Object.keys(teacher.availability).length > 0) {
+    Object.entries(teacher.availability).forEach(([day, times]) => {
+      if (Array.isArray(times)) {
+        times.forEach(time => {
+          slots.push({ id: slotId++, day, time });
+        });
+      }
+    });
+  }
+  // Fallback slots if none defined
+  if (slots.length === 0) {
+    slots.push({ id: 1, day: "Today", time: "3:30 PM" });
+    slots.push({ id: 2, day: "Tomorrow", time: "10:00 AM" });
+    slots.push({ id: 3, day: "Wednesday", time: "4:00 PM" });
+    slots.push({ id: 4, day: "Thursday", time: "11:30 AM" });
+  }
+
+  const isSlotBooked = (slot) => {
+    return (bookedSessions || []).some(session => 
+      (session.teacherId === teacher.id || session.teacherId === teacher.uid) &&
+      session.slot &&
+      session.slot.day === slot.day &&
+      session.slot.time === slot.time
+    );
+  };
 
   // Format Card Number (adds spaces every 4 digits)
   const handleCardNumberChange = (e) => {
@@ -318,7 +338,7 @@ export default function BookingModal({
             {/* Header */}
             <div className="mb-6">
               <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Secure Check-out</span>
-              <h3 className="font-heading font-bold text-2xl text-brand-moss">Book a Lesson</h3>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Book a Trial Class</h3>
               <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
                 with <span className="font-semibold">{teacher.name}</span>
               </p>
@@ -352,9 +372,11 @@ export default function BookingModal({
               <div className="grid grid-cols-2 gap-3">
                 {slots.map(slot => {
                   const isSelected = selectedSlots.includes(slot.id);
+                  const booked = isSlotBooked(slot);
                   return (
                     <button
                       key={slot.id}
+                      disabled={booked}
                       onClick={() => {
                         setSelectedSlots(prev => 
                           prev.includes(slot.id) 
@@ -363,12 +385,17 @@ export default function BookingModal({
                         );
                       }}
                       className={`py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 ${
-                        isSelected
-                          ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-1 ring-brand-clay'
-                          : 'border-brand-moss/10 bg-white hover:border-brand-moss/40 text-brand-charcoal/80'
+                        booked
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                          : isSelected
+                            ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-1 ring-brand-clay'
+                            : 'border-brand-moss/10 bg-white hover:border-brand-moss/40 text-brand-charcoal/80'
                       }`}
                     >
-                      <span className="text-xs font-bold block">{slot.day}</span>
+                      <span className="text-xs font-bold block flex justify-between items-center font-heading">
+                        <span>{slot.day}</span>
+                        {booked && <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-mono uppercase font-bold">Booked</span>}
+                      </span>
                       <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block flex items-center gap-1">
                         <Clock className="w-3 h-3 text-brand-moss/40" /> {slot.time}
                       </span>

@@ -2280,6 +2280,7 @@ export default function App() {
         onBook={handleBookingConfirm}
         formatCurrency={formatCurrency}
         convertMinor={convertMinor}
+        bookedSessions={bookedSessions}
       />
 
       <AuthModal 
@@ -2455,7 +2456,7 @@ export default function App() {
                 "{watchingTeacherVideo.bio}"
               </p>
               <div className="flex justify-between items-center">
-                <span className="font-mono text-2xs text-brand-charcoal/50 uppercase">RATE: {formatCurrency(convertMinor(watchingTeacherVideo.rate, selectedCurrency), selectedCurrency)} / hour</span>
+                <span className="font-mono text-2xs text-brand-charcoal/50 uppercase">TRIAL RATE: {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)} / class</span>
                 <button
                   onClick={() => {
                     const tutor = watchingTeacherVideo;

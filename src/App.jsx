@@ -1007,7 +1007,10 @@ export default function App() {
       {/* Static Header Navbar */}
       <nav className="w-full bg-brand-charcoal text-white py-4 px-6 md:px-12 border-b border-brand-cream/10 z-50 relative">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div 
+            onClick={() => setCurrentView('home')}
+            className="flex items-center gap-2 cursor-pointer select-none"
+          >
             <div className="w-8 h-8 rounded-full flex items-center justify-center font-heading font-extrabold bg-brand-cream text-brand-moss">
               EB
             </div>

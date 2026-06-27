@@ -14,6 +14,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleUserForSetup, setGoogleUserForSetup] = useState(null);
+  const [eliteCertificate, setEliteCertificate] = useState('');
 
   const API_BASE = '/api';
 
@@ -44,7 +45,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
       const payload = activeTab === 'login' 
         ? { email, password, uid: firebaseUser?.uid } 
-        : { email, displayName: name, username: role === 'Teacher' ? username : undefined, role, country, password, referredBy: refCode || undefined, uid: firebaseUser?.uid };
+        : { email, displayName: name, username: role === 'Teacher' ? username : undefined, role, country, password, referredBy: refCode || undefined, uid: firebaseUser?.uid, eliteCertificate: role === 'Teacher' ? eliteCertificate : undefined };
 
       const response = await fetch(`${API_BASE}${endpoint}`, {
         method: 'POST',
@@ -69,7 +70,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
         const payload = activeTab === 'login' 
           ? { email, password } 
-          : { email, displayName: name, username: role === 'Teacher' ? username : undefined, role, country, password, referredBy: refCode || undefined };
+          : { email, displayName: name, username: role === 'Teacher' ? username : undefined, role, country, password, referredBy: refCode || undefined, eliteCertificate: role === 'Teacher' ? eliteCertificate : undefined };
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
           method: 'POST',
@@ -220,7 +221,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         role,
         country,
         referredBy: refCode || undefined,
-        uid: googleUserForSetup.uid
+        uid: googleUserForSetup.uid,
+        eliteCertificate: role === 'Teacher' ? eliteCertificate : undefined
       };
 
       const response = await fetch(`${API_BASE}/auth/register`, {
@@ -350,6 +352,21 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     className="w-full bg-white border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            {role === 'Teacher' && (
+              <div>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Elite Teachers Certificate (Optional)</label>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder="e.g. ETA-2026-XXXXXX"
+                    value={eliteCertificate}
+                    onChange={(e) => setEliteCertificate(e.target.value)}
+                    className="w-full bg-white border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
                   />
                 </div>
               </div>
@@ -490,6 +507,21 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                   className="w-full bg-white border border-brand-moss/10 rounded-xl pl-11 pr-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm font-mono"
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'register' && role === 'Teacher' && (
+            <div>
+              <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Elite Teachers Certificate (Optional)</label>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="e.g. ETA-2026-XXXXXX"
+                  value={eliteCertificate}
+                  onChange={(e) => setEliteCertificate(e.target.value)}
+                  className="w-full bg-white border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
                 />
               </div>
             </div>

@@ -19,7 +19,7 @@ export default function Academy({
   const [submittingPayment, setSubmittingPayment] = useState(false);
   
   // Paywall states
-  const [billingPlan, setBillingPlan] = useState('monthly'); // 'monthly', 'annual'
+  const [billingPlan, setBillingPlan] = useState('onboarding'); // 'onboarding'
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -527,6 +527,12 @@ export default function Academy({
     return formatCurrency(converted, selectedCurrency);
   };
 
+  const getAcademyFee = () => {
+    const rawNgn = 5000000; // 50,000 NGN in kobo
+    const converted = convertMinor(rawNgn, selectedCurrency);
+    return formatCurrency(converted, selectedCurrency);
+  };
+
   // General guest page showing program syllabus and subscription info
   if (!currentUser || currentUser.role !== 'Teacher') {
     return (
@@ -576,7 +582,7 @@ export default function Academy({
               }}
               className="inline-block btn-magnetic py-3 px-8 bg-brand-clay hover:bg-brand-clay/95 rounded-full text-white font-bold uppercase tracking-wider text-xs shadow-lg shadow-brand-clay/10"
             >
-              Go to Portal & Register
+              Register for Academy (₦50,000 Onboarding Fee)
             </button>
           </div>
         </div>
@@ -691,7 +697,7 @@ export default function Academy({
                   </div>
                   <h4 className="font-heading font-bold text-lg text-white">Enrollment Confirmed!</h4>
                   <p className="font-sans text-2xs text-brand-cream/70 max-w-xs mx-auto">
-                    Welcome to the academy. Subscription payment has been verified. You now have full access to all materials.
+                    Welcome to the academy. Onboarding registration payment has been verified. You now have full access to all materials.
                   </p>
                   <button
                     onClick={() => { setEnrolled(true); fetchStatus(); }}
@@ -728,26 +734,10 @@ export default function Academy({
               ) : (
                 <form onSubmit={handleEnroll} className="space-y-5 font-sans text-xs">
                   
-                  {/* Monthly vs Annual Selector */}
-                  <div className="grid grid-cols-2 gap-2 bg-brand-cream/5 p-1 rounded-2xl border border-brand-cream/10">
-                    <button
-                      type="button"
-                      onClick={() => setBillingPlan('monthly')}
-                      className={`py-2 px-3 rounded-xl font-mono text-[9px] uppercase tracking-wider font-bold transition-all ${
-                        billingPlan === 'monthly' ? 'bg-brand-clay text-white' : 'text-brand-cream/60 hover:text-brand-cream'
-                      }`}
-                    >
-                      Monthly {getSubscriptionPrice('monthly')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBillingPlan('annual')}
-                      className={`py-2 px-3 rounded-xl font-mono text-[9px] uppercase tracking-wider font-bold transition-all ${
-                        billingPlan === 'annual' ? 'bg-brand-clay text-white' : 'text-brand-cream/60 hover:text-brand-cream'
-                      }`}
-                    >
-                      Annual {getSubscriptionPrice('annual')}
-                    </button>
+                  {/* Flat Onboarding Fee display */}
+                  <div className="bg-brand-cream/5 border border-brand-cream/10 rounded-2xl p-4 text-center">
+                    <span className="font-mono text-2xs text-brand-clay font-bold tracking-widest uppercase block mb-1">ONBOARDING & REGISTRATION FEE</span>
+                    <span className="font-heading font-extrabold text-2xl text-white">{getAcademyFee()}</span>
                   </div>
 
                   {paymentError && (
@@ -817,7 +807,7 @@ export default function Academy({
                         <Loader className="w-3.5 h-3.5 animate-spin" /> Authorization Security Check...
                       </>
                     ) : (
-                      `Secure Academy Subscription`
+                      `Pay Onboarding Fee & Register`
                     )}
                   </button>
                 </form>

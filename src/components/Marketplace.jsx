@@ -226,7 +226,13 @@ export default function Marketplace({
 
       {/* Grid listing */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredTeachers.map(teacher => {
+        {[...filteredTeachers].sort((a, b) => {
+          const aHasElite = (a.badges || []).includes('badge-ai-cert');
+          const bHasElite = (b.badges || []).includes('badge-ai-cert');
+          if (aHasElite && !bHasElite) return -1;
+          if (!aHasElite && bHasElite) return 1;
+          return 0;
+        }).map(teacher => {
           const rateValue = teacher.rate || 0;
           const convertedRate = convertMinor(rateValue, selectedCurrency);
           const formattedRate = formatCurrency(convertedRate, selectedCurrency);

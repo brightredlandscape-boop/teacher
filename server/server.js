@@ -444,7 +444,7 @@ function requireOwnerOrAdmin(req, res, next) {
 
 // Register a new user (Parent or Teacher)
 app.post('/api/auth/register', authRateLimiter, async (req, res) => {
-  const { email, displayName, role, country, password, username: requestedUsername, referredBy, uid: clientUid } = req.body;
+  const { email, displayName, role, country, password, username: requestedUsername, referredBy, uid: clientUid, eliteCertificate } = req.body;
   if (!email || !displayName || !role) {
     return res.status(400).json({ error: "Email, display name, and role are required." });
   }
@@ -511,7 +511,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       rate: 0,
       rating: 5.0,
       reviewsCount: 0,
-      badges: [],
+      badges: eliteCertificate ? ["badge-ai-cert"] : [],
       bio: "",
       avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
       coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",

@@ -236,6 +236,9 @@ export default function Marketplace({
           const rateValue = 350000; // ₦3,500 across board for trial class
           const convertedRate = convertMinor(rateValue, selectedCurrency);
           const formattedRate = formatCurrency(convertedRate, selectedCurrency);
+          const standardRateVal = teacher.rate || 400000;
+          const convertedStandardRate = convertMinor(standardRateVal, selectedCurrency);
+          const formattedStandardRate = formatCurrency(convertedStandardRate, selectedCurrency);
           const teacherId = teacher.username || teacher.uid || teacher.id;
           
           return (
@@ -367,11 +370,14 @@ export default function Marketplace({
 
               {/* Hourly Rate & CTA buttons */}
               <div>
-                <div className="flex justify-between items-baseline mb-4">
-                  <span className="text-xs text-brand-charcoal/50">Trial Rate:</span>
-                  <div className="text-right">
-                    <span className="font-heading font-bold text-xl text-brand-moss">{formattedRate}</span>
-                    <span className="font-sans text-2xs text-brand-charcoal/50 block">/ class</span>
+                <div className="flex flex-col gap-1.5 mb-4 border-t border-brand-moss/5 pt-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-brand-charcoal/50 font-mono text-[10px] uppercase tracking-wider">Standard Rate:</span>
+                    <span className="font-heading font-bold text-brand-moss">{formattedStandardRate}/hr</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-brand-charcoal/50 font-mono text-[10px] uppercase tracking-wider">Trial Rate:</span>
+                    <span className="font-heading font-bold text-brand-clay">{formattedRate}/class</span>
                   </div>
                 </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Star, ShieldCheck, Video, Calendar, ArrowLeft, Heart, Languages, MapPin, Award, CheckCircle2, Zap } from 'lucide-react';
+import { Star, ShieldCheck, Video, Calendar, ArrowLeft, Heart, Languages, MapPin, Award, CheckCircle2, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function TeacherPublicProfile({ 
   username, 
@@ -14,7 +14,73 @@ export default function TeacherPublicProfile({
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState([]);
 
+  // Availability calendar states
+  const [calendarMonth, setCalendarMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+
   const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+
+  const getDaysInMonth = (d) => {
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  };
+
+  const getStartDayOfMonth = (d) => {
+    return new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+  };
+
+  const isTeacherAvailableOnDate = (d) => {
+    if (!teacher || !teacher.availability) return false;
+    
+    // Past dates are not available
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const checkDate = new Date(d);
+    checkDate.setHours(0,0,0,0);
+    if (checkDate < today) return false;
+
+    // Check weekday name in availability
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[d.getDay()];
+    
+    // Check if tomorrow matches 'Tomorrow'
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const isTomorrow = checkDate.getTime() - today.getTime() === oneDayMs;
+
+    if (isTomorrow && (teacher.availability['Tomorrow'] || teacher.availability['tomorrow'])) {
+      return true;
+    }
+    
+    // Match weekday case-insensitively
+    const availableDays = Object.keys(teacher.availability).map(k => k.toLowerCase());
+    return availableDays.includes(dayOfWeek.toLowerCase());
+  };
+
+  const getSlotsForDate = (d) => {
+    if (!teacher || !teacher.availability) return [];
+    
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[d.getDay()];
+    
+    // Check tomorrow first
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const checkDate = new Date(d);
+    checkDate.setHours(0,0,0,0);
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const isTomorrow = checkDate.getTime() - today.getTime() === oneDayMs;
+
+    if (isTomorrow && (teacher.availability['Tomorrow'] || teacher.availability['tomorrow'])) {
+      return teacher.availability['Tomorrow'] || teacher.availability['tomorrow'] || [];
+    }
+
+    // Match weekday
+    const matchedKey = Object.keys(teacher.availability).find(k => k.toLowerCase() === dayOfWeek.toLowerCase());
+    if (matchedKey) {
+      return teacher.availability[matchedKey] || [];
+    }
+    return [];
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -427,13 +493,26 @@ export default function TeacherPublicProfile({
 
         {/* Right Column: Rate Card & Slot booking */}
         <div className="lg:col-span-4 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-lg space-y-6 lg:sticky lg:top-28">
-          <div>
-            <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block mb-1">TRIAL CLASS RATE</span>
-            <div className="flex items-baseline gap-1">
-              <span className="font-heading text-4xl font-extrabold text-brand-moss">
-                {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)}
-              </span>
-              <span className="font-mono text-xs text-brand-charcoal/50">/ class</span>
+          
+          {/* Rate Header Card */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">STANDARD RATE</span>
+              <div className="flex items-baseline gap-0.5">
+                <span className="font-heading text-xl sm:text-2xl font-extrabold text-brand-moss">
+                  {formatCurrency(convertMinor(teacher.rate || 400000, selectedCurrency), selectedCurrency)}
+                </span>
+                <span className="font-mono text-[10px] text-brand-charcoal/50">/ hr</span>
+              </div>
+            </div>
+            <div>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">TRIAL RATE</span>
+              <div className="flex items-baseline gap-0.5">
+                <span className="font-heading text-xl sm:text-2xl font-extrabold text-brand-clay">
+                  {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)}
+                </span>
+                <span className="font-mono text-[10px] text-brand-charcoal/50">/ class</span>
+              </div>
             </div>
           </div>
 
@@ -456,29 +535,114 @@ export default function TeacherPublicProfile({
 
           <div className="h-px bg-brand-moss/5" />
 
-          {/* Slot Scheduler options list */}
-          <div className="space-y-3">
-            <h4 className="font-heading font-bold text-brand-moss text-xs uppercase tracking-wider flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-brand-clay" /> Booking Slots
-            </h4>
-            <div className="space-y-2">
-              {teacher.availability && Object.keys(teacher.availability).map(day => (
-                <div key={day} className="bg-brand-cream/30 border border-brand-moss/5 p-3 rounded-xl">
-                  <div className="font-mono text-[9px] uppercase tracking-wider font-bold text-brand-moss mb-1.5">{day}</div>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {Array.isArray(teacher.availability[day]) && teacher.availability[day].map(time => (
-                      <button
-                        key={time}
-                        onClick={() => onBookClick(teacher)}
-                        className="py-1 px-2.5 rounded-lg border border-brand-moss/10 hover:border-brand-clay hover:text-brand-clay bg-white font-mono text-[9px] transition-all text-brand-charcoal"
-                      >
-                        {time}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          {/* Interactive Availability Calendar */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h4 className="font-heading font-bold text-brand-moss text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-brand-clay" /> Availability
+              </h4>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                  className="p-1 rounded-full hover:bg-brand-moss/5 text-brand-moss"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="font-mono text-[10px] font-bold text-brand-moss min-w-[90px] text-center">
+                  {calendarMonth.toLocaleDateString('default', { month: 'short', year: 'numeric' })}
+                </span>
+                <button
+                  onClick={() => setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                  className="p-1 rounded-full hover:bg-brand-moss/5 text-brand-moss"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Calendar Grid */}
+            <div className="border border-brand-moss/10 rounded-2xl p-3 bg-brand-cream/10">
+              {/* Day Labels */}
+              <div className="grid grid-cols-7 gap-1 text-center font-mono text-[9px] text-brand-charcoal/40 font-bold mb-2">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((l, idx) => (
+                  <span key={idx}>{l}</span>
+                ))}
+              </div>
+
+              {/* Days Numbers */}
+              <div className="grid grid-cols-7 gap-1">
+                {/* Blank lead offsets */}
+                {Array.from({ length: getStartDayOfMonth(calendarMonth) }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+
+                {/* Day Cells */}
+                {(() => {
+                  const daysInMonth = getDaysInMonth(calendarMonth);
+                  const cells = [];
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const cellDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+                    const available = isTeacherAvailableOnDate(cellDate);
+                    const isSelected = selectedDate && 
+                                       selectedDate.getDate() === day && 
+                                       selectedDate.getMonth() === calendarMonth.getMonth() && 
+                                       selectedDate.getFullYear() === calendarMonth.getFullYear();
+                    
+                    cells.push(
+                      <button
+                        key={day}
+                        disabled={!available}
+                        onClick={() => {
+                          setSelectedDate(cellDate);
+                          setSelectedSlot(null);
+                        }}
+                        className={`h-7 w-7 rounded-full text-[9px] font-mono flex items-center justify-center mx-auto transition-all ${
+                          isSelected
+                            ? 'bg-brand-moss text-white font-bold shadow-sm'
+                            : available
+                            ? 'bg-emerald-50 border border-emerald-250 text-emerald-800 hover:bg-emerald-100 font-bold'
+                            : 'text-brand-charcoal/20 cursor-not-allowed'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  }
+                  return cells;
+                })()}
+              </div>
+            </div>
+
+            {/* Slots Panel */}
+            {selectedDate && (
+              <div className="bg-brand-cream/35 border border-brand-moss/5 p-3 rounded-xl animate-fade-up space-y-2">
+                <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-brand-moss block">
+                  Time Slots ({selectedDate.toLocaleDateString('default', { weekday: 'short', month: 'short', day: 'numeric' })}):
+                </span>
+                {getSlotsForDate(selectedDate).length === 0 ? (
+                  <span className="text-[10px] text-brand-charcoal/50 italic block">No slots set.</span>
+                ) : (
+                  <div className="flex gap-1.5 flex-wrap">
+                    {getSlotsForDate(selectedDate).map(time => {
+                      const isSlotSelected = selectedSlot === time;
+                      return (
+                        <button
+                          key={time}
+                          onClick={() => setSelectedSlot(time)}
+                          className={`py-1 px-2.5 rounded-lg border font-mono text-[9px] transition-all ${
+                            isSlotSelected
+                              ? 'bg-brand-clay border-brand-clay text-white font-bold'
+                              : 'border-brand-moss/10 bg-white hover:border-brand-clay hover:text-brand-clay text-brand-charcoal'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Direct CTA button to check booking triggers */}
@@ -486,7 +650,8 @@ export default function TeacherPublicProfile({
             onClick={() => onBookClick(teacher)}
             className="btn-magnetic w-full py-4 bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
           >
-            <CheckCircle2 className="w-4.5 h-4.5" /> Book Trial Session
+            <CheckCircle2 className="w-4.5 h-4.5" /> 
+            {selectedSlot ? `Book Class @ ${selectedSlot}` : 'Book Trial Session'}
           </button>
         </div>
 

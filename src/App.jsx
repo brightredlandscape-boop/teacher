@@ -1346,8 +1346,8 @@ export default function App() {
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </a>
             <a 
-              href="#session-engine" 
-              onClick={scrollToSection('session-engine')}
+              href="#academy" 
+              onClick={scrollToSection('academy')}
               className="btn-magnetic font-sans font-bold text-xs uppercase tracking-wider bg-brand-cream/10 backdrop-blur-sm text-brand-cream border border-brand-cream/30 hover:bg-brand-cream hover:text-brand-charcoal px-8 py-4 rounded-full"
             >
               {t('simulateLiveClass')}

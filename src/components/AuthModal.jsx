@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Mail, User, Shield, Lock } from 'lucide-react';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import BrandLogo from './BrandLogo';
 
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
@@ -265,12 +266,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           </button>
 
           {/* Logo Icon */}
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-full bg-brand-moss text-brand-cream flex items-center justify-center font-heading font-extrabold text-sm">
-              EB
-            </div>
-            <span className="font-heading font-bold tracking-tight text-lg text-brand-moss">EduBridge Africa</span>
-          </div>
+          <BrandLogo light={false} className="h-8 mb-6" />
 
           <h3 className="font-heading font-bold text-xl text-brand-moss mb-2">Complete Registration</h3>
           <p className="font-sans text-xs text-brand-charcoal/70 mb-6">
@@ -438,12 +434,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         </button>
 
         {/* Logo Icon */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 rounded-full bg-brand-moss text-brand-cream flex items-center justify-center font-heading font-extrabold text-sm">
-            EB
-          </div>
-          <span className="font-heading font-bold tracking-tight text-lg text-brand-moss">EduBridge Africa</span>
-        </div>
+        <BrandLogo light={false} className="h-8 mb-6" />
 
         {/* Tab Switcher */}
         <div className="flex bg-brand-moss/5 border border-brand-moss/10 rounded-full p-1 mb-6">

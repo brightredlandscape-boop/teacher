@@ -31,6 +31,7 @@ import heroImage from './assets/hero.jpg';
 import { translations } from './locales/i18n';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import BrandLogo from './components/BrandLogo';
 
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const Marketplace = lazy(() => import('./components/Marketplace'));
@@ -1040,12 +1041,9 @@ export default function App() {
               setIsMobileMenuOpen(false);
               setCurrentView('home');
             }}
-            className="flex items-center gap-2 cursor-pointer select-none"
+            className="cursor-pointer select-none"
           >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center font-heading font-extrabold bg-brand-cream text-brand-moss">
-              EB
-            </div>
-            <span className="font-heading font-bold tracking-tight text-lg text-white">EduBridge Africa</span>
+            <BrandLogo light={true} className="h-8" />
           </div>
           
           {currentUser && (
@@ -2410,12 +2408,7 @@ export default function App() {
       <footer className="bg-brand-charcoal text-brand-cream pt-24 pb-12 rounded-t-[4rem] border-t border-brand-cream/10">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-brand-clay text-white flex items-center justify-center font-heading font-bold">
-                EB
-              </div>
-              <span className="font-heading font-bold tracking-tight text-lg text-white">EduBridge Africa</span>
-            </div>
+            <BrandLogo light={true} className="h-8" />
             <p className="font-sans text-xs text-brand-cream/60 leading-relaxed">
               Africa's Best Teachers. The World's Best Students. Connecting local educators with international tutoring standards.
             </p>

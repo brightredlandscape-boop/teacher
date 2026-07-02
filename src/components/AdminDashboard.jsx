@@ -3028,7 +3028,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
               </div>
 
               {/* Scrollable list */}
-              <div className="max-h-[500px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+              <div className="max-h-[300px] sm:max-h-[400px] md:max-h-[500px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
                 {sentEmails.filter(e => 
                   e.to.toLowerCase().includes(emailSearch.toLowerCase()) || 
                   e.subject.toLowerCase().includes(emailSearch.toLowerCase())
@@ -3195,7 +3195,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
       {selectedViewEmail && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-2xs" onClick={() => setSelectedViewEmail(null)} />
-          <div className="relative bg-white border border-brand-moss/20 rounded-[2.5rem] w-full max-w-2xl p-8 shadow-2xl z-10 font-sans text-xs">
+          <div className="relative bg-white border border-brand-moss/20 rounded-[2rem] sm:rounded-[2.5rem] w-full max-w-2xl p-5 sm:p-8 shadow-2xl z-10 font-sans text-xs max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6 pb-2 border-b border-brand-moss/10">
               <div>
                 <span className="font-mono text-[8px] uppercase tracking-wider text-brand-clay block font-bold">

@@ -1034,17 +1034,17 @@ export default function App() {
     <div className="relative min-h-screen bg-brand-cream text-brand-charcoal overflow-x-hidden selection:bg-brand-clay selection:text-white">
       
       {/* Interactive Developer/Demo Switcher Bar */}
-      <div className="w-full bg-brand-moss text-white px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 border-b border-brand-cream/10 z-[60] relative shadow-md">
+      <div className="w-full bg-brand-moss text-white px-4 sm:px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-brand-cream/10 z-[60] relative shadow-md">
         <div className="flex items-center gap-2">
-          <span className="inline-flex w-2 h-2 bg-green-400 rounded-full animate-ping" />
-          <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-brand-cream/90">
+          <span className="inline-flex w-1.5 h-1.5 bg-green-400 rounded-full animate-ping" />
+          <span className="font-mono text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-brand-cream/90">
             Developer Sandbox Mode
           </span>
-          <span className="hidden md:inline font-sans text-[9px] text-brand-cream/70">
+          <span className="hidden sm:inline font-sans text-[8px] sm:text-[9px] text-brand-cream/70">
             — Select a role to instantly test different dashboards:
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[9px] font-bold">
+        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[8px] sm:text-[9px] font-bold">
           <button
             type="button"
             onClick={() => {
@@ -1606,9 +1606,9 @@ export default function App() {
         <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-moss/80 to-transparent mix-blend-multiply opacity-95" />
 
         <div className="relative z-10 max-w-4xl text-left md:text-right flex flex-col items-start md:items-end">
-          <h1 className="hero-fade font-heading font-bold text-white text-4xl sm:text-5xl md:text-7xl leading-[1.05] tracking-tight mb-4">
+          <h1 className="hero-fade font-heading font-bold text-white text-3xl sm:text-5xl md:text-7xl leading-[1.05] tracking-tight mb-4">
             {t('heroTitleFirst')} <br />
-            <span className="hero-fade font-drama italic font-light text-brand-clay text-6xl sm:text-7xl md:text-9xl tracking-normal block mt-2">
+            <span className="hero-fade font-drama italic font-light text-brand-clay text-5xl sm:text-7xl md:text-9xl tracking-normal block mt-2">
               {t('heroTitleSecond')}
             </span>
           </h1>

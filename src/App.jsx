@@ -180,6 +180,7 @@ export default function App() {
   // Booking Modal Trigger State
   const [selectedTeacherForBooking, setSelectedTeacherForBooking] = useState(null);
   const [selectedStudentForBooking, setSelectedStudentForBooking] = useState(null);
+  const [bookingPreselectedSlots, setBookingPreselectedSlots] = useState([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [watchingTeacherVideo, setWatchingTeacherVideo] = useState(null);
 
@@ -494,7 +495,7 @@ export default function App() {
   };
 
   // State handlers
-  const handleBookClick = (teacher, student) => {
+  const handleBookClick = (teacher, student, preselectedSlots = []) => {
     if (!currentUser) {
       setAuthTab('login');
       setIsAuthOpen(true);
@@ -502,6 +503,7 @@ export default function App() {
     }
     setSelectedTeacherForBooking(teacher);
     setSelectedStudentForBooking(student || null);
+    setBookingPreselectedSlots(preselectedSlots);
     setIsBookingOpen(true);
   };
 
@@ -1527,6 +1529,7 @@ export default function App() {
             selectedCurrency={selectedCurrency}
             formatCurrency={formatCurrency}
             convertMinor={convertMinor}
+            bookedSessions={bookedSessions}
           />
         </Suspense>
       )}
@@ -2569,6 +2572,7 @@ export default function App() {
           formatCurrency={formatCurrency}
           convertMinor={convertMinor}
           bookedSessions={bookedSessions}
+          preselectedSlots={bookingPreselectedSlots}
         />
       </Suspense>
 

@@ -7,7 +7,8 @@ export default function TeacherPublicProfile({
   onBookClick, 
   selectedCurrency, 
   formatCurrency, 
-  convertMinor 
+  convertMinor,
+  bookedSessions = []
 }) {
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,7 @@ export default function TeacherPublicProfile({
   // Availability calendar states
   const [calendarMonth, setCalendarMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]); // Array of { day, time, dateString }
 
   const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -80,6 +81,35 @@ export default function TeacherPublicProfile({
       return teacher.availability[matchedKey] || [];
     }
     return [];
+  };
+
+  const handleSlotToggle = (time) => {
+    if (!selectedDate) return;
+    const dateString = selectedDate.toISOString().split('T')[0];
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    const isSelected = selectedSlots.some(s => s.dateString === dateString && s.time === time);
+    
+    if (isSelected) {
+      setSelectedSlots(prev => prev.filter(s => !(s.dateString === dateString && s.time === time)));
+    } else {
+      setSelectedSlots(prev => [...prev, { day: dayName, time, dateString }]);
+    }
+  };
+
+  const isSlotSelected = (time) => {
+    if (!selectedDate) return false;
+    const dateString = selectedDate.toISOString().split('T')[0];
+    return selectedSlots.some(s => s.dateString === dateString && s.time === time);
+  };
+
+  const isCalendarSlotBooked = (dateString, time) => {
+    return (bookedSessions || []).some(session => 
+      (session.teacherId === teacher?.id || session.teacherId === teacher?.uid) &&
+      session.status !== 'Cancelled' &&
+      session.slot &&
+      (session.slot.dateString === dateString || session.slot.day === dateString || (session.slot.day && session.slot.day.includes(dateString))) &&
+      session.slot.time === time
+    );
   };
 
   useEffect(() => {
@@ -624,18 +654,23 @@ export default function TeacherPublicProfile({
                 ) : (
                   <div className="flex gap-1.5 flex-wrap">
                     {getSlotsForDate(selectedDate).map(time => {
-                      const isSlotSelected = selectedSlot === time;
+                      const dateString = selectedDate.toISOString().split('T')[0];
+                      const booked = isCalendarSlotBooked(dateString, time);
+                      const activeSelected = isSlotSelected(time);
                       return (
                         <button
                           key={time}
-                          onClick={() => setSelectedSlot(time)}
+                          disabled={booked}
+                          onClick={() => handleSlotToggle(time)}
                           className={`py-1 px-2.5 rounded-lg border font-mono text-[9px] transition-all ${
-                            isSlotSelected
+                            booked
+                              ? 'border-gray-200 bg-gray-150 text-gray-400 cursor-not-allowed opacity-50 line-through'
+                              : activeSelected
                               ? 'bg-brand-clay border-brand-clay text-white font-bold'
                               : 'border-brand-moss/10 bg-white hover:border-brand-clay hover:text-brand-clay text-brand-charcoal'
                           }`}
                         >
-                          {time}
+                          {time} {booked && "(Booked)"}
                         </button>
                       );
                     })}
@@ -643,15 +678,46 @@ export default function TeacherPublicProfile({
                 )}
               </div>
             )}
+
+            {/* Selected Sessions Summary Basket */}
+            {selectedSlots.length > 0 && (
+              <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 space-y-2 font-sans text-xs">
+                <span className="font-heading font-bold text-brand-moss uppercase text-[10px] tracking-wider block">
+                  Selected Sessions ({selectedSlots.length}):
+                </span>
+                <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+                  {selectedSlots.map((s, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-white border border-brand-moss/5 rounded-xl px-3 py-1.5 shadow-sm">
+                      <span>{s.day} at <strong className="text-brand-moss">{s.time}</strong></span>
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedSlots(prev => prev.filter((_, i) => i !== idx))} 
+                        className="text-red-500 hover:text-red-700 font-bold ml-2 text-[10px] uppercase tracking-wider"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Direct CTA button to check booking triggers */}
           <button
-            onClick={() => onBookClick(teacher)}
-            className="btn-magnetic w-full py-4 bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2"
+            onClick={() => onBookClick(teacher, null, selectedSlots)}
+            disabled={selectedSlots.length === 0}
+            className={`btn-magnetic w-full py-4 font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg flex items-center justify-center gap-2 ${
+              selectedSlots.length === 0
+                ? 'bg-brand-moss/20 text-brand-moss/45 cursor-not-allowed shadow-none'
+                : 'bg-brand-clay hover:bg-brand-clay/95 text-white shadow-brand-clay/20'
+            }`}
           >
             <CheckCircle2 className="w-4.5 h-4.5" /> 
-            {selectedSlot ? `Book Class @ ${selectedSlot}` : 'Book Trial Session'}
+            {selectedSlots.length > 0 
+              ? `Book Selected Sessions (${selectedSlots.length})` 
+              : 'Select slots in calendar'
+            }
           </button>
         </div>
 

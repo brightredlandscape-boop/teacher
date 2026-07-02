@@ -1322,7 +1322,16 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   // Double-booking check
   const existingBookings = db.find('sessions', s => s.teacherId === teacherId && s.status !== 'Cancelled');
   for (const slot of slots) {
-    const isDoubleBooked = existingBookings.some(eb => eb.slot && eb.slot.day === slot.day && eb.slot.time === slot.time);
+    const isDoubleBooked = existingBookings.some(eb => 
+      eb.slot && 
+      eb.slot.time === slot.time &&
+      (
+        eb.slot.day === slot.day || 
+        (eb.slot.dateString && eb.slot.dateString === slot.dateString) ||
+        (eb.slot.dateString && slot.day && slot.day.includes(eb.slot.dateString)) ||
+        (slot.dateString && eb.slot.day && eb.slot.day.includes(slot.dateString))
+      )
+    );
     if (isDoubleBooked) {
       return res.status(400).json({ error: `The slot "${slot.day} at ${slot.time}" is already booked for this teacher.` });
     }

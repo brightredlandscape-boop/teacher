@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Calendar, CreditCard, Shield, Clock, Lock } from 'lucide-react';
 
 export default function BookingModal({ 
@@ -10,7 +10,8 @@ export default function BookingModal({
   onBook, 
   formatCurrency, 
   convertMinor,
-  bookedSessions = []
+  bookedSessions = [],
+  preselectedSlots = []
 }) {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -42,35 +43,115 @@ export default function BookingModal({
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
   const formattedRate = formatCurrency(convertedRateMinor, selectedCurrency);
 
+  // Generate upcoming slots based on teacher availability mapped to actual calendar dates
+  const generateUpcomingSlots = (availability) => {
+    if (!availability) return [];
+    const slotsList = [];
+    const today = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Loop over the next 14 days
+    for (let i = 1; i <= 14; i++) {
+      const futureDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      const weekday = dayNames[futureDate.getDay()];
+      const dateString = futureDate.toISOString().split('T')[0];
+      const formattedDay = futureDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      
+      // Match availability keys case-insensitively
+      let times = [];
+      const isTomorrow = i === 1;
+      if (isTomorrow && (availability['Tomorrow'] || availability['tomorrow'])) {
+        times = availability['Tomorrow'] || availability['tomorrow'] || [];
+      } else {
+        const matchedKey = Object.keys(availability).find(k => k.toLowerCase() === weekday.toLowerCase());
+        if (matchedKey) {
+          times = availability[matchedKey] || [];
+        }
+      }
+      
+      if (Array.isArray(times)) {
+        times.forEach(time => {
+          slotsList.push({
+            day: formattedDay,
+            time: time,
+            dateString: dateString
+          });
+        });
+      }
+    }
+    return slotsList;
+  };
+
+  // Construct availability slots list
+  const slots = useMemo(() => {
+    if (!teacher) return [];
+    
+    // Convert teacher weekly availability to actual dates
+    const upcoming = generateUpcomingSlots(teacher.availability || {});
+    
+    // Merge preselected slots to make sure they are included
+    const allSlots = [...upcoming];
+    if (preselectedSlots && preselectedSlots.length > 0) {
+      preselectedSlots.forEach(ps => {
+        const exists = allSlots.some(s => s.dateString === ps.dateString && s.time === ps.time);
+        if (!exists) {
+          allSlots.push({
+            day: ps.day,
+            time: ps.time,
+            dateString: ps.dateString
+          });
+        }
+      });
+    }
+
+    // Fallback if none defined
+    if (allSlots.length === 0) {
+      const today = new Date();
+      for (let i = 1; i <= 3; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+        allSlots.push({
+          day: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+          time: i === 1 ? "10:00 AM" : "3:30 PM",
+          dateString: d.toISOString().split('T')[0]
+        });
+      }
+    }
+
+    // Sort slots by dateString then time
+    allSlots.sort((a, b) => {
+      const dDiff = a.dateString.localeCompare(b.dateString);
+      if (dDiff !== 0) return dDiff;
+      return a.time.localeCompare(b.time);
+    });
+
+    return allSlots.map((s, idx) => ({ id: idx + 1, ...s }));
+  }, [teacher, preselectedSlots]);
+
+  // Synchronize state when the modal opens or preselectedSlots change
+  useEffect(() => {
+    if (isOpen && slots.length > 0) {
+      if (preselectedSlots && preselectedSlots.length > 0) {
+        // Find matching IDs of the preselected slots
+        const matchingIds = slots.filter(s =>
+          preselectedSlots.some(ps => ps.dateString === s.dateString && ps.time === s.time)
+        ).map(s => s.id);
+        setSelectedSlots(matchingIds.length > 0 ? matchingIds : [slots[0].id]);
+      } else {
+        setSelectedSlots([]);
+      }
+    }
+  }, [isOpen, preselectedSlots, slots]);
+
   const numSelected = selectedSlots.length > 0 ? selectedSlots.length : 1;
   const totalRateMinor = activeRateMinor * numSelected;
   const formattedTotalRate = formatCurrency(convertMinor(totalRateMinor, selectedCurrency), selectedCurrency);
 
-  // Generate slots based on teacher availability
-  const slots = [];
-  let slotId = 1;
-  if (teacher && teacher.availability && Object.keys(teacher.availability).length > 0) {
-    Object.entries(teacher.availability).forEach(([day, times]) => {
-      if (Array.isArray(times)) {
-        times.forEach(time => {
-          slots.push({ id: slotId++, day, time });
-        });
-      }
-    });
-  }
-  // Fallback slots if none defined
-  if (slots.length === 0) {
-    slots.push({ id: 1, day: "Today", time: "3:30 PM" });
-    slots.push({ id: 2, day: "Tomorrow", time: "10:00 AM" });
-    slots.push({ id: 3, day: "Wednesday", time: "4:00 PM" });
-    slots.push({ id: 4, day: "Thursday", time: "11:30 AM" });
-  }
-
   const isSlotBooked = (slot) => {
     return (bookedSessions || []).some(session => 
-      (session.teacherId === teacher.id || session.teacherId === teacher.uid) &&
+      (session.teacherId === teacher?.id || session.teacherId === teacher?.uid) &&
+      session.status !== 'Cancelled' &&
       session.slot &&
-      session.slot.day === slot.day &&
+      (session.slot.dateString === slot.dateString || session.slot.day === slot.day || (session.slot.day && session.slot.day.includes(slot.dateString))) &&
       session.slot.time === slot.time
     );
   };
@@ -417,7 +498,7 @@ export default function BookingModal({
                   {teacher?.timezone || 'WAT (GMT+1)'}
                 </span>
               </span>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
                 {slots.map(slot => {
                   const isSelected = selectedSlots.includes(slot.id);
                   const booked = isSlotBooked(slot);

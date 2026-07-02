@@ -552,6 +552,134 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                 <span className="font-mono text-[9px] text-brand-moss font-bold block mt-2">Total classes</span>
               </div>
             </div>
+            
+            {/* Teacher Onboarding Checklist */}
+            {(() => {
+              const hasSubjects = teacherProfile?.subjects && teacherProfile.subjects.length > 0;
+              const hasAvailability = Object.values(availabilityGrid).some(slots => slots.length > 0);
+              const hasGraded = gradesLog && gradesLog.length > 0;
+
+              const teacherSteps = [
+                {
+                  step: 1,
+                  title: "Teacher Vetting Status",
+                  desc: "Your profile has been vetted and verified by the administration team.",
+                  completed: true,
+                  actionLabel: "Verified",
+                  action: null
+                },
+                {
+                  step: 2,
+                  title: "Set Hourly Rate & Profile Details",
+                  desc: hasSubjects 
+                    ? `Configured. Hourly rate: ${formatCurrency(teacherProfile.rate || 0, selectedCurrency)}.`
+                    : "Configure your subjects, biography, profile avatar, and set your hourly rate.",
+                  completed: hasSubjects,
+                  actionLabel: "Edit Profile",
+                  action: () => setActiveTab('profile')
+                },
+                {
+                  step: 3,
+                  title: "Set Slot Availability",
+                  desc: hasAvailability 
+                    ? "Weekly schedule slots configured."
+                    : "Add availability slots for days of the week so parents can book lessons.",
+                  completed: hasAvailability,
+                  actionLabel: "Set Availability",
+                  action: () => setActiveTab('profile')
+                },
+                {
+                  step: 4,
+                  title: "Grade Homework Submission",
+                  desc: hasGraded 
+                    ? `Graded ${gradesLog.length} assignment(s).`
+                    : "Grade student assignments and homework submissions to release escrow funds.",
+                  completed: hasGraded,
+                  actionLabel: "Grade Homework",
+                  action: () => {
+                    const el = document.getElementById('grading-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    else setActiveTab('students');
+                  }
+                }
+              ];
+
+              const tCompleted = teacherSteps.filter(s => s.completed).length;
+              const tPercent = Math.round((tCompleted / teacherSteps.length) * 100);
+
+              return (
+                <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 md:p-8 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                      <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">INTERACTIVE QUICKSTART GUIDE</span>
+                      <h3 className="font-heading font-bold text-xl text-brand-moss">Set Up Your Teacher Account</h3>
+                      <p className="font-sans text-xs text-brand-charcoal/70 mt-1 leading-relaxed">
+                        Complete these steps to maximize your visibility and process bookings successfully. Click any card to navigate.
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end shrink-0">
+                      <span className="font-sans text-2xs font-bold text-brand-moss uppercase tracking-wider mb-1.5">
+                        Progress: {tPercent}% ({tCompleted}/{teacherSteps.length})
+                      </span>
+                      <div className="w-48 h-2 bg-brand-moss/10 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-brand-clay transition-all duration-500 rounded-full" 
+                          style={{ width: `${tPercent}%` }} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {teacherSteps.map((item) => (
+                      <div 
+                        key={item.step} 
+                        onClick={() => item.action && item.action()}
+                        className={`border rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 relative select-none ${
+                          item.action ? 'cursor-pointer hover:shadow-md hover:border-brand-clay/35 hover-lift' : ''
+                        } ${
+                          item.completed 
+                            ? 'bg-emerald-50/20 border-emerald-600/20 text-brand-charcoal' 
+                            : 'bg-white border-brand-moss/10 hover:border-brand-clay/40'
+                        }`}
+                      >
+                        <div className="absolute top-3 right-3">
+                          {item.completed ? (
+                            <span className="flex items-center justify-center w-4 h-4 bg-emerald-600 rounded-full text-white text-[9px] font-bold">✓</span>
+                          ) : (
+                            <span className="flex items-center justify-center w-4 h-4 border border-brand-clay/55 rounded-full text-brand-clay text-[9px] font-bold animate-pulse">●</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <span className={`font-heading font-black text-2xl block mb-1 ${item.completed ? 'text-emerald-600/80' : 'text-brand-clay'}`}>
+                            0{item.step}
+                          </span>
+                          <h4 className="font-heading font-bold text-xs text-brand-moss mb-2">{item.title}</h4>
+                          <p className="font-sans text-[11px] text-brand-charcoal/75 leading-relaxed mb-3">{item.desc}</p>
+                        </div>
+
+                        <div className="border-t border-brand-moss/5 pt-2 mt-auto">
+                          {item.actionLabel && !item.completed && (
+                            <button 
+                              type="button"
+                              className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-extrabold hover:underline block text-left"
+                            >
+                              {item.actionLabel} →
+                            </button>
+                          )}
+                          {item.completed && (
+                            <span className="font-mono text-[9px] uppercase tracking-wider text-emerald-600 font-extrabold block">
+                              Completed
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Incoming Booking Requests */}
             <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm">

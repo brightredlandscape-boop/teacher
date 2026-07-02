@@ -478,60 +478,143 @@ export default function ParentDashboard({
           </div>
           
           {/* Parent Onboarding Protocol Checklist */}
-          <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 md:p-8 shadow-sm">
-            <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-2">QUICKSTART GUIDE</span>
-            <h3 className="font-heading font-bold text-xl text-brand-moss mb-4">How to Setup & Manage Classes (Step-by-Step)</h3>
-            <p className="font-sans text-xs text-brand-charcoal/70 mb-6 leading-relaxed">
-              Welcome to EduBridge Africa! As a parent, you control your children's learning journey, booking schedules, and payments. Here is how the system links you, your children, and the teachers together:
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              {[
-                {
-                  step: "1",
-                  title: "Add Child Profile",
-                  desc: "Click 'Add Child Profile' under Select Student. Enter their name and subjects to create their profile.",
-                  expect: "Creates a separate dashboard with individual gradebooks, XP tracker, study groups, and badges."
-                },
-                {
-                  step: "2",
-                  title: "Top-up Wallet",
-                  desc: "Go to 'Billing & Topup'. Fund your balance via Paystack card or bank transfer.",
-                  expect: "Deposits funds. Payments are locked in an escrow lockbox when booking, protecting your money."
-                },
-                {
-                  step: "3",
-                  title: "Book a Teacher",
-                  desc: "Go to 'Find & Book Tutors'. Filter by subject, pick a teacher, and select an available slot.",
-                  expect: "Secures the lesson and places it under 'Pending Confirmation' status on your dashboard."
-                },
-                {
-                  step: "4",
-                  title: "Join Class",
-                  desc: "The teacher approves. On lesson day, click 'Join Session' next to the scheduled slot.",
-                  expect: "Launches the virtual Zoom classroom directly. The link is available to you and your child."
-                },
-                {
-                  step: "5",
-                  title: "Confirm Completion",
-                  desc: "After the session ends, click 'Confirm Release' or raise a dispute if there is an issue.",
-                  expect: "Releases the escrowed funds to the teacher's bank balance, completing the transaction."
+          {(() => {
+            const onboardingSteps = [
+              {
+                step: 1,
+                title: "Log in as Parent",
+                desc: `You are logged in as Parent (${currentUser?.displayName || 'Ngozi Adeleke'}).`,
+                expect: "Unlocks secure escrow billing lockbox and child progress sheets.",
+                completed: true,
+                actionLabel: "Completed",
+                action: null
+              },
+              {
+                step: 2,
+                title: "Add Child Profile",
+                desc: students.length > 0 
+                  ? `Child profile(s) created: ${students.map(s => s.name).join(', ')}.`
+                  : "Add a profile for your child (e.g. Tunde) to track grades, XP, and badges.",
+                expect: "Generates individual learning charts, grade logs, and class records.",
+                completed: students.length > 0,
+                actionLabel: "Add Student Profile",
+                action: () => setIsAddChildOpen(true)
+              },
+              {
+                step: 3,
+                title: "Top-up Wallet",
+                desc: parentWalletBalance > 0
+                  ? `Wallet funded! Balance: ${formatCurrency(convertMinor(parentWalletBalance, selectedCurrency), selectedCurrency)}`
+                  : "Deposit mock naira or standard dollars via card/bank transfer to begin booking.",
+                expect: "Funds are locked in timed escrow during session booking to guarantee safety.",
+                completed: parentWalletBalance > 0,
+                actionLabel: "Go to Billing",
+                action: () => setActiveTab('billing')
+              },
+              {
+                step: 4,
+                title: "Book a Teacher",
+                desc: parentBookedSessions.length > 0
+                  ? `Booked ${parentBookedSessions.length} session(s) with tutors.`
+                  : "Browse the marketplace, select Mr. Adebayo Okafor (or others) and book slot.",
+                expect: "Secures tutoring slot immediately and holds class payment in escrow.",
+                completed: parentBookedSessions.length > 0,
+                actionLabel: "Explore Tutors",
+                action: () => setActiveTab('marketplace')
+              },
+              {
+                step: 5,
+                title: "Grade Homework",
+                desc: parentGradesLog.length > 0
+                  ? `Graded ${parentGradesLog.length} assignment(s) successfully.`
+                  : "Verify homework submissions sent by the tutor and grade them.",
+                expect: "Releases the escrow locked lesson fee directly to the teacher's wallet.",
+                completed: parentGradesLog.length > 0,
+                actionLabel: "Grade Homework",
+                action: () => {
+                  const el = document.getElementById('academic-tracker');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }
-              ].map((item) => (
-                <div key={item.step} className="bg-brand-cream/15 border border-brand-moss/5 rounded-2xl p-4 flex flex-col justify-between hover-lift">
+              }
+            ];
+
+            const completedCount = onboardingSteps.filter(s => s.completed).length;
+            const progressPercent = Math.round((completedCount / onboardingSteps.length) * 100);
+
+            return (
+              <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 md:p-8 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   <div>
-                    <span className="font-heading font-black text-2xl text-brand-clay block mb-1">0{item.step}</span>
-                    <h4 className="font-heading font-bold text-xs text-brand-moss mb-2">{item.title}</h4>
-                    <p className="font-sans text-[11px] text-brand-charcoal/75 leading-relaxed mb-3">{item.desc}</p>
+                    <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">INTERACTIVE QUICKSTART GUIDE</span>
+                    <h3 className="font-heading font-bold text-xl text-brand-moss">Set Up & Manage Your Account</h3>
+                    <p className="font-sans text-xs text-brand-charcoal/70 mt-1 leading-relaxed">
+                      Perform the tasks below to set up your account. Click any pending card to navigate directly.
+                    </p>
                   </div>
-                  <div className="border-t border-brand-moss/5 pt-2 mt-auto">
-                    <span className="font-mono text-[8px] uppercase tracking-wider text-brand-moss/65 block font-bold">What to expect:</span>
-                    <p className="font-sans text-[10px] text-brand-charcoal/60 leading-normal mt-1">{item.expect}</p>
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className="font-sans text-2xs font-bold text-brand-moss uppercase tracking-wider mb-1.5">
+                      Progress: {progressPercent}% ({completedCount}/{onboardingSteps.length})
+                    </span>
+                    <div className="w-48 h-2 bg-brand-moss/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-brand-clay transition-all duration-500 rounded-full" 
+                        style={{ width: `${progressPercent}%` }} 
+                      />
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  {onboardingSteps.map((item) => (
+                    <div 
+                      key={item.step} 
+                      onClick={() => item.action && item.action()}
+                      className={`border rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 relative select-none ${
+                        item.action ? 'cursor-pointer hover:shadow-md hover:border-brand-clay/35 hover-lift' : ''
+                      } ${
+                        item.completed 
+                          ? 'bg-emerald-50/20 border-emerald-600/20 text-brand-charcoal' 
+                          : 'bg-white border-brand-moss/10 hover:border-brand-clay/40'
+                      }`}
+                    >
+                      {/* Status indicator */}
+                      <div className="absolute top-3 right-3">
+                        {item.completed ? (
+                          <span className="flex items-center justify-center w-4 h-4 bg-emerald-600 rounded-full text-white text-[9px] font-bold">✓</span>
+                        ) : (
+                          <span className="flex items-center justify-center w-4 h-4 border border-brand-clay/55 rounded-full text-brand-clay text-[9px] font-bold animate-pulse">●</span>
+                        )}
+                      </div>
+
+                      <div>
+                        <span className={`font-heading font-black text-2xl block mb-1 ${item.completed ? 'text-emerald-600/80' : 'text-brand-clay'}`}>
+                          0{item.step}
+                        </span>
+                        <h4 className="font-heading font-bold text-xs text-brand-moss mb-2">{item.title}</h4>
+                        <p className="font-sans text-[11px] text-brand-charcoal/75 leading-relaxed mb-3">{item.desc}</p>
+                      </div>
+
+                      <div className="border-t border-brand-moss/5 pt-2 mt-auto">
+                        {item.actionLabel && !item.completed && (
+                          <button 
+                            type="button"
+                            className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-extrabold hover:underline block text-left"
+                          >
+                            {item.actionLabel} →
+                          </button>
+                        )}
+                        {item.completed && (
+                          <span className="font-mono text-[9px] uppercase tracking-wider text-emerald-600 font-extrabold block">
+                            Completed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Child Selection and AI Insight Banner */}
           <div className="flex flex-col lg:flex-row justify-between items-stretch gap-6">

@@ -95,6 +95,119 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [refundCalcDeduct, setRefundCalcDeduct] = useState('15'); // percent
   const [refundCalcResult, setRefundCalcResult] = useState(3400);
 
+  // Email Client state variables
+  const [sentEmails, setSentEmails] = useState([]);
+  const [platformUsers, setPlatformUsers] = useState([]);
+  const [selectedUserForWelcome, setSelectedUserForWelcome] = useState('');
+  const [selectedUserForNotif, setSelectedUserForNotif] = useState('all');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifBody, setNotifBody] = useState('');
+  const [sendingWelcome, setSendingWelcome] = useState(false);
+  const [sendingNotif, setSendingNotif] = useState(false);
+  const [emailSearch, setEmailSearch] = useState('');
+  const [selectedViewEmail, setSelectedViewEmail] = useState(null);
+  const [emailLogsLoading, setEmailLogsLoading] = useState(false);
+
+  const fetchEmailData = async () => {
+    try {
+      setEmailLogsLoading(true);
+      const headers = getAuthHeaders();
+      
+      const usersRes = await fetch(`${API_BASE}/admin/users`, { headers });
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setPlatformUsers(usersData);
+        if (usersData.length > 0 && !selectedUserForWelcome) {
+          setSelectedUserForWelcome(usersData[0].uid);
+        }
+      }
+      
+      const emailsRes = await fetch(`${API_BASE}/admin/emails`, { headers });
+      if (emailsRes.ok) {
+        const emailsData = await emailsRes.json();
+        emailsData.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+        setSentEmails(emailsData);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch email client data:", err);
+    } finally {
+      setEmailLogsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSubSection === 'emails') {
+      fetchEmailData();
+    }
+  }, [activeSubSection]);
+
+  const handleSendWelcomeEmail = async (e) => {
+    e.preventDefault();
+    if (!selectedUserForWelcome) return;
+    const targetUser = platformUsers.find(u => u.uid === selectedUserForWelcome);
+    if (!targetUser) return;
+    
+    setSendingWelcome(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/emails/send-welcome`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          email: targetUser.email,
+          displayName: targetUser.displayName,
+          role: targetUser.role
+        })
+      });
+      if (res.ok) {
+        alert(`Welcome email successfully queued for ${targetUser.displayName} (${targetUser.email})`);
+        fetchEmailData();
+      } else {
+        const data = await res.json();
+        alert(`Failed to send email: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network connection error sending welcome email.");
+    } finally {
+      setSendingWelcome(false);
+    }
+  };
+
+  const handleSendNotification = async (e) => {
+    e.preventDefault();
+    if (!notifTitle.trim() || !notifBody.trim()) {
+      alert("Title and message are required.");
+      return;
+    }
+    
+    setSendingNotif(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/emails/send-notification`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          userId: selectedUserForNotif,
+          title: notifTitle,
+          body: notifBody
+        })
+      });
+      if (res.ok) {
+        alert("Notification & email update broadcast successfully completed.");
+        setNotifTitle('');
+        setNotifBody('');
+        fetchEmailData();
+      } else {
+        const data = await res.json();
+        alert(`Failed to send notification: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network connection error broadcasting notification.");
+    } finally {
+      setSendingNotif(false);
+    }
+  };
+
   useEffect(() => {
     const cost = parseFloat(refundCalcCost || 0);
     const d = parseFloat(refundCalcDeduct || 0);
@@ -640,7 +753,8 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             { id: 'groups', label: 'Groups & Bundles' },
             { id: 'compliance', label: 'Compliance & Safety' },
             { id: 'b2b', label: 'B2B Partners' },
-            { id: 'config', label: 'Config & Moderation' }
+            { id: 'config', label: 'Config & Moderation' },
+            { id: 'emails', label: 'Emails & Notifications' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -2874,6 +2988,257 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
               </div>
             </div>
 
+          </div>
+        </div>
+      {/* SECTION 8: EMAILS & NOTIFICATIONS CLIENT */}
+      {activeSubSection === 'emails' && (
+        <div className="space-y-8 animate-fade-up">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Left Panel: Audit Log of Sent Emails */}
+            <div className="lg:col-span-7 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+              <div>
+                <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">AUDIT TRAIL LOGS</span>
+                <h3 className="font-heading font-bold text-xl text-brand-moss mt-0.5">Sent Transactional Emails</h3>
+                <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
+                  Trace and audit all emails generated by billing escrow updates, registrations, and administrative announcements.
+                </p>
+              </div>
+
+              {/* Search bar and refresh */}
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search logs by recipient or subject..."
+                    value={emailSearch}
+                    onChange={(e) => setEmailSearch(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-full py-2.5 pl-4 pr-10 text-xs font-sans text-brand-charcoal focus:outline-none focus:border-brand-clay focus:ring-1 focus:ring-brand-clay"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchEmailData}
+                  className="px-4 py-2 bg-brand-cream hover:bg-brand-moss/5 border border-brand-moss/10 rounded-full flex items-center justify-center text-brand-moss transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${emailLogsLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+
+              {/* Scrollable list */}
+              <div className="max-h-[500px] overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                {sentEmails.filter(e => 
+                  e.to.toLowerCase().includes(emailSearch.toLowerCase()) || 
+                  e.subject.toLowerCase().includes(emailSearch.toLowerCase())
+                ).length === 0 ? (
+                  <div className="py-12 text-center text-brand-charcoal/40 text-xs font-sans">
+                    {emailLogsLoading ? "Loading email records..." : "No email records found matching the search."}
+                  </div>
+                ) : (
+                  sentEmails.filter(e => 
+                    e.to.toLowerCase().includes(emailSearch.toLowerCase()) || 
+                    e.subject.toLowerCase().includes(emailSearch.toLowerCase())
+                  ).map((item) => (
+                    <div 
+                      key={item.id}
+                      onClick={() => setSelectedViewEmail(item)}
+                      className={`p-4 rounded-2xl border text-left cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-brand-clay/30 ${
+                        selectedViewEmail?.id === item.id 
+                          ? 'bg-brand-clay/5 border-brand-clay' 
+                          : 'bg-brand-cream/10 border-brand-moss/5 hover:bg-brand-cream/20'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2 mb-1">
+                        <span className="font-heading text-xs font-bold text-brand-moss">{item.subject}</span>
+                        <span className={`font-mono text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          item.status === 'sent' 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                            : item.status === 'failed' 
+                            ? 'bg-rose-50 border-rose-200 text-rose-800'
+                            : 'bg-amber-50 border-amber-200 text-amber-800 animate-pulse'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] text-brand-charcoal/60 mt-2 font-mono">
+                        <div>
+                          To: <span className="font-bold text-brand-moss">{item.to}</span>
+                        </div>
+                        <div>
+                          {new Date(item.sentAt).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Right Panel: Send controls */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Send Welcome Email */}
+              <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-4">
+                <div>
+                  <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block">SEND WELCOME TEMPLATE</span>
+                  <h3 className="font-heading font-bold text-lg text-brand-moss mt-0.5">Welcome Onboarding Email</h3>
+                  <p className="font-sans text-xs text-brand-charcoal/70 mt-1 leading-relaxed">
+                    Fire the standard transactional welcome email containing login info, verification links, and system guides to a user.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSendWelcomeEmail} className="space-y-4 pt-2">
+                  <div>
+                    <label className="font-heading font-bold text-2xs uppercase tracking-wider text-brand-charcoal/60 block mb-2">
+                      Select Recipient User
+                    </label>
+                    <select
+                      value={selectedUserForWelcome}
+                      onChange={(e) => setSelectedUserForWelcome(e.target.value)}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl py-2 px-3 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                    >
+                      {platformUsers.length === 0 ? (
+                        <option value="">No users found</option>
+                      ) : (
+                        platformUsers.map(u => (
+                          <option key={u.uid} value={u.uid}>
+                            {u.displayName} ({u.role}) — {u.email}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingWelcome || platformUsers.length === 0}
+                    className="w-full py-3 bg-brand-moss hover:bg-brand-moss/90 text-white font-sans text-2xs font-bold uppercase tracking-wider rounded-full transition-colors flex items-center justify-center gap-2"
+                  >
+                    {sendingWelcome ? "Sending welcome email..." : "Send Onboarding Email"}
+                  </button>
+                </form>
+              </div>
+
+              {/* Send Broadcast Notification */}
+              <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-4">
+                <div>
+                  <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block">BROADCAST BULLETIN</span>
+                  <h3 className="font-heading font-bold text-lg text-brand-moss mt-0.5">System Update & Email Broadcast</h3>
+                  <p className="font-sans text-xs text-brand-charcoal/70 mt-1 leading-relaxed">
+                    Creates an in-app notification displayed in the notification bell and triggers a matching administrative email copy to target.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSendNotification} className="space-y-4 pt-2">
+                  <div>
+                    <label className="font-heading font-bold text-2xs uppercase tracking-wider text-brand-charcoal/60 block mb-2">
+                      Target Audience
+                    </label>
+                    <select
+                      value={selectedUserForNotif}
+                      onChange={(e) => setSelectedUserForNotif(e.target.value)}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl py-2 px-3 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                    >
+                      <option value="all">📢 All Users (Global Broadcast)</option>
+                      {platformUsers.map(u => (
+                        <option key={u.uid} value={u.uid}>
+                          👤 {u.displayName} ({u.role}) — {u.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-heading font-bold text-2xs uppercase tracking-wider text-brand-charcoal/60 block mb-2">
+                      Announcement Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Scheduled Platform Maintenance Window"
+                      value={notifTitle}
+                      onChange={(e) => setNotifTitle(e.target.value)}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl py-2 px-3 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-heading font-bold text-2xs uppercase tracking-wider text-brand-charcoal/60 block mb-2">
+                      Message Content (Body)
+                    </label>
+                    <textarea
+                      placeholder="Enter the broadcast notification message..."
+                      rows="4"
+                      value={notifBody}
+                      onChange={(e) => setNotifBody(e.target.value)}
+                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl py-2 px-3 text-xs text-brand-charcoal focus:outline-none focus:border-brand-clay font-sans resize-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={sendingNotif}
+                    className="w-full py-3 bg-brand-clay hover:bg-brand-clay/90 text-white font-sans text-2xs font-bold uppercase tracking-wider rounded-full transition-colors flex items-center justify-center gap-2 shadow-md shadow-brand-clay/10"
+                  >
+                    {sendingNotif ? "Broadcasting message..." : "Broadcast Update Now"}
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW EMAIL PREVIEW MODAL */}
+      {selectedViewEmail && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-2xs" onClick={() => setSelectedViewEmail(null)} />
+          <div className="relative bg-white border border-brand-moss/20 rounded-[2.5rem] w-full max-w-2xl p-8 shadow-2xl z-10 font-sans text-xs">
+            <div className="flex justify-between items-start mb-6 pb-2 border-b border-brand-moss/10">
+              <div>
+                <span className="font-mono text-[8px] uppercase tracking-wider text-brand-clay block font-bold">
+                  TRANSACTIONAL EMAIL SYSTEM PREVIEW
+                </span>
+                <h3 className="font-heading font-bold text-base text-brand-moss mt-0.5">
+                  Audit Log Details
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedViewEmail(null)} 
+                className="text-brand-clay hover:underline font-mono text-[10px] font-bold"
+              >
+                Close Details
+              </button>
+            </div>
+
+            {/* Email card mock */}
+            <div className="border border-brand-moss/10 rounded-2xl p-6 bg-brand-cream/10 space-y-4">
+              <div className="space-y-1 font-mono text-[10px] border-b border-brand-moss/5 pb-3">
+                <div><span className="text-brand-charcoal/40">ID:</span> <span className="text-brand-moss font-bold">{selectedViewEmail.id}</span></div>
+                <div><span className="text-brand-charcoal/40">FROM:</span> <span className="text-brand-moss">EduBridge Africa &lt;onboarding@resend.dev&gt;</span></div>
+                <div><span className="text-brand-charcoal/40">TO:</span> <span className="text-brand-moss font-bold">{selectedViewEmail.to}</span></div>
+                <div><span className="text-brand-charcoal/40">SUBJECT:</span> <span className="text-brand-clay font-bold">{selectedViewEmail.subject}</span></div>
+                <div><span className="text-brand-charcoal/40">DATE:</span> <span className="text-brand-charcoal">{new Date(selectedViewEmail.sentAt).toLocaleString()}</span></div>
+                <div><span className="text-brand-charcoal/40">TEMPLATE:</span> <span className="text-brand-charcoal/60 uppercase">{selectedViewEmail.template}</span></div>
+                {selectedViewEmail.messageId && (
+                  <div><span className="text-brand-charcoal/40">SMTP ID:</span> <span className="text-brand-moss font-bold">{selectedViewEmail.messageId}</span></div>
+                )}
+              </div>
+
+              {/* Email Content body */}
+              <div className="bg-white border border-brand-moss/5 rounded-xl p-6 text-xs text-brand-charcoal leading-relaxed whitespace-pre-wrap font-sans max-h-[300px] overflow-y-auto">
+                {selectedViewEmail.body}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button 
+                onClick={() => setSelectedViewEmail(null)}
+                className="py-2.5 px-6 bg-brand-moss hover:bg-brand-moss/95 text-white font-mono text-[9px] uppercase tracking-wider font-bold rounded-full shadow-md"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

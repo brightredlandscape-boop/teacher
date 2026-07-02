@@ -10,7 +10,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { db, seedDatabase, connectDb } from './db.js';
 import paymentRoutes from './routes/payments.js';
 import b2bRoutes from './routes/b2b.js';
-import { sendTransactionalEmail } from './services/email.js';
+import { sendTransactionalEmail, readSentEmails } from './services/email.js';
 
 dotenv.config();
 
@@ -2113,6 +2113,79 @@ app.post('/api/notifications/read-all/:uid', authenticateToken, requireOwnerOrAd
     await db.update('notifications', n.id, { read: true });
   }
   res.json({ success: true, count: list.length });
+});
+
+// --- ADMIN EMAIL & NOTIFICATION CLIENT ROUTES ---
+
+// GET all users (Admin only)
+app.get('/api/admin/users', authenticateToken, requireRole(['Admin']), (req, res) => {
+  const users = db.find('users');
+  res.json(users);
+});
+
+// GET all sent emails (Admin only)
+app.get('/api/admin/emails', authenticateToken, requireRole(['Admin']), (req, res) => {
+  try {
+    const emails = readSentEmails();
+    res.json(emails);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read sent emails logs." });
+  }
+});
+
+// POST send welcome email (Admin only)
+app.post('/api/admin/emails/send-welcome', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  const { email, displayName, role } = req.body;
+  if (!email || !displayName || !role) {
+    return res.status(400).json({ error: "Email, display name, and role are required." });
+  }
+  try {
+    const record = sendTransactionalEmail(email, "Welcome to EduBridge Africa!", "welcome", {
+      displayName,
+      role
+    });
+    res.json({ success: true, email: record });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to send welcome email." });
+  }
+});
+
+// POST send admin notification (Admin only)
+app.post('/api/admin/emails/send-notification', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  const { userId, title, body } = req.body;
+  if (!userId || !title || !body) {
+    return res.status(400).json({ error: "userId, title, and body are required." });
+  }
+
+  try {
+    let targets = [];
+    if (userId === 'all') {
+      targets = db.find('users');
+    } else {
+      const user = db.findOne('users', u => u.uid === userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found." });
+      }
+      targets = [user];
+    }
+
+    const sentRecords = [];
+    for (const target of targets) {
+      // 1. Create in-app notification
+      await createNotification(target.uid, 'admin_broadcast', title, body);
+      
+      // 2. Send email notification
+      const emailRecord = sendTransactionalEmail(target.email, title, 'admin_notification', {
+        displayName: target.displayName,
+        message: body
+      });
+      sentRecords.push(emailRecord);
+    }
+
+    res.json({ success: true, sentCount: targets.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to broadcast notification." });
+  }
 });
 
 // POST Create Dispute

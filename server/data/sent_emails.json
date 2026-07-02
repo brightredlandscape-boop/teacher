@@ -45,5 +45,33 @@
     "sentAt": "2026-06-26T20:12:36.227Z",
     "status": "failed",
     "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+  },
+  {
+    "id": "email_3d7d04d5-bef1-414d-a35f-08832551d426",
+    "to": "parent@test.com",
+    "subject": "Welcome to EduBridge Africa!",
+    "template": "welcome",
+    "body": "Hi Test Parent,\n\nWelcome to EduBridge Africa! Your account as a Parent has been successfully registered. Please verify your email using this link: http://localhost:5173/verify-email?token=ec3558b4a63f1a22c5786b1bea46aba1\n\nBest regards,\nThe EduBridge Support Team",
+    "data": {
+      "displayName": "Test Parent",
+      "role": "Parent"
+    },
+    "sentAt": "2026-07-02T07:54:13.409Z",
+    "status": "failed",
+    "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+  },
+  {
+    "id": "email_1f42f242-290b-4de6-a812-9b3f949bb695",
+    "to": "teacher2@edubridge.com",
+    "subject": "Welcome to EduBridge Africa!",
+    "template": "welcome",
+    "body": "Hi Test Te,\n\nWelcome to EduBridge Africa! Your account as a Teacher has been successfully registered. Please verify your email using this link: http://localhost:5173/verify-email?token=f8afcf0af19f4cb5148d63783c97273d\n\nBest regards,\nThe EduBridge Support Team",
+    "data": {
+      "displayName": "Test Te",
+      "role": "Teacher"
+    },
+    "sentAt": "2026-07-02T08:40:25.168Z",
+    "status": "failed",
+    "error": "Message failed: 550 You can only send testing emails to your own email address (zeerocodes@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
   }
 ]

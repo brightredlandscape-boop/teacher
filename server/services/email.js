@@ -25,7 +25,7 @@ try {
 const EMAIL_LOG_FILE = path.join(DATA_DIR, 'sent_emails.json');
 
 // Helper to read sent emails log
-function readSentEmails() {
+export function readSentEmails() {
   if (!fs.existsSync(EMAIL_LOG_FILE)) {
     try {
       fs.writeFileSync(EMAIL_LOG_FILE, JSON.stringify([], null, 2));
@@ -91,6 +91,8 @@ export function sendTransactionalEmail(to, subject, templateName, templateData) 
     body = `Hello Parent,\n\nYour session with ${templateData.teacherName} has been booked. A payment of ${templateData.formattedCost} has been safely locked in the EduBridge Timed Escrow Engine for the slot: ${templateData.slot.day} at ${templateData.slot.time}.\n\nEscrow details: https://localhost:5173/dashboard/billing\n\nThanks,\nEduBridge Billing`;
   } else if (templateName === 'assignment_graded') {
     body = `Hi Parent,\n\nAn assignment score card has been posted for ${templateData.studentName}.\n\nAssignment: "${templateData.title}"\nGrade: ${templateData.score}/100\nFeedback: "${templateData.feedback}"\n\nCheck detailed grades: http://localhost:5173/dashboard/progress`;
+  } else if (templateName === 'admin_notification' || templateName === 'custom') {
+    body = `Dear ${templateData.displayName},\n\nWe have a new update for you regarding your EduBridge account:\n\n${templateData.message}\n\nTo view this update and take action, please log in to your dashboard at http://localhost:5173/\n\nWarm regards,\nEduBridge Administration`;
   } else {
     body = `Subject: ${subject}\nData: ${JSON.stringify(templateData)}`;
   }

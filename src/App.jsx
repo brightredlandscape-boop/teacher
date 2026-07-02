@@ -1033,6 +1033,97 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-brand-cream text-brand-charcoal overflow-x-hidden selection:bg-brand-clay selection:text-white">
       
+      {/* Interactive Developer/Demo Switcher Bar */}
+      <div className="w-full bg-brand-moss text-white px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 border-b border-brand-cream/10 z-[60] relative shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex w-2 h-2 bg-green-400 rounded-full animate-ping" />
+          <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-brand-cream/90">
+            Developer Sandbox Mode
+          </span>
+          <span className="hidden md:inline font-sans text-[9px] text-brand-cream/70">
+            — Select a role to instantly test different dashboards:
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[9px] font-bold">
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem('edubridge_user');
+              localStorage.removeItem('edubridge_token');
+              setCurrentUser(null);
+              setCurrentView('home');
+            }}
+            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
+              !currentUser 
+                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
+                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
+            }`}
+          >
+            Visitor (Home)
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => {
+              const u = { uid: 'parent_1', displayName: 'Ngozi Adeleke', role: 'Parent', email: 'parent@edubridge.com', country: 'Nigeria' };
+              handleAuthSuccess(u);
+            }}
+            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
+              currentUser?.role === 'Parent' 
+                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
+                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
+            }`}
+          >
+            Parent (Ngozi)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const u = { uid: 'teacher_1', displayName: 'Mr. Adebayo Okafor', role: 'Teacher', email: 'teacher@edubridge.com', country: 'Nigeria' };
+              handleAuthSuccess(u);
+            }}
+            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
+              currentUser?.role === 'Teacher' 
+                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
+                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
+            }`}
+          >
+            Teacher (Adebayo)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const u = { uid: 'student_1', displayName: 'Tunde Okafor', role: 'Student', email: 'student@edubridge.com' };
+              handleAuthSuccess(u);
+            }}
+            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
+              currentUser?.role === 'Student' 
+                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
+                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
+            }`}
+          >
+            Student (Tunde)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const u = { uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email: 'admin@edubridge.com' };
+              handleAuthSuccess(u);
+            }}
+            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
+              currentUser?.role === 'Admin' 
+                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
+                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
+            }`}
+          >
+            Admin (System)
+          </button>
+        </div>
+      </div>
+
       {/* Static Header Navbar */}
       <nav className="w-full bg-brand-charcoal text-white py-4 px-6 md:px-12 border-b border-brand-cream/10 z-50 relative">
         <div className="flex items-center justify-between">

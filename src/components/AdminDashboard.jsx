@@ -2990,6 +2990,8 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
           </div>
         </div>
+      )}
+
       {/* SECTION 8: EMAILS & NOTIFICATIONS CLIENT */}
       {activeSubSection === 'emails' && (
         <div className="space-y-8 animate-fade-up">

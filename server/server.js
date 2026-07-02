@@ -1313,7 +1313,7 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
 
 // POST Book a session
 app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requireOwnerOrAdmin, async (req, res) => {
-  const { teacherId, teacherName, studentId, studentName, parentId, costPerSession, slots } = req.body;
+  const { teacherId, teacherName, studentId, studentName, parentId, costPerSession, slots, subject, curriculum } = req.body;
 
   if (!slots || !Array.isArray(slots) || slots.length === 0) {
     return res.status(400).json({ error: "No slots selected." });
@@ -1342,8 +1342,13 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
     escrow: wallet.escrow + totalCost
   });
 
+  const teacherProfile = db.findOne('teachers', t => t.uid === teacherId || t.id === teacherId);
+  const defaultSubject = (teacherProfile && teacherProfile.subjects && teacherProfile.subjects[0]) || "General Class";
+  const defaultCurriculum = (teacherProfile && teacherProfile.curricula && teacherProfile.curricula[0]) || "Standard";
+
   // 3. Create Session Records
   const createdSessions = [];
+  let lastSession = null;
   for (const slot of slots) {
     const newSession = await db.insert('sessions', {
       teacherId,
@@ -1355,24 +1360,29 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
       slot,
       status: "Pending Confirmation",
       clockLog: [],
-      recordingConsent: { teacher: true, parent: true }
+      recordingConsent: { teacher: true, parent: true },
+      subject: subject || defaultSubject,
+      curriculum: curriculum || defaultCurriculum
     });
     createdSessions.push(newSession);
+    lastSession = newSession;
   }
 
   // 4. Log Transaction
-  await db.insert('transactions', {
-    amount: totalCost,
-    amountMinorUnits: totalCost,
-    currency: "NGN",
-    commission: 0,
-    status: "secured",
-    fromUserId: parentId,
-    toUserId: teacherId,
-    sessionId: newSession.id,
-    paymentProcessor: "escrow",
-    payoutStatus: "locked"
-  });
+  if (lastSession) {
+    await db.insert('transactions', {
+      amount: totalCost,
+      amountMinorUnits: totalCost,
+      currency: "NGN",
+      commission: 0,
+      status: "secured",
+      fromUserId: parentId,
+      toUserId: teacherId,
+      sessionId: lastSession.id,
+      paymentProcessor: "escrow",
+      payoutStatus: "locked"
+    });
+  }
 
   const cost = costPerSession;
   const slot = slots[0];
@@ -1400,7 +1410,7 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   });
 
   res.json({
-    session: newSession,
+    session: lastSession,
     walletBalance: wallet.balance - cost,
     escrowBalance: wallet.escrow + cost
   });

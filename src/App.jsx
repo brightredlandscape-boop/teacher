@@ -656,7 +656,7 @@ export default function App() {
     }
   };
 
-  const handleBookingConfirm = async (costNgnMinor, slots, paymentMethod = 'wallet') => {
+  const handleBookingConfirm = async (costNgnMinor, slots, paymentMethod = 'wallet', options = {}) => {
     const activeStudentId = selectedStudentForBooking ? (selectedStudentForBooking.uid || selectedStudentForBooking.id) : 'student_1';
     const activeStudentName = selectedStudentForBooking ? selectedStudentForBooking.name : 'Tunde';
     try {
@@ -673,7 +673,11 @@ export default function App() {
             paymentType: 'session_booking',
             amountNgnMinor: costNgnMinor,
             studentId: activeStudentId,
-            studentName: activeStudentName
+            studentName: activeStudentName,
+            metadata: {
+              subject: options.subject,
+              curriculum: options.curriculum
+            }
           })
         });
         if (checkoutRes.ok) {
@@ -705,7 +709,9 @@ export default function App() {
           studentName: activeStudentName,
           parentId: currentUser ? currentUser.uid : 'parent_1',
           costPerSession: Math.floor(costNgnMinor / slots.length),
-          slots
+          slots,
+          subject: options.subject || (selectedTeacherForBooking.subjects && selectedTeacherForBooking.subjects[0]) || 'General',
+          curriculum: options.curriculum || (selectedTeacherForBooking.curricula && selectedTeacherForBooking.curricula[0]) || 'Standard'
         })
       });
 
@@ -733,7 +739,7 @@ export default function App() {
         teacherId: selectedTeacherForBooking.id,
         teacherName: selectedTeacherForBooking.name,
         avatar: selectedTeacherForBooking.avatar,
-        subject: selectedTeacherForBooking.subjects[0] + " Class",
+        subject: `${options.subject || selectedTeacherForBooking.subjects[0] || 'General'} Class (${options.curriculum || 'Standard'})`,
         studentName: activeStudentName,
         studentId: activeStudentId,
         slot: slot,

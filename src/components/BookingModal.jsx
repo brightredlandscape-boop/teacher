@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, CreditCard, Shield, Clock, Lock } from 'lucide-react';
 
 export default function BookingModal({ 
@@ -13,6 +13,15 @@ export default function BookingModal({
   bookedSessions = []
 }) {
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedCurriculum, setSelectedCurriculum] = useState('');
+
+  useEffect(() => {
+    if (teacher) {
+      setSelectedSubject(teacher.subjects?.[0] || 'General');
+      setSelectedCurriculum(teacher.curricula?.[0] || 'Standard');
+    }
+  }, [teacher]);
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -102,7 +111,7 @@ export default function BookingModal({
       setIsProcessing(true);
       setTimeout(() => {
         const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
-        onBook(totalRateMinor, slotsData, paymentMethod);
+        onBook(totalRateMinor, slotsData, paymentMethod, { subject: selectedSubject, curriculum: selectedCurriculum });
         setIsProcessing(false);
         resetStates();
         onClose();
@@ -142,7 +151,7 @@ export default function BookingModal({
       setTimeout(() => {
         // Successful payment booking release
         const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
-        onBook(totalRateMinor, slotsData, 'card');
+        onBook(totalRateMinor, slotsData, 'card', { subject: selectedSubject, curriculum: selectedCurriculum });
         setIsProcessing(false);
         resetStates();
         onClose();
@@ -351,13 +360,52 @@ export default function BookingModal({
                   <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <span className="font-heading font-bold text-sm text-brand-moss">1-on-1 Trial Class</span>
-                  <span className="font-sans text-xs text-brand-charcoal/60 block">60 minutes · WAEC/Cambridge</span>
+                  <span className="font-heading font-bold text-sm text-brand-moss">{selectedSubject || '1-on-1'} Trial Class</span>
+                  <span className="font-sans text-xs text-brand-charcoal/60 block">60 minutes · {selectedCurriculum || 'WAEC/Cambridge'}</span>
                 </div>
               </div>
               <div className="text-right">
                 <span className="font-heading font-bold text-base text-brand-moss block">{formattedRate}</span>
                 <span className="font-mono text-[9px] uppercase tracking-widest text-brand-clay block font-bold">100% Refundable</span>
+              </div>
+            </div>
+
+            {/* Custom Lesson & Class Type selectors */}
+            <div className="mb-6 bg-white border border-brand-moss/10 rounded-2xl p-4 space-y-3 shadow-sm">
+              <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block">
+                🏷️ Select Lesson & Class Type
+              </span>
+              <div className="grid grid-cols-2 gap-4 font-sans">
+                <div>
+                  <label className="font-sans font-bold text-[9px] uppercase tracking-wider text-brand-charcoal/60 block mb-1">Subject / Lesson</label>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-3 py-2 text-xs font-sans text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                  >
+                    {teacher.subjects && teacher.subjects.map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                    {(!teacher.subjects || teacher.subjects.length === 0) && (
+                      <option value="General">General</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-sans font-bold text-[9px] uppercase tracking-wider text-brand-charcoal/60 block mb-1">Class Type / Curriculum</label>
+                  <select
+                    value={selectedCurriculum}
+                    onChange={(e) => setSelectedCurriculum(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-3 py-2 text-xs font-sans text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                  >
+                    {teacher.curricula && teacher.curricula.map(curr => (
+                      <option key={curr} value={curr}>{curr}</option>
+                    ))}
+                    {(!teacher.curricula || teacher.curricula.length === 0) && (
+                      <option value="Standard">Standard</option>
+                    )}
+                  </select>
+                </div>
               </div>
             </div>
 

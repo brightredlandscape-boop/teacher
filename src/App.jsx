@@ -775,7 +775,15 @@ export default function App() {
   };
 
   // Wallet topup sync
-  const handleTopupWallet = async (amountNgnMinor, method = 'bank') => {
+  const handleTopupWallet = async (amountMinor, method = 'bank', currency = 'NGN') => {
+    // 1. Convert amount to NGN minor units for local tracking/fallback
+    let amountNgnMinor = amountMinor;
+    if (currency !== 'NGN') {
+      const rateKey = `NGN_${currency}`;
+      const rate = exchangeRates[rateKey] || 1;
+      amountNgnMinor = Math.round(amountMinor / rate);
+    }
+
     try {
       if (method === 'paystack') {
         const provider = 'paystack';
@@ -784,16 +792,16 @@ export default function App() {
           headers: getAuthHeaders(),
           body: JSON.stringify({
             parentId: currentUser ? currentUser.uid : 'parent_1',
-            amount: amountNgnMinor,
-            currency: 'NGN',
+            amount: amountMinor, // Pass amount in selected currency minor units
+            currency: currency, // Pass selected currency
             provider,
             paymentType: 'wallet_topup',
-            amountNgnMinor
+            amountNgnMinor: amountNgnMinor // Pass converted NGN minor units in metadata
           })
         });
         if (checkoutRes.ok) {
           const data = await checkoutRes.json();
-          appendTelemetryLog(`Initiating ${provider} topup checkout for ${formatCurrency(amountNgnMinor, 'NGN')}`);
+          appendTelemetryLog(`Initiating ${provider} topup checkout for ${formatCurrency(amountMinor, currency)}`);
           window.location.href = data.checkoutUrl;
           return { redirect: true };
         } else {
@@ -823,7 +831,7 @@ export default function App() {
         setWalletBalance(data.walletBalance);
         setEscrowBalance(data.escrowBalance);
         await fetchInitialData();
-        appendTelemetryLog(`Wallet Topup: Success adding ${formatCurrency(convertMinor(amountNgnMinor, selectedCurrency), selectedCurrency)} to parent wallet.`);
+        appendTelemetryLog(`Wallet Topup: Success adding ${formatCurrency(amountMinor, currency)} (${formatCurrency(amountNgnMinor, 'NGN')}) to parent wallet.`);
         return true;
       }
       return false;
@@ -833,7 +841,7 @@ export default function App() {
         return false;
       }
       setWalletBalance(prev => prev + amountNgnMinor);
-      appendTelemetryLog(`Wallet Topup (Local Fallback): Success adding ${formatCurrency(convertMinor(amountNgnMinor, selectedCurrency), selectedCurrency)}.`);
+      appendTelemetryLog(`Wallet Topup (Local Fallback): Success adding ${formatCurrency(amountMinor, currency)} (${formatCurrency(amountNgnMinor, 'NGN')}).`);
       return true;
     }
   };

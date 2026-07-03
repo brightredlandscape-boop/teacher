@@ -289,17 +289,17 @@ export default function ParentDashboard({
     setTopupLoading(true);
     setTopupSuccess('');
     
-    // convert NGN float input to minor units (e.g. 10000 NGN -> 1000000 minor)
-    const amountNgnMinor = Math.round(amountNum * 100);
+    // convert float input to minor units (e.g. 10 USD -> 1000 minor cents)
+    const amountMinor = Math.round(amountNum * 100);
 
     if (onTopupWallet) {
-      const res = await onTopupWallet(amountNgnMinor, topupMethod);
+      const res = await onTopupWallet(amountMinor, topupMethod, selectedCurrency);
       if (res && res.redirect) {
         // user is redirected, keep loading status until redirect completes
         return;
       }
       if (res) {
-        setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountNgnMinor, 'NGN')} successfully credited via ${topupMethod.toUpperCase()}!`);
+        setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountMinor, selectedCurrency)} successfully credited via ${topupMethod.toUpperCase()}!`);
         setCustomAmount('');
         fetchDashboard();
       } else {
@@ -1194,40 +1194,48 @@ export default function ParentDashboard({
                 
                 {/* Preset Amounts Grid */}
                 <div>
-                  <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-3">Select Top-up Preset (NGN)</label>
+                  <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-3">Select Top-up Preset ({selectedCurrency})</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { label: '₦5,000', value: '5000' },
-                      { label: '₦10,000', value: '10000' },
-                      { label: '₦25,000', value: '25000' },
-                      { label: 'Custom Amount', value: 'custom' }
-                    ].map((p) => (
-                      <button
-                        key={p.value}
-                        type="button"
-                        onClick={() => setTopupAmount(p.value)}
-                        className={`py-3 rounded-xl border font-heading font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
-                          topupAmount === p.value
-                            ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal shadow-sm'
-                            : 'border-brand-moss/10 bg-white hover:border-brand-moss/45'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+                    {(() => {
+                      const presetsByCurrency = {
+                        NGN: [{ label: '₦5,000', value: '5000' }, { label: '₦10,000', value: '10000' }, { label: '₦25,000', value: '25000' }],
+                        USD: [{ label: '$10', value: '10' }, { label: '$25', value: '25' }, { label: '$50', value: '50' }],
+                        GBP: [{ label: '£10', value: '10' }, { label: '£25', value: '25' }, { label: '£50', value: '50' }],
+                        EUR: [{ label: '€10', value: '10' }, { label: '€25', value: '25' }, { label: '€50', value: '50' }],
+                        GHS: [{ label: 'GH₵50', value: '50' }, { label: 'GH₵100', value: '100' }, { label: 'GH₵250', value: '250' }],
+                        CAD: [{ label: 'C$15', value: '15' }, { label: 'C$30', value: '30' }, { label: 'C$75', value: '75' }]
+                      };
+                      const activePresets = [...(presetsByCurrency[selectedCurrency] || presetsByCurrency.NGN), { label: 'Custom Amount', value: 'custom' }];
+                      return activePresets.map((p) => (
+                        <button
+                          key={p.value}
+                          type="button"
+                          onClick={() => setTopupAmount(p.value)}
+                          className={`py-3 rounded-xl border font-heading font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                            topupAmount === p.value
+                              ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal shadow-sm'
+                              : 'border-brand-moss/10 bg-white hover:border-brand-moss/45'
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ));
+                    })()}
                   </div>
                 </div>
 
                 {/* Custom Amount Input */}
                 {topupAmount === 'custom' && (
                   <div className="animate-fade-in">
-                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-1.5">Enter Custom Deposit Amount (NGN)</label>
+                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-1.5">Enter Custom Deposit Amount ({selectedCurrency})</label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-4 font-bold text-brand-moss">₦</span>
+                      <span className="absolute left-4 font-bold text-brand-moss">
+                        {selectedCurrency === 'NGN' ? '₦' : selectedCurrency === 'USD' ? '$' : selectedCurrency === 'GBP' ? '£' : selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'GHS' ? 'GH₵' : selectedCurrency === 'CAD' ? 'C$' : selectedCurrency}
+                      </span>
                       <input
                         type="number"
                         required
-                        placeholder="e.g. 15000"
+                        placeholder={`e.g. ${selectedCurrency === 'NGN' ? '15000' : '100'}`}
                         value={customAmount}
                         onChange={(e) => setCustomAmount(e.target.value)}
                         className="w-full bg-white border border-brand-moss/10 rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-brand-clay text-sm font-bold"
@@ -1259,6 +1267,34 @@ export default function ParentDashboard({
                     ))}
                   </div>
                 </div>
+
+                {/* Inline Bank Details Info Box */}
+                {topupMethod === 'bank' && (
+                  <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 animate-fade-in font-sans text-xs space-y-2">
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">🏦 Direct Bank Transfer Details</span>
+                    <p className="text-brand-charcoal/70">Please make a transfer of the exact amount in your selected base currency. Ensure you include your parent user ID <strong className="font-mono">{currentUser?.uid || 'parent_1'}</strong> as the transfer description/reference.</p>
+                    <div className="bg-white border border-brand-moss/5 p-3 rounded-xl space-y-1.5 font-mono text-[10px]">
+                      <div className="flex justify-between">
+                        <span className="text-brand-charcoal/50">BANK NAME:</span>
+                        <span className="font-bold text-brand-moss">{selectedCurrency === 'NGN' ? 'Providus Bank' : 'Standard Chartered Bank'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-brand-charcoal/50">ACCOUNT NAME:</span>
+                        <span className="font-bold text-brand-moss">EduBridge Africa Ltd</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-brand-charcoal/50">ACCOUNT NUMBER:</span>
+                        <span className="font-bold text-brand-clay">{selectedCurrency === 'NGN' ? '1023948571' : '9988223311'}</span>
+                      </div>
+                      {selectedCurrency !== 'NGN' && (
+                        <div className="flex justify-between">
+                          <span className="text-brand-charcoal/50">SWIFT / ROUTING:</span>
+                          <span className="font-bold text-brand-moss">SCBLNGLaXXX</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Action Submit */}
                 <button

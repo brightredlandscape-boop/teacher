@@ -369,7 +369,10 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
       const response = await fetch(`${API_BASE}/payout/request`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ amount: payoutRequestAmount })
+        body: JSON.stringify({ 
+          amount: payoutRequestAmount,
+          payoutMethod: payoutMethod
+        })
       });
       const data = await response.json();
       if (response.ok) {

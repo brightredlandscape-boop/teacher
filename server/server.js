@@ -15,6 +15,7 @@ import { sendTransactionalEmail, readSentEmails } from './services/email.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(helmet()); // Apply HTTP security headers globally
 const PORT = process.env.PORT || 5000;
 
@@ -357,6 +358,26 @@ async function guaranteeInitialProfiles() {
   const teacher_5 = db.findOne('teachers', t => t.uid === 'teacher_5');
   if (teacher_5 && (!teacher_5.username || teacher_5.username !== 'fatima' || teacher_5.status !== 'verified')) {
     await db.update('teachers', teacher_5.id, { username: "fatima", status: "verified" });
+  }
+
+  // Guarantee wallets for admin_1 and teacher_1
+  let adminWallet = db.findOne('wallets', w => w.uid === 'admin_1');
+  if (!adminWallet) {
+    await db.insert('wallets', {
+      uid: 'admin_1',
+      balance: 15000000, // ₦150,000 in minor units
+      escrow: 0
+    });
+    console.log("Guaranteed admin_1 wallet.");
+  }
+  let teacher1Wallet = db.findOne('wallets', w => w.uid === 'teacher_1');
+  if (!teacher1Wallet) {
+    await db.insert('wallets', {
+      uid: 'teacher_1',
+      balance: 8500000, // ₦85,000 in minor units
+      escrow: 0
+    });
+    console.log("Guaranteed teacher_1 wallet.");
   }
 }
 
@@ -1631,6 +1652,20 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     });
   }
 
+  // Add commission to admin's wallet balance
+  let adminWallet = db.findOne('wallets', w => w.uid === 'admin_1');
+  if (!adminWallet) {
+    adminWallet = await db.insert('wallets', {
+      uid: 'admin_1',
+      balance: commission,
+      escrow: 0
+    });
+  } else {
+    await db.update('wallets', adminWallet.id, {
+      balance: Number(adminWallet.balance) + commission
+    });
+  }
+
   await createNotification(
     session.parentId,
     "session_completed",
@@ -1692,9 +1727,9 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
 
 // --- PAYOUT ENDPOINTS ---
 
-// POST Request Payout (Teacher)
-app.post('/api/payout/request', authenticateToken, requireRole(['Teacher']), async (req, res) => {
-  const { amount } = req.body;
+// POST Request Payout (Teacher & Admin)
+app.post('/api/payout/request', authenticateToken, requireRole(['Teacher', 'Admin']), async (req, res) => {
+  const { amount, payoutMethod } = req.body;
   if (!amount || amount <= 0) {
     return res.status(400).json({ error: "Valid amount is required." });
   }
@@ -1705,11 +1740,13 @@ app.post('/api/payout/request', authenticateToken, requireRole(['Teacher']), asy
   }
 
   // Deduct from wallet balance to prevent double requests
-  await db.update('wallets', wallet.id, { balance: wallet.balance - amount });
+  const newBal = Number(wallet.balance) - Number(amount);
+  await db.update('wallets', wallet.id, { balance: newBal });
 
   const payoutReq = await db.insert('payout_requests', {
     teacherId: req.user.uid,
-    amount,
+    amount: Number(amount),
+    payoutMethod: payoutMethod || 'Wise Bank Direct',
     status: 'pending',
     requestedAt: new Date().toISOString()
   });
@@ -1717,19 +1754,41 @@ app.post('/api/payout/request', authenticateToken, requireRole(['Teacher']), asy
   // Notify admins
   const admins = db.find('users', u => u.role === 'Admin');
   for (const admin of admins) {
-    await createNotification(admin.uid, 'system', 'Payout Request', `Teacher ${req.user.displayName || req.user.uid} requested a payout of ₦${amount/100}.`);
+    await createNotification(
+      admin.uid,
+      'system',
+      'Payout Request',
+      `${req.user.role === 'Admin' ? 'Admin' : 'Teacher'} ${req.user.displayName || req.user.uid} requested a payout of ₦${amount/100} via ${payoutMethod || 'Wise Bank Direct'}.`
+    );
   }
 
-  res.json({ success: true, payoutRequest: payoutReq, newBalance: wallet.balance - amount });
+  res.json({ success: true, payoutRequest: payoutReq, newBalance: newBal });
+});
+
+// GET Admin Wallet Balance
+app.get('/api/admin/wallet', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  let wallet = db.findOne('wallets', w => w.uid === req.user.uid);
+  if (!wallet) {
+    wallet = await db.insert('wallets', {
+      uid: req.user.uid,
+      balance: 0,
+      escrow: 0
+    });
+  }
+  res.json({
+    walletBalance: wallet.balance,
+    escrowBalance: wallet.escrow
+  });
 });
 
 // GET Payout Requests (Admin)
 app.get('/api/admin/payouts', authenticateToken, requireRole(['Admin']), (req, res) => {
   const payouts = db.find('payout_requests');
-  // Enhance with teacher info
+  // Enhance with teacher / admin user info
   const enhanced = payouts.map(p => {
     const t = db.findOne('teachers', t => t.uid === p.teacherId) || {};
-    return { ...p, teacherName: t.name || p.teacherId };
+    const u = db.findOne('users', u => u.uid === p.teacherId) || {};
+    return { ...p, teacherName: u.displayName || t.name || p.teacherId };
   });
   enhanced.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
   res.json(enhanced);

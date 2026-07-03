@@ -747,6 +747,18 @@ export async function seedDatabase() {
       escrow: 0
     });
 
+    await db.insert('wallets', {
+      uid: "admin_1",
+      balance: 15000000, // ₦150,000 in minor units
+      escrow: 0
+    });
+
+    await db.insert('wallets', {
+      uid: "teacher_1",
+      balance: 8500000, // ₦85,000 in minor units
+      escrow: 0
+    });
+
     console.log('Seeded Parent/Student Users & Wallets');
   }
 

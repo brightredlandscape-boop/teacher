@@ -61,7 +61,7 @@ function getTransporter() {
     const host = process.env.SMTP_HOST || 'smtp.resend.com';
     const port = parseInt(process.env.SMTP_PORT || '465', 10);
     const user = process.env.SMTP_USER || 'resend';
-    const pass = process.env.SMTP_PASS || 're_N31LvYPg_HQpnmirsYo2EFPxPAzgugFXe';
+    const pass = process.env.SMTP_PASS || '';
 
     transporter = nodemailer.createTransport({
       host: host,

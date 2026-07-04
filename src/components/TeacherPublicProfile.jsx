@@ -276,10 +276,10 @@ export default function TeacherPublicProfile({
 
     // Clean up SEO tags when unmounting
     return () => {
-      document.title = 'EduBridge — Connecting African educators with verified training';
+      document.title = 'EduBridge - Connecting African educators to private home lessons and online tutoring globally.';
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', 'Connecting African educators with verified training, resources, and career-boosting opportunities.');
+        metaDesc.setAttribute('content', 'EduBridge Africa connects you with rigorously verified African educators for private online and in-home tutoring');
       }
     };
   }, [username]);

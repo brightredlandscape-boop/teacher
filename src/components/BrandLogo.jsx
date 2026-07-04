@@ -13,19 +13,19 @@ export default function BrandLogo({ light = false, className = '', iconOnly = fa
           cx="100" 
           cy="100" 
           r="90" 
-          fill="#000000" 
-          stroke={light ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.05)"} 
+          fill="#2E4036" 
+          stroke={light ? "rgba(242, 240, 233, 0.15)" : "rgba(46, 64, 54, 0.1)"} 
           strokeWidth="4" 
         />
         <path 
           d="M 45 100 C 45 60, 100 60, 100 100 C 100 140, 155 140, 155 100" 
-          stroke="#00AEEF" 
+          stroke="#CC5833" 
           strokeWidth="14" 
           strokeLinecap="round" 
           fill="none" 
         />
-        <circle cx="72.5" cy="46" r="14" fill="#00AEEF" />
-        <circle cx="127.5" cy="104" r="14" fill="#00AEEF" />
+        <circle cx="72.5" cy="46" r="14" fill="#F2F0E9" />
+        <circle cx="127.5" cy="104" r="14" fill="#F2F0E9" />
       </svg>
 
       {!iconOnly && (

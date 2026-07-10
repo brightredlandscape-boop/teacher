@@ -1372,6 +1372,11 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
 app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requireOwnerOrAdmin, async (req, res) => {
   const { teacherId, teacherName, studentId, studentName, parentId, costPerSession, slots, subject, curriculum } = req.body;
 
+  const demoUids = ['teacher_1', 'teacher_2', 'teacher_3', 'teacher_4', 'teacher_5', 'teacher_test_pay'];
+  if (demoUids.includes(teacherId)) {
+    return res.status(400).json({ error: "Booking sessions with demo content tutors is disabled." });
+  }
+
   if (!slots || !Array.isArray(slots) || slots.length === 0) {
     return res.status(400).json({ error: "No slots selected." });
   }

@@ -16,6 +16,11 @@ function authenticateB2BSchool(req, res, next) {
     return res.status(403).json({ error: "Invalid B2B school API key." });
   }
 
+  // Ensure key is active and not revoked
+  if (school.status !== 'active') {
+    return res.status(403).json({ error: "B2B school API key is inactive or has been revoked." });
+  }
+
   req.school = school;
   next();
 }

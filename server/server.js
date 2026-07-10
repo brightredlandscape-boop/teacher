@@ -1093,6 +1093,11 @@ app.get('/api/students/dashboard/:uid', authenticateToken, (req, res) => {
     return res.status(404).json({ error: "Student dashboard not found." });
   }
 
+  // Authorization check: User must be Admin, the Student themselves, or the Parent of the student
+  if (req.user.role !== 'Admin' && req.user.uid !== student.uid && req.user.uid !== student.parentUid) {
+    return res.status(403).json({ error: "Access forbidden. You do not have permission to view this student's dashboard." });
+  }
+
   const studentSessions = db.find('sessions', s => s.studentId === student.uid || s.studentName.toLowerCase() === student.name.toLowerCase());
   const assignments = db.find('assignments', a => a.studentId === student.uid || a.studentName.toLowerCase() === student.name.toLowerCase());
 
@@ -1120,6 +1125,11 @@ app.get('/api/students/dashboard/:uid', authenticateToken, (req, res) => {
 // GET Teacher dashboard data
 app.get('/api/teachers/dashboard/:uid', authenticateToken, (req, res) => {
   const { uid } = req.params;
+
+  // Authorization check: User must be Admin or the Teacher themselves
+  if (req.user.role !== 'Admin' && req.user.uid !== uid) {
+    return res.status(403).json({ error: "Access forbidden. You do not have permission to view this dashboard." });
+  }
 
   const teacher = db.findOne('teachers', t => t.uid === uid);
   if (!teacher) {
@@ -1319,6 +1329,17 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
   // Verify Role: Must be Parent or Student
   if (req.user.role !== 'Parent' && req.user.role !== 'Student') {
     return res.status(403).json({ error: "Access forbidden. Only students or parents can submit homework." });
+  }
+
+  // Verify Ownership: Requester must be the Student themselves or the Parent of the student
+  const student = db.findOne('students', s => s.name.toLowerCase() === assignment.studentName.toLowerCase());
+  if (req.user.role !== 'Admin') {
+    if (req.user.role === 'Student' && (!student || student.uid !== req.user.uid)) {
+      return res.status(403).json({ error: "Access forbidden. You are not the student assigned to this homework." });
+    }
+    if (req.user.role === 'Parent' && (!student || student.parentUid !== req.user.uid)) {
+      return res.status(403).json({ error: "Access forbidden. You are not the parent of the student assigned to this homework." });
+    }
   }
 
   const updated = await db.update('assignments', id, {
@@ -2461,6 +2482,10 @@ app.get('/api/parents/dashboard/:uid/ai-insight', authenticateToken, requireOwne
   }
 
   const student = db.findOne('students', s => s.parentUid === uid && s.name.toLowerCase() === studentName.toLowerCase());
+  if (!student) {
+    return res.status(403).json({ error: "Access forbidden. Student not associated with this parent profile." });
+  }
+
   const assignments = db.find('assignments', a => a.studentName.toLowerCase() === studentName.toLowerCase());
   const sessions = db.find('sessions', s => s.studentName.toLowerCase() === studentName.toLowerCase());
 

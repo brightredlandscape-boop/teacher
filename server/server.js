@@ -1327,6 +1327,21 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
     submittedAt: new Date().toISOString()
   });
 
+  // Automated email alert to teacher
+  try {
+    const studentObj = db.findOne('students', s => s.id === assignment.studentId) || { name: "Student" };
+    const teacherUser = db.findOne('users', u => u.uid === assignment.teacherId);
+    if (teacherUser && teacherUser.email) {
+      sendTransactionalEmail(teacherUser.email, "EduBridge: Homework Assignment Submitted", "assignment_submitted", {
+        studentName: studentObj.name,
+        title: assignment.title,
+        submittedAt: new Date().toLocaleDateString()
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send homework submission email alert:", err);
+  }
+
   res.json(updated);
 });
 
@@ -1439,6 +1454,23 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
     slot
   });
 
+  // Automated notification and email alert to the teacher
+  try {
+    const teacherUser = db.findOne('users', u => u.uid === teacherId);
+    if (teacherUser && teacherUser.email) {
+      sendTransactionalEmail(teacherUser.email, "EduBridge: New Session Booking Request", "booking_received", {
+        parentName: parentUser.displayName || parentUser.email.split('@')[0],
+        studentName,
+        subject,
+        curriculum,
+        slot,
+        formattedPayout: `₦${((cost * 0.85) / 100).toFixed(2)}`
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send booking notification email to teacher:", err);
+  }
+
   res.json({
     session: lastSession,
     walletBalance: wallet.balance - cost,
@@ -1472,6 +1504,20 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), a
       "Booking Confirmed",
       `Your session with ${session.teacherName} has been confirmed for ${session.slot.day} at ${session.slot.time}.`
     );
+
+    // Automated email to Parent
+    try {
+      const parentUser = db.findOne('users', u => u.uid === session.parentId);
+      if (parentUser && parentUser.email) {
+        sendTransactionalEmail(parentUser.email, "EduBridge: Booking Request Confirmed", "booking_confirmed", {
+          teacherName: session.teacherName,
+          slot: session.slot
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send booking confirmation email to parent:", err);
+    }
+
     return res.json(updated);
   } else if (action === "Reject") {
     // Release escrow back to parent
@@ -1492,6 +1538,20 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), a
       "Booking Declined",
       `Your booking request was declined by ${session.teacherName}. Funds have been refunded to your wallet.`
     );
+
+    // Automated email to Parent
+    try {
+      const parentUser = db.findOne('users', u => u.uid === session.parentId);
+      if (parentUser && parentUser.email) {
+        sendTransactionalEmail(parentUser.email, "EduBridge: Booking Request Declined", "booking_rejected", {
+          teacherName: session.teacherName,
+          formattedCost: `₦${session.cost/100}`
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send booking rejection email to parent:", err);
+    }
+
     return res.json(updated);
   } else {
     return res.status(400).json({ error: "Invalid action. Must be 'Confirm' or 'Reject'." });
@@ -1680,6 +1740,26 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     `Payout of ₦${payout/100} has been released to your wallet (commission: ₦${commission/100}).`
   );
 
+  // Automated email notifications to parent and teacher
+  try {
+    const parentUser = db.findOne('users', u => u.uid === session.parentId);
+    if (parentUser && parentUser.email) {
+      sendTransactionalEmail(parentUser.email, "EduBridge: Tutoring Session Completed Summary", "session_completed", {
+        teacherName: session.teacherName
+      });
+    }
+
+    const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
+    if (teacherUser && teacherUser.email) {
+      sendTransactionalEmail(teacherUser.email, "EduBridge: Escrow Funds Released", "escrow_released", {
+        formattedPayout: `₦${payout/100}`,
+        formattedCommission: `₦${commission/100}`
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send session ended transactional emails:", err);
+  }
+
   // Add payout log to transactions
   await db.insert('transactions', {
     amount: session.cost,
@@ -1806,6 +1886,17 @@ app.post('/api/admin/payouts/:id/respond', authenticateToken, requireRole(['Admi
   if (action === 'approve') {
     await db.update('payout_requests', payoutReq.id, { status: 'approved', processedAt: new Date().toISOString() });
     await createNotification(payoutReq.teacherId, 'payout_approved', 'Payout Approved', `Your payout of ₦${payoutReq.amount/100} has been processed and sent to your bank account.`);
+
+    try {
+      const teacherUser = db.findOne('users', u => u.uid === payoutReq.teacherId);
+      if (teacherUser && teacherUser.email) {
+        sendTransactionalEmail(teacherUser.email, "EduBridge: Payout Request Approved", "payout_approved", {
+          formattedAmount: `₦${payoutReq.amount/100}`
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send payout approved email:", err);
+    }
   } else if (action === 'reject') {
     await db.update('payout_requests', payoutReq.id, { status: 'rejected', processedAt: new Date().toISOString() });
     
@@ -1815,6 +1906,18 @@ app.post('/api/admin/payouts/:id/respond', authenticateToken, requireRole(['Admi
       await db.update('wallets', wallet.id, { balance: wallet.balance + payoutReq.amount });
     }
     await createNotification(payoutReq.teacherId, 'payout_rejected', 'Payout Rejected', `Your payout of ₦${payoutReq.amount/100} was rejected and refunded to your wallet.`);
+
+    try {
+      const teacherUser = db.findOne('users', u => u.uid === payoutReq.teacherId);
+      if (teacherUser && teacherUser.email) {
+        sendTransactionalEmail(teacherUser.email, "EduBridge: Payout Request Declined", "payout_rejected", {
+          formattedAmount: `₦${payoutReq.amount/100}`,
+          reason: "Administrative verification check required."
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send payout rejected email:", err);
+    }
   } else {
     return res.status(400).json({ error: "Action must be approve or reject." });
   }
@@ -2315,6 +2418,35 @@ app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), asy
     "Dispute Registered",
     `Your dispute on the session with ${session.teacherName} has been received. Our support team will review within 48 hours.`
   );
+
+  // Automated dispute email alerts (teacher, parent, admins)
+  try {
+    const parentUser = db.findOne('users', u => u.uid === session.parentId) || { email: "parent@edubridge.com" };
+    const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
+    if (teacherUser && teacherUser.email) {
+      sendTransactionalEmail(teacherUser.email, "EduBridge: Billing Dispute Opened", "dispute_created", {
+        slot: session.slot,
+        parentName: parentUser.displayName || parentUser.email.split('@')[0],
+        reason
+      });
+    }
+    
+    sendTransactionalEmail(parentUser.email, "EduBridge: Dispute Registered", "admin_notification", {
+      displayName: parentUser.displayName || "Parent",
+      message: `Your dispute for the session on ${session.slot.day} at ${session.slot.time} with ${session.teacherName} has been registered. Our billing support team is reviewing it and will contact you shortly.`
+    });
+
+    const admins = db.find('users', u => u.role === 'Admin');
+    for (const admin of admins) {
+      sendTransactionalEmail(admin.email, "EduBridge ADMIN: New Dispute Filed", "dispute_created", {
+        slot: session.slot,
+        parentName: parentUser.displayName || parentUser.email.split('@')[0],
+        reason
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send dispute transactional emails:", err);
+  }
 
   res.json({ success: true, dispute });
 });

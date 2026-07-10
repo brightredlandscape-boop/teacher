@@ -1049,96 +1049,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-brand-cream text-brand-charcoal overflow-x-hidden selection:bg-brand-clay selection:text-white">
       
-      {/* Interactive Developer/Demo Switcher Bar */}
-      <div className="w-full bg-brand-moss text-white px-4 sm:px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-brand-cream/10 z-[60] relative shadow-md">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex w-1.5 h-1.5 bg-green-400 rounded-full animate-ping" />
-          <span className="font-mono text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-brand-cream/90">
-            Developer Sandbox Mode
-          </span>
-          <span className="hidden sm:inline font-sans text-[8px] sm:text-[9px] text-brand-cream/70">
-            — Select a role to instantly test different dashboards:
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[8px] sm:text-[9px] font-bold">
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem('edubridge_user');
-              localStorage.removeItem('edubridge_token');
-              setCurrentUser(null);
-              setCurrentView('home');
-            }}
-            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
-              !currentUser 
-                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
-                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Visitor (Home)
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => {
-              const u = { uid: 'parent_1', displayName: 'Ngozi Adeleke', role: 'Parent', email: 'parent@edubridge.com', country: 'Nigeria' };
-              handleAuthSuccess(u);
-            }}
-            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
-              currentUser?.role === 'Parent' 
-                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
-                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Parent (Ngozi)
-          </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              const u = { uid: 'teacher_1', displayName: 'Mr. Adebayo Okafor', role: 'Teacher', email: 'teacher@edubridge.com', country: 'Nigeria' };
-              handleAuthSuccess(u);
-            }}
-            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
-              currentUser?.role === 'Teacher' 
-                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
-                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Teacher (Adebayo)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const u = { uid: 'student_1', displayName: 'Tunde Okafor', role: 'Student', email: 'student@edubridge.com' };
-              handleAuthSuccess(u);
-            }}
-            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
-              currentUser?.role === 'Student' 
-                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
-                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Student (Tunde)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const u = { uid: 'admin_1', displayName: 'System Admin', role: 'Admin', email: 'admin@edubridge.com' };
-              handleAuthSuccess(u);
-            }}
-            className={`py-1 px-2.5 rounded-full transition-all border duration-300 ${
-              currentUser?.role === 'Admin' 
-                ? 'bg-brand-clay border-brand-clay text-white shadow-sm' 
-                : 'bg-black/25 border-white/10 text-white/80 hover:bg-white/5'
-            }`}
-          >
-            Admin (System)
-          </button>
-        </div>
-      </div>
 
       {/* Static Header Navbar */}
       <nav className="w-full bg-brand-charcoal text-white py-4 px-6 md:px-12 border-b border-brand-cream/10 z-50 relative">
@@ -1662,14 +1573,14 @@ export default function App() {
 
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
           <h2 className="trust-fade font-heading font-bold text-4xl sm:text-5xl md:text-6xl text-white leading-[1.15] tracking-tight max-w-3xl">
-            Your child deserves a teacher <br />
+            Premium private lessons & tutoring <br />
             <span className="font-drama italic text-brand-clay font-light text-5xl sm:text-6xl md:text-7xl block mt-3">
               you can trust completely.
             </span>
           </h2>
           
           <p className="trust-fade font-sans font-light text-brand-cream/80 text-base sm:text-lg md:text-xl max-w-3xl mt-8 leading-relaxed">
-            EduBridge Africa connects you with rigorously verified African educators for private online and in-home tutoring. Every session is time-clocked, payment-protected, and progress-tracked — so you see exactly what your child is learning.
+            EduBridge Africa connects you with certified, background-checked private tutors for online home tutoring and lessons. Every study session is server-timed, escrow-protected, and parent-monitored so you can see exactly how your child grows.
           </p>
 
           <div className="trust-fade flex flex-col sm:flex-row gap-4 justify-center items-center w-full mt-10">
@@ -1678,14 +1589,14 @@ export default function App() {
               onClick={scrollToSection('marketplace')}
               className="btn-magnetic group font-sans font-bold text-xs uppercase tracking-wider bg-brand-clay text-white px-8 py-4 rounded-full shadow-lg shadow-brand-clay/20 flex items-center justify-center gap-2 hover:bg-brand-clay/90"
             >
-              <span>Find a Teacher Now →</span>
+              <span>Find a Private Tutor Now →</span>
             </a>
             <a 
               href="#protocol" 
               onClick={scrollToSection('protocol')}
               className="btn-magnetic font-sans font-bold text-xs uppercase tracking-wider bg-white text-brand-moss hover:bg-brand-cream/90 px-8 py-4 rounded-full transition-colors"
             >
-              Watch How It Works
+              How Online Tutoring Works
             </a>
           </div>
 
@@ -1760,27 +1671,27 @@ export default function App() {
       <section className="py-24 px-6 md:px-16 lg:px-24 bg-brand-cream/40 border-b border-brand-moss/10">
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">Addressing Objections</span>
+            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">Trust & Verification</span>
             <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss tracking-tight">
-              Fears & Solutions
+              Ensuring Quality in Online Home Tutoring
             </h2>
             <p className="font-sans text-brand-charcoal/70 mt-3 text-sm">
-              We understand the hesitation of hiring online. Here is how EduBridge protects you and your child.
+              Here is how our custom platform eliminates the risks of hiring private lesson tutors online.
             </p>
           </div>
 
           {/* Fear #1 */}
           <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 shadow-sm hover-lift flex flex-col md:flex-row gap-6">
             <div className="flex-1 bg-rose-50/50 border-l-4 border-rose-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">FEAR #1</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">COMMON CONCERN</span>
               <p className="font-sans font-bold text-brand-charcoal text-sm leading-relaxed">
-                "The tutor disappeared after 3 sessions — I had already paid in advance."
+                "The online tutor disappeared after a few sessions — I had already paid in advance."
               </p>
             </div>
             <div className="flex-1 bg-emerald-50/60 border-l-4 border-emerald-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUBRIDGE SOLUTION</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUBRIDGE ESCROW SECURITY</span>
               <p className="font-sans text-brand-charcoal/90 text-sm leading-relaxed">
-                Payments are held in escrow until after each session is confirmed. You never pre-pay for future lessons. Your money is always protected.
+                Payments are held in secure escrow and released to the tutor only after you confirm that the session is complete. You never pay for unheld lessons upfront.
               </p>
             </div>
           </div>
@@ -1788,15 +1699,15 @@ export default function App() {
           {/* Fear #2 */}
           <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 shadow-sm hover-lift flex flex-col md:flex-row gap-6">
             <div className="flex-1 bg-rose-50/50 border-l-4 border-rose-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">FEAR #2</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">COMMON CONCERN</span>
               <p className="font-sans font-bold text-brand-charcoal text-sm leading-relaxed">
-                "I have no idea if my child is actually learning anything between sessions."
+                "I have no idea if my child is actually learning anything between tutoring sessions."
               </p>
             </div>
             <div className="flex-1 bg-emerald-50/60 border-l-4 border-emerald-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUBRIDGE SOLUTION</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">PARENT LESSON TRACKING</span>
               <p className="font-sans text-brand-charcoal/90 text-sm leading-relaxed">
-                Your parent dashboard shows real-time attendance, graded assignments, score trends, and AI-generated weekly progress reports — in plain language.
+                Your parent portal tracks attendance rate, graded school assignments, and lesson score trends. Get weekly student progress summaries generated by AI.
               </p>
             </div>
           </div>
@@ -1804,15 +1715,15 @@ export default function App() {
           {/* Fear #3 */}
           <div className="bg-white border border-brand-moss/10 rounded-[2rem] p-6 shadow-sm hover-lift flex flex-col md:flex-row gap-6">
             <div className="flex-1 bg-rose-50/50 border-l-4 border-rose-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">FEAR #3</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-rose-500 font-bold block mb-1">COMMON CONCERN</span>
               <p className="font-sans font-bold text-brand-charcoal text-sm leading-relaxed">
-                "How do I know this person is actually qualified and safe to teach my child?"
+                "How do I know this lesson teacher is actually qualified and safe to instruct my child?"
               </p>
             </div>
             <div className="flex-1 bg-emerald-50/60 border-l-4 border-emerald-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUBRIDGE SOLUTION</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">VETTED PRIVATE TUTORS</span>
               <p className="font-sans text-brand-charcoal/90 text-sm leading-relaxed">
-                Every educator undergoes double-ID validation, academic background verification, and a mandatory 4-week pedagogical vetting process before their profile goes live.
+                Every teacher undergoes academic degree checks, ID verification, and a mandatory 4-week pedagogical instruction training before scheduling classes.
               </p>
             </div>
           </div>
@@ -1828,11 +1739,11 @@ export default function App() {
             <div>
               <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">FOR PARENTS</span>
               <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss leading-[1.15] tracking-tight">
-                From search to first <br />
-                lesson in under 10 minutes.
+                Get started with online <br />
+                home tutoring in under 10 minutes.
               </h2>
               <p className="font-sans text-brand-charcoal/70 mt-6 text-base leading-relaxed">
-                No agency middlemen. No upfront deposits. No uncertainty. Just a qualified, verified teacher ready to help your child.
+                No agency markups. No deposits. Select certified private lesson teachers for school curriculum support, WAEC/JAMB prep, or international exam lessons.
               </p>
             </div>
 
@@ -1844,9 +1755,9 @@ export default function App() {
                   1
                 </div>
                 <div className="space-y-1 mt-1">
-                  <h4 className="font-heading font-bold text-brand-moss text-lg">Search with confidence</h4>
+                  <h4 className="font-heading font-bold text-brand-moss text-lg">Select Certified Tutors</h4>
                   <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                    Filter by subject, curriculum (WAEC, JAMB, IGCSE, Cambridge, IB), price, rating, and availability. Every teacher you see has been verified — you cannot find an unverified teacher on EduBridge.
+                    Browse our directory of top-tier tutors. Filter by subject, level, and specific syllabus (Cambridge IGCSE, WAEC/JAMB, IB). Compare rates and read verified parent reviews.
                   </p>
                 </div>
               </div>
@@ -1857,9 +1768,9 @@ export default function App() {
                   2
                 </div>
                 <div className="space-y-1 mt-1">
-                  <h4 className="font-heading font-bold text-brand-moss text-lg">Book a risk-free trial lesson</h4>
+                  <h4 className="font-heading font-bold text-brand-moss text-lg">Schedule Your Trial Lesson</h4>
                   <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                    Your first lesson is protected by our full money-back guarantee. Pay securely via Paystack. Your payment is held in escrow — released only after the session is confirmed.
+                    Book a trial class with absolute safety. Payments are processed securely and held in escrow until the lesson concludes. Your first class is backed by a 100% refund guarantee.
                   </p>
                 </div>
               </div>
@@ -1870,9 +1781,9 @@ export default function App() {
                   3
                 </div>
                 <div className="space-y-1 mt-1">
-                  <h4 className="font-heading font-bold text-brand-moss text-lg">Watch your child grow — live</h4>
+                  <h4 className="font-heading font-bold text-brand-moss text-lg">Track Academic Lessons</h4>
                   <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                    After every session, check the clock log, view assignments, read the teacher's session notes, and see your AI-generated progress report. Your parent dashboard never leaves you guessing.
+                    Access your parent dashboard to view the lesson clock log, grade assignments, review teacher syllabus notes, and read weekly student reports generated by AI.
                   </p>
                 </div>
               </div>
@@ -1898,9 +1809,9 @@ export default function App() {
                 <Activity className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="font-heading font-bold text-xl text-brand-moss">Session Clock — to the second.</h3>
+                <h3 className="font-heading font-bold text-xl text-brand-moss">Automated Lesson Clock</h3>
                 <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                  The live clock starts when both your child and the teacher join, pauses if either disconnects, and stops the moment the session ends. You are billed only for time actually taught. Every second is logged.
+                  Our built-in classroom clock logs lessons to the exact second. You pay only for time spent tutoring, preventing billing manipulation or dispute issues.
                 </p>
               </div>
             </div>
@@ -1911,9 +1822,9 @@ export default function App() {
                 <TrendingUp className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="font-heading font-bold text-xl text-brand-moss">Live Progress Dashboard</h3>
+                <h3 className="font-heading font-bold text-xl text-brand-moss">Parent Progress Portals</h3>
                 <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                  See attendance rate, assignment scores, grade trends over time, and teacher session notes — all in one parent dashboard. The AI generates a plain-English weekly report every Monday morning.
+                  Track attendance, school tests, assignment grades, and tutor lesson notes inside a single portal. Get clear visual performance analysis and AI-curated updates weekly.
                 </p>
               </div>
             </div>
@@ -1924,9 +1835,9 @@ export default function App() {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="font-heading font-bold text-xl text-brand-moss">Escrow Payment Protection</h3>
+                <h3 className="font-heading font-bold text-xl text-brand-moss">Escrow Protection for Lessons</h3>
                 <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                  Your payment is held and released to the teacher only after the session is completed and confirmed. You can never lose money to a no-show or disappearing tutor again.
+                  Funds are held in secure escrow and released to educators only after the tutoring session is finished. Your investment in your child's lessons is fully protected.
                 </p>
               </div>
             </div>
@@ -1942,7 +1853,7 @@ export default function App() {
                 Money-Back Guarantee
               </h3>
               <p className="font-sans text-brand-cream/80 text-sm leading-relaxed">
-                Not satisfied after your first lesson? Full refund, no questions asked. No forms to fill. Your risk is zero.
+                Not satisfied after your first online home tutoring session? Full refund, no questions asked. Your risk is zero.
               </p>
             </div>
 
@@ -1957,11 +1868,11 @@ export default function App() {
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">THE EDUBRIDGE STANDARD</span>
             <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss tracking-tight leading-tight">
-              Not just any teacher. <br className="hidden sm:inline" />
-              <span className="font-drama italic text-brand-clay font-light text-4xl sm:text-6xl block mt-2">The right teacher.</span>
+              Vetted Private Tutors for <br className="hidden sm:inline" />
+              <span className="font-drama italic text-brand-clay font-light text-4xl sm:text-6xl block mt-2">Online & Home Lessons.</span>
             </h2>
             <p className="font-sans text-brand-charcoal/70 mt-6 max-w-xl mx-auto text-base leading-relaxed">
-              We accept fewer than 1 in 5 teacher applicants. Every educator who reaches your child has passed our full verification stack.
+              We screen and onboard only the top 20% of tutor applicants. Rest easy knowing your child is learning from a verified professional.
             </p>
           </div>
 
@@ -1972,9 +1883,9 @@ export default function App() {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="font-heading font-bold text-xl text-brand-moss">Identity Verified</h3>
+                <h3 className="font-heading font-bold text-xl text-brand-moss">Vetted Private Tutors</h3>
                 <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                  Government-issued ID confirmed by our admin team before any profile goes live.
+                  Government-issued ID and background clearance confirmed before any tutor listing goes live.
                 </p>
               </div>
             </div>
@@ -1985,9 +1896,9 @@ export default function App() {
                 <BookOpen className="w-6 h-6" />
               </div>
               <div className="space-y-2">
-                <h3 className="font-heading font-bold text-xl text-brand-moss">Credentials Checked</h3>
+                <h3 className="font-heading font-bold text-xl text-brand-moss">Academic Board Verified</h3>
                 <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                  Degree certificates, teaching qualifications and professional licences reviewed by hand.
+                  Degree certificates, qualifications, and curriculum instruction capabilities verified manually.
                 </p>
               </div>
             </div>
@@ -2110,11 +2021,11 @@ export default function App() {
         />
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
           <p className="font-heading text-lg sm:text-2xl text-brand-cream/60 tracking-wide uppercase mb-12">
-            Most teacher marketplaces focus on: check-the-box profiles.
+            Most online home tutoring sites focus on: basic tutor matching.
           </p>
           <div className="h-px w-24 bg-brand-cream/15 mx-auto mb-12" />
           <h2 className="font-drama italic text-3xl sm:text-6xl md:text-7xl leading-tight text-white font-light">
-            We focus on: verified <span className="text-brand-clay not-italic font-heading font-bold">pedagogical mastery.</span>
+            We focus on: verified <span className="text-brand-clay not-italic font-heading font-bold">instructional excellence and private lessons.</span>
           </h2>
         </div>
       </section>
@@ -2123,7 +2034,7 @@ export default function App() {
       <section id="protocol" className="relative bg-brand-moss text-brand-cream min-h-screen flex flex-col justify-between py-16 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 w-full mb-8">
           <h2 className="font-heading font-bold text-3xl sm:text-5xl tracking-tight text-white mb-2">
-            The Vetting Protocol
+            Vetting Protocol for Home Tutoring & Lessons
           </h2>
         </div>
 
@@ -2133,9 +2044,9 @@ export default function App() {
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">01 // VERIFICATION</span>
-                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Biometric Vetting & IDs</h3>
+                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Background Vetting & ID Verification</h3>
                 <p className="font-sans text-brand-cream/70 text-base leading-relaxed">
-                  We authenticate state IDs, university degree credentials, and perform background vetting sweeps.
+                  Every private tutor undergoes strict ID validation, degree credential checks, and background vetting to ensure maximum safety for child home tutoring.
                 </p>
               </div>
               <div className="flex items-center justify-center h-full min-h-[300px]">
@@ -2159,9 +2070,9 @@ export default function App() {
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">02 // INSTRUCTION</span>
-                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Elite Teachers Academy</h3>
+                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Pedagogical & AI Instruction Training</h3>
                 <p className="font-sans text-brand-cream/70 text-base leading-relaxed">
-                  Teachers undergo training modules focusing on deploying AI tools in the classroom and modern teaching methodologies.
+                  Our educators undergo continuous training in digital class instruction, curriculum alignment, and leveraging AI tools for adaptive private lessons.
                 </p>
               </div>
               <div className="flex items-center justify-center h-full min-h-[300px] w-full">
@@ -2198,9 +2109,9 @@ export default function App() {
             <div className="bg-brand-charcoal border border-brand-cream/10 rounded-[3rem] w-full p-8 md:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
               <div className="space-y-6">
                 <span className="font-mono text-xs text-brand-clay tracking-widest block">03 // SETTLEMENT</span>
-                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Cross-Border Timed Escrows</h3>
+                <h3 className="font-heading font-bold text-3xl sm:text-5xl text-white">Secure Payment & Escrow Settlement</h3>
                 <p className="font-sans text-brand-cream/70 text-base leading-relaxed">
-                  Locked funds are routed safely and released to localized mobile money wallets and bank cards.
+                  Escrowed funds are released safely to the tutor's account only after successful lesson delivery, ensuring absolute trust and financial safety.
                 </p>
               </div>
               <div className="flex items-center justify-center h-full min-h-[300px] w-full">
@@ -2241,7 +2152,7 @@ export default function App() {
             <div>
               <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">COMMON QUESTIONS</span>
               <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss leading-tight tracking-tight">
-                Everything parents ask before booking.
+                Questions About Online Home Tutoring & Private Lessons.
               </h2>
               <p className="font-sans text-brand-charcoal/70 mt-6 text-sm leading-relaxed">
                 Still have questions? Our team is on WhatsApp — tap the button below and we will answer in under 5 minutes.
@@ -2328,9 +2239,9 @@ export default function App() {
               YOUR CHILD'S EDUCATION IS NOT SOMETHING TO LEAVE TO CHANCE
             </span>
             <h2 className="font-heading font-bold text-3xl sm:text-4xl md:text-5xl text-white leading-tight tracking-tight">
-              Give your child the teacher they deserve. <br />
+              Provide the Best Online Home Tutoring & Lessons for Your Child. <br />
               <span className="font-drama italic text-brand-clay font-light text-4xl sm:text-5xl md:text-6xl block mt-2">
-                Start with a risk-free trial lesson.
+                Start with a risk-free trial private lesson today.
               </span>
             </h2>
             <p className="font-sans text-brand-cream/80 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-2">

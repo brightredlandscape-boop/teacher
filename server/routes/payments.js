@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import { getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { db } from '../db.js';
+import { sendTransactionalEmail } from '../services/email.js';
 
 dotenv.config();
 
@@ -315,6 +316,17 @@ router.post('/webhook', async (req, res) => {
       type: 'wallet_topup',
       timestamp: new Date().toISOString()
     });
+
+    // Send transactional confirmation email
+    const parentUser = db.findOne('users', u => u.uid === parentId || u.id === parentId);
+    if (parentUser) {
+      sendTransactionalEmail(parentUser.email, "EduBridge: Wallet Deposit Confirmed", "wallet_topup", {
+        displayName: parentUser.displayName,
+        formattedAmount: `₦${(amountNgnMinor / 100).toLocaleString()}`,
+        reference: reference || 'N/A',
+        paymentProcessor: 'paystack'
+      });
+    }
 
     return res.json({ success: true, message: "Wallet topped up successfully." });
   }

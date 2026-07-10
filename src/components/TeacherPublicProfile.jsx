@@ -124,7 +124,7 @@ export default function TeacherPublicProfile({
           setTeacher(data);
           
           // SEO Metadata optimization on mount
-          document.title = `${data.name || 'Tutor'} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${data.name || 'Tutor'} | Online Home Tutoring & Lessons | EduBridge`;
           
           // Update or insert SEO meta description tag
           let metaDesc = document.querySelector('meta[name="description"]');
@@ -134,7 +134,7 @@ export default function TeacherPublicProfile({
             document.head.appendChild(metaDesc);
           }
           const subjects = Array.isArray(data.subjects) ? data.subjects.join(', ') : 'subjects';
-          metaDesc.setAttribute('content', `Book private lessons with ${data.name || 'this tutor'} on EduBridge. Specializes in ${subjects}. Vetted credentials, secure escrows, and AI certified.`);
+          metaDesc.setAttribute('content', `Book premium online home tutoring and private lessons with ${data.name || 'this tutor'} on EduBridge. Specializes in ${subjects}. Vetted credentials, secure escrow payment protection.`);
         } else {
           const errData = await response.json().catch(() => ({}));
           setError(errData.error || 'Tutor public profile page not found.');
@@ -169,7 +169,7 @@ export default function TeacherPublicProfile({
             ]
           };
           setTeacher(mockAdebayo);
-          document.title = `${mockAdebayo.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${mockAdebayo.name} | Online Home Tutoring & Lessons | EduBridge`;
         } else if (usernameLower === 'kofi') {
           const mockKofi = {
             uid: "teacher_2",
@@ -193,7 +193,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockKofi);
-          document.title = `${mockKofi.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${mockKofi.name} | Online Home Tutoring & Lessons | EduBridge`;
         } else if (usernameLower === 'chioma') {
           const mockChioma = {
             uid: "teacher_3",
@@ -217,7 +217,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockChioma);
-          document.title = `${mockChioma.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${mockChioma.name} | Online Home Tutoring & Lessons | EduBridge`;
         } else if (usernameLower === 'aminata') {
           const mockAminata = {
             uid: "teacher_4",
@@ -240,7 +240,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockAminata);
-          document.title = `${mockAminata.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${mockAminata.name} | Online Home Tutoring & Lessons | EduBridge`;
         } else if (usernameLower === 'fatima') {
           const mockFatima = {
             uid: "teacher_5",
@@ -263,7 +263,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockFatima);
-          document.title = `${mockFatima.name} | Premium Vetted Tutor | EduBridge Africa`;
+          document.title = `${mockFatima.name} | Online Home Tutoring & Lessons | EduBridge`;
         } else {
           setError('Tutor public profile page not found.');
         }
@@ -276,10 +276,10 @@ export default function TeacherPublicProfile({
 
     // Clean up SEO tags when unmounting
     return () => {
-      document.title = 'EduBridge - Connecting African educators to private home lessons and online tutoring globally.';
+      document.title = 'EduBridge | Premium 1-on-1 Online Home Tutoring & Private Lessons';
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', 'EduBridge Africa connects you with rigorously verified African educators for private online and in-home tutoring');
+        metaDesc.setAttribute('content', 'Connect with certified, background-checked private tutors for online home tutoring and personalized academic lessons.');
       }
     };
   }, [username]);

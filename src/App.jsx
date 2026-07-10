@@ -45,6 +45,7 @@ const TeacherOnboarding = lazy(() => import('./components/TeacherOnboarding'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const TeacherPublicProfile = lazy(() => import('./components/TeacherPublicProfile'));
 const StudentPortal = lazy(() => import('./components/StudentPortal'));
+const PrivacyModal = lazy(() => import('./components/PrivacyModal'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -109,6 +110,7 @@ export default function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedChatSession, setSelectedChatSession] = useState(null);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
 
   // Waitlist form states
   const [waitlistName, setWaitlistName] = useState('');
@@ -2446,7 +2448,14 @@ export default function App() {
             <ul className="space-y-2.5 font-sans text-xs text-brand-cream/70">
               <li><span className="block text-brand-cream/70">Secure Escrows</span></li>
               <li><span className="block text-brand-cream/70">Biometric Verification</span></li>
-              <li><span className="block text-brand-cream/70">GDPR & NDPR Compliance</span></li>
+              <li>
+                <button 
+                  onClick={() => setIsPrivacyOpen(true)} 
+                  className="hover:text-brand-clay text-left transition-colors block text-brand-cream/70 font-semibold"
+                >
+                  GDPR, NDPR & Privacy Policy
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -2512,6 +2521,13 @@ export default function App() {
           }} 
           session={selectedChatSession} 
           currentUser={currentUser} 
+        />
+      </Suspense>
+
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <PrivacyModal 
+          isOpen={isPrivacyOpen} 
+          onClose={() => setIsPrivacyOpen(false)} 
         />
       </Suspense>
 

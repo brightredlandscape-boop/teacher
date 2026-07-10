@@ -110,7 +110,7 @@ function getHtmlWrapper(title, contentHtml) {
           </div>
           <div class="footer">
             <p>SYSTEM ACTIVE // ESCROW PROTECTED // SECURED BY GEMINI AI</p>
-            <p>© 2026 EduBridge Africa. All rights reserved.</p>
+            <p>© 2026 EduBridge Africa. A product of Zeerocodes Automation Limited. All rights reserved.</p>
           </div>
         </div>
       </body>

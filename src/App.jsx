@@ -2474,7 +2474,7 @@ export default function App() {
           </div>
           
           <div className="flex gap-6 font-sans text-[11px] text-brand-cream/50">
-            <span>© 2026 EduBridge Africa. All rights reserved.</span>
+            <span>© 2026 EduBridge Africa. A product of Zeerocodes Automation Limited. All rights reserved.</span>
           </div>
         </div>
       </footer>

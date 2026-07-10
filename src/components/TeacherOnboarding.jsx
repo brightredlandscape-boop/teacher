@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle, ShieldCheck, Video, Calendar, BookOpen, User } from 'lucide-react';
+import TutorAgreementModal from './TutorAgreementModal';
 
 export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isAgreementOpen, setIsAgreementOpen] = useState(false);
 
   // Step 1: Personal Info
   const [name, setName] = useState(currentUser?.displayName || '');
@@ -737,6 +740,29 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
                   <div className="col-span-2">CV / Resume: <b className="truncate block max-w-xs">{cvUrl ? 'Uploaded' : 'Missing'}</b></div>
                 </div>
               </div>
+
+              {/* Legal Terms Checkbox */}
+              <div className="flex items-start gap-3 bg-brand-cream/10 border border-brand-moss/10 rounded-2xl p-4 mt-4 font-sans text-xs">
+                <input
+                  type="checkbox"
+                  id="agreeToTerms"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 cursor-pointer accent-brand-clay w-4 h-4 shrink-0"
+                />
+                <label htmlFor="agreeToTerms" className="cursor-pointer text-brand-charcoal/80 select-none">
+                  I agree to the{" "}
+                  <button 
+                    type="button"
+                    onClick={() => setIsAgreementOpen(true)}
+                    className="text-brand-clay font-bold underline hover:text-brand-moss transition-colors"
+                  >
+                    Tutor Independent Contractor Agreement
+                  </button>
+                  , including the 15% platform service commission fee on earnings and missed scheduled class penalties.
+                </label>
+              </div>
+
             </div>
           </div>
         )}
@@ -764,13 +790,19 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
           ) : (
             <button
               onClick={handleSubmit}
-              disabled={loading || !videoUrl || !govIdUrl || !degreeUrl || !cvUrl}
+              disabled={loading || !videoUrl || !govIdUrl || !degreeUrl || !cvUrl || !agreedToTerms}
               className="flex-1 py-3 px-6 rounded-full bg-brand-clay hover:bg-brand-clay/95 text-white font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-brand-clay/10 transition-all disabled:opacity-40"
             >
               {loading ? 'Submitting Application...' : 'Submit Teacher Application'} <CheckCircle className="w-4 h-4" />
             </button>
           )}
         </div>
+
+        {/* Tutor Service Legal Agreement Modal */}
+        <TutorAgreementModal 
+          isOpen={isAgreementOpen} 
+          onClose={() => setIsAgreementOpen(false)} 
+        />
 
       </div>
     </section>

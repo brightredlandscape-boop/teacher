@@ -38,10 +38,11 @@ export default function BookingModal({
   const [otpCode, setOtpCode] = useState('');
   const [paymentStatusText, setPaymentStatusText] = useState('');
 
-  const trialRateNgnMinor = 350000; // ₦3,500
-  const activeRateMinor = trialRateNgnMinor; // ₦3,500 across board
+  const isFirstTrial = !bookedSessions || bookedSessions.length === 0;
+  const teacherRateMinor = teacher ? (teacher.rate || 0) : 350000;
+  const activeRateMinor = isFirstTrial ? 0 : teacherRateMinor;
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
-  const formattedRate = formatCurrency(convertedRateMinor, selectedCurrency);
+  const formattedRate = isFirstTrial ? "Free (First Trial Class)" : formatCurrency(convertedRateMinor, selectedCurrency);
 
   // Generate upcoming slots based on teacher availability mapped to actual calendar dates
   const generateUpcomingSlots = (availability) => {
@@ -325,7 +326,7 @@ export default function BookingModal({
             <div className="bg-brand-moss text-brand-cream p-6 rounded-2xl shadow-md space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-clay/10 rounded-full blur-xl pointer-events-none" />
               <div className="flex justify-between items-center">
-                <span className="font-heading font-bold text-xs uppercase tracking-widest opacity-60">EduBridge Secure Card</span>
+                <span className="font-heading font-bold text-xs uppercase tracking-widest opacity-60">EduVista Secure Card</span>
                 <Lock className="w-4 h-4 text-brand-clay" />
               </div>
               <div className="space-y-1">
@@ -550,7 +551,7 @@ export default function BookingModal({
                   }`}
                 >
                   <div>
-                    <span className="text-xs font-bold block text-brand-charcoal">EduBridge Balance Wallet</span>
+                    <span className="text-xs font-bold block text-brand-charcoal">EduVista Balance Wallet</span>
                     <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block">
                       Available: {formatCurrency(convertMinor(walletBalance, selectedCurrency), selectedCurrency)}
                     </span>

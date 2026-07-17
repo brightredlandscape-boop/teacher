@@ -83,7 +83,7 @@ export default function App() {
   
   // Current user authentication states
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('edubridge_user');
+    const saved = localStorage.getItem('eduvista_user');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -97,7 +97,7 @@ export default function App() {
     const path = window.location.pathname;
     const match = path.match(/\/teacher\/([^/]+)/);
     if (match) return 'teacher_profile';
-    const saved = localStorage.getItem('edubridge_user');
+    const saved = localStorage.getItem('eduvista_user');
     return saved ? 'dashboard' : 'home';
   });
   const [profileUsername, setProfileUsername] = useState(() => {
@@ -147,7 +147,7 @@ export default function App() {
   // AI Customer Support Agent States
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportMessages, setSupportMessages] = useState([
-    { sender: 'agent', text: "Hello! I am your EduBridge Virtual Assistant. How can I help you navigate our platform today?" }
+    { sender: 'agent', text: "Hello! I am your EduVista Virtual Assistant. How can I help you navigate our platform today?" }
   ]);
   const [supportInput, setSupportInput] = useState('');
   const [supportLoading, setSupportLoading] = useState(false);
@@ -219,7 +219,7 @@ export default function App() {
   const API_BASE = '/api';
 
   const getAuthHeaders = (extraHeaders = {}) => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...extraHeaders,
@@ -379,7 +379,7 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const token = await user.getIdToken();
-        localStorage.setItem('edubridge_token', token);
+        localStorage.setItem('eduvista_token', token);
         
         try {
           const response = await fetch(`${API_BASE}/users/${user.uid}`, {
@@ -391,21 +391,21 @@ export default function App() {
           if (response.ok) {
             const profile = await response.json();
             const fullUser = { ...profile, token };
-            localStorage.setItem('edubridge_user', JSON.stringify(fullUser));
+            localStorage.setItem('eduvista_user', JSON.stringify(fullUser));
             setCurrentUser(fullUser);
           }
         } catch (err) {
           console.warn("Failed to retrieve database profile for Firebase user:", err);
         }
       } else {
-        const savedUserStr = localStorage.getItem('edubridge_user');
+        const savedUserStr = localStorage.getItem('eduvista_user');
         if (savedUserStr) {
           const savedUser = JSON.parse(savedUserStr);
           if (savedUser.uid && (savedUser.uid.startsWith('user_') || savedUser.uid.includes('_1'))) {
             // Keep local mock profile
           } else {
-            localStorage.removeItem('edubridge_user');
-            localStorage.removeItem('edubridge_token');
+            localStorage.removeItem('eduvista_user');
+            localStorage.removeItem('eduvista_token');
             setCurrentUser(null);
           }
         }
@@ -418,7 +418,7 @@ export default function App() {
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get('ref');
     if (ref) {
-      localStorage.setItem('edubridge_ref', ref);
+      localStorage.setItem('eduvista_ref', ref);
       fetch(`${API_BASE}/parents/referral/hit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -442,7 +442,7 @@ export default function App() {
         setCurrentView('teacher_profile');
         setProfileUsername(username);
       } else {
-        const savedUser = localStorage.getItem('edubridge_user');
+        const savedUser = localStorage.getItem('eduvista_user');
         if (hash === '#topup' || hash === '#billing') {
           if (!savedUser) {
             setCurrentView('home');
@@ -455,7 +455,7 @@ export default function App() {
           }
         } else {
           // If no specific hash, set to dashboard if logged in, or home
-          const saved = localStorage.getItem('edubridge_user');
+          const saved = localStorage.getItem('eduvista_user');
           setCurrentView(saved ? 'dashboard' : 'home');
           setProfileUsername('');
           // Refresh ScrollTrigger and reset timeline when returning home
@@ -530,7 +530,7 @@ export default function App() {
   };
 
   const handleBackToHome = () => {
-    const basePath = window.location.pathname.startsWith('/EduBridge') ? '/EduBridge/' : '/';
+    const basePath = window.location.pathname.startsWith('/EduVista') ? '/EduVista/' : '/';
     window.history.pushState({}, '', basePath);
     setCurrentView('home');
     setProfileUsername('');
@@ -542,7 +542,7 @@ export default function App() {
     }, 100);
   };
   const handleTutorProfileSelect = (username) => {
-    const basePath = window.location.pathname.startsWith('/EduBridge') ? '/EduBridge' : '';
+    const basePath = window.location.pathname.startsWith('/EduVista') ? '/EduVista' : '';
     window.history.pushState({}, '', `${basePath}/teacher/${username}`);
     setCurrentView('teacher_profile');
     setProfileUsername(username);
@@ -580,10 +580,10 @@ export default function App() {
 
   const handleAuthSuccess = (user) => {
     if (user.token) {
-      localStorage.setItem('edubridge_token', user.token);
-      localStorage.setItem('edubridge_user', JSON.stringify(user));
+      localStorage.setItem('eduvista_token', user.token);
+      localStorage.setItem('eduvista_user', JSON.stringify(user));
     } else {
-      localStorage.setItem('edubridge_user', JSON.stringify(user));
+      localStorage.setItem('eduvista_user', JSON.stringify(user));
     }
     setCurrentUser(user);
     setCurrentView('dashboard');
@@ -598,7 +598,7 @@ export default function App() {
     setAuthLoading(true);
 
     const endpoint = authTab === 'login' ? '/auth/login' : '/auth/register';
-    const refCode = localStorage.getItem('edubridge_ref');
+    const refCode = localStorage.getItem('eduvista_ref');
     const payload = authTab === 'login' 
       ? { email: authEmail, password: authPassword } 
       : { email: authEmail, displayName: authName, role: authRole, country: authCountry, password: authPassword, referredBy: refCode || undefined };
@@ -634,7 +634,7 @@ export default function App() {
           const u = { uid: 'admin_zeerocodes', displayName: 'Zeerocodes Super Admin', role: 'Admin', email: authEmail };
           handleAuthSuccess(u);
         } else {
-          setAuthError('Simulated error: use parent@edubridge.com, teacher@edubridge.com, student@edubridge.com or admin@edubridge.com');
+          setAuthError('Simulated error: use parent@eduvista.com, teacher@eduvista.com, student@eduvista.com or admin@eduvista.com');
         }
       } else {
         const mockUid = `user_${Date.now()}`;
@@ -698,9 +698,17 @@ export default function App() {
             amountNgnMinor: costNgnMinor,
             studentId: activeStudentId,
             studentName: activeStudentName,
+            teacherId: selectedTeacherForBooking.id || selectedTeacherForBooking.uid,
+            teacherName: selectedTeacherForBooking.name,
+            slots,
             metadata: {
               subject: options.subject,
-              curriculum: options.curriculum
+              curriculum: options.curriculum,
+              teacherId: selectedTeacherForBooking.id || selectedTeacherForBooking.uid,
+              teacherName: selectedTeacherForBooking.name,
+              slots: JSON.stringify(slots),
+              studentId: activeStudentId,
+              studentName: activeStudentName
             }
           })
         });
@@ -714,8 +722,8 @@ export default function App() {
           console.error("Booking checkout initiation failed:", errData);
           alert(`Booking payment failed: ${errData.error || "Payment gateway error"}`);
           if (checkoutRes.status === 401 || checkoutRes.status === 403 || (errData.error && errData.error.toLowerCase().includes("token"))) {
-            localStorage.removeItem('edubridge_user');
-            localStorage.removeItem('edubridge_token');
+            localStorage.removeItem('eduvista_user');
+            localStorage.removeItem('eduvista_token');
             setCurrentUser(null);
             setCurrentView('home');
           }
@@ -831,8 +839,8 @@ export default function App() {
           console.error("Top-up checkout initiation failed:", errData);
           alert(`Top-up failed: ${errData.error || "Payment gateway error"}`);
           if (checkoutRes.status === 401 || checkoutRes.status === 403 || (errData.error && errData.error.toLowerCase().includes("token"))) {
-            localStorage.removeItem('edubridge_user');
-            localStorage.removeItem('edubridge_token');
+            localStorage.removeItem('eduvista_user');
+            localStorage.removeItem('eduvista_token');
             setCurrentUser(null);
             setCurrentView('home');
           }
@@ -1083,7 +1091,7 @@ export default function App() {
             }}
             className="cursor-pointer select-none"
           >
-            <BrandLogo light={true} className="h-8" />
+            <BrandLogo light={true} className="h-11 md:h-12 lg:h-13 transition-transform duration-300 hover:scale-105" />
           </div>
           
           {currentUser && (
@@ -1250,8 +1258,8 @@ export default function App() {
                     } catch (e) {
                       console.warn("Failed to sign out of Firebase:", e);
                     }
-                    localStorage.removeItem('edubridge_user');
-                    localStorage.removeItem('edubridge_token');
+                    localStorage.removeItem('eduvista_user');
+                    localStorage.removeItem('eduvista_token');
                     setCurrentUser(null);
                     setCurrentView('home');
                     setIsMobileMenuOpen(false);
@@ -1421,8 +1429,8 @@ export default function App() {
                       } catch (e) {
                         console.warn("Failed to sign out of Firebase:", e);
                       }
-                      localStorage.removeItem('edubridge_user');
-                      localStorage.removeItem('edubridge_token');
+                      localStorage.removeItem('eduvista_user');
+                      localStorage.removeItem('eduvista_token');
                       setCurrentUser(null);
                       setCurrentView('home');
                     }}
@@ -1602,7 +1610,7 @@ export default function App() {
           </h2>
           
           <p className="trust-fade font-sans font-light text-brand-cream/80 text-base sm:text-lg md:text-xl max-w-3xl mt-8 leading-relaxed">
-            EduBridge Africa connects you with certified, background-checked private tutors for online home tutoring and lessons. Every study session is server-timed, escrow-protected, and parent-monitored so you can see exactly how your child grows.
+            EduVista Africa connects you with certified, background-checked private tutors for online home tutoring and lessons. Every study session is server-timed, escrow-protected, and parent-monitored so you can see exactly how your child grows.
           </p>
 
           <div className="trust-fade flex flex-col sm:flex-row gap-4 justify-center items-center w-full mt-10">
@@ -1711,7 +1719,7 @@ export default function App() {
               </p>
             </div>
             <div className="flex-1 bg-emerald-50/60 border-l-4 border-emerald-500 p-5 rounded-r-[1.5rem]">
-              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUBRIDGE ESCROW SECURITY</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-emerald-600 font-bold block mb-1">EDUVISTA ESCROW SECURITY</span>
               <p className="font-sans text-brand-charcoal/90 text-sm leading-relaxed">
                 Payments are held in secure escrow and released to the tutor only after you confirm that the session is complete. You never pay for unheld lessons upfront.
               </p>
@@ -1869,7 +1877,7 @@ export default function App() {
               <div className="absolute top-0 right-0 w-48 h-48 bg-brand-clay/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-3 mb-3 text-brand-clay">
                 <Sparkles className="w-5 h-5 animate-pulse" />
-                <span className="font-mono text-2xs uppercase tracking-widest font-extrabold">EduBridge Guarantee</span>
+                <span className="font-mono text-2xs uppercase tracking-widest font-extrabold">EduVista Guarantee</span>
               </div>
               <h3 className="font-heading font-bold text-2xl text-white mb-2 uppercase tracking-tight">
                 Money-Back Guarantee
@@ -1888,7 +1896,7 @@ export default function App() {
       <section className="py-24 px-6 md:px-16 lg:px-24 bg-white border-b border-brand-moss/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">THE EDUBRIDGE STANDARD</span>
+            <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-3">THE EDUVISTA STANDARD</span>
             <h2 className="font-heading font-bold text-3xl sm:text-5xl text-brand-moss tracking-tight leading-tight">
               Vetted Private Tutors for <br className="hidden sm:inline" />
               <span className="font-drama italic text-brand-clay font-light text-4xl sm:text-6xl block mt-2">Online & Home Lessons.</span>
@@ -1952,7 +1960,7 @@ export default function App() {
                   <Star className="w-4 h-4 fill-current" />
                 </div>
                 <p className="font-sans italic text-sm sm:text-base text-brand-charcoal/85 leading-relaxed">
-                  "I have tried two other platforms and three Facebook tutors. EduBridge is the only one where I actually feel in control. The dashboard shows me everything. I do not have to chase the teacher for updates."
+                  "I have tried two other platforms and three Facebook tutors. EduVista is the only one where I actually feel in control. The dashboard shows me everything. I do not have to chase the teacher for updates."
                 </p>
                 <div className="flex items-center gap-3 pt-4 border-t border-brand-moss/5">
                   <div className="w-10 h-10 rounded-full bg-brand-moss text-brand-cream flex items-center justify-center font-heading font-extrabold text-xs">
@@ -1978,7 +1986,7 @@ export default function App() {
                   <Star className="w-4 h-4 fill-current" />
                 </div>
                 <p className="font-sans italic text-sm sm:text-base text-brand-charcoal/85 leading-relaxed">
-                  "My daughter moved from D to B in IGCSE Chemistry in 8 weeks. But what I value most is the trust. I know who is teaching her, I see how long, I see the homework. EduBridge gave me that transparency."
+                  "My daughter moved from D to B in IGCSE Chemistry in 8 weeks. But what I value most is the trust. I know who is teaching her, I see how long, I see the homework. EduVista gave me that transparency."
                 </p>
                 <div className="flex items-center gap-3 pt-4 border-t border-brand-moss/5">
                   <div className="w-10 h-10 rounded-full bg-brand-moss text-brand-cream flex items-center justify-center font-heading font-extrabold text-xs">
@@ -2207,7 +2215,7 @@ export default function App() {
               },
               {
                 q: "How do I know the teacher is really qualified?",
-                a: "Every teacher on EduBridge has submitted government-issued ID and qualification documents reviewed by our admin team. They have also completed our ELITE TEACHERS ACADEMY and hold a verified badge. Fewer than 1 in 5 applicants are accepted."
+                a: "Every teacher on EduVista has submitted government-issued ID and qualification documents reviewed by our admin team. They have also completed our ELITE TEACHERS ACADEMY and hold a verified badge. Fewer than 1 in 5 applicants are accepted."
               },
               {
                 q: "What happens if the teacher does not show up?",
@@ -2267,7 +2275,7 @@ export default function App() {
               </span>
             </h2>
             <p className="font-sans text-brand-cream/80 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-2">
-              Join 18,000+ families across Africa and the diaspora who trust EduBridge Africa for their children's private tutoring. Verified teachers. Transparent progress. Payment protection. Always.
+              Join 18,000+ families across Africa and the diaspora who trust EduVista Africa for their children's private tutoring. Verified teachers. Transparent progress. Payment protection. Always.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
@@ -2449,10 +2457,14 @@ export default function App() {
       <footer className="bg-brand-charcoal text-brand-cream pt-24 pb-12 rounded-t-[4rem] border-t border-brand-cream/10">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="space-y-4">
-            <BrandLogo light={true} className="h-8" />
+            <BrandLogo light={true} className="h-11 md:h-12 lg:h-13 transition-transform duration-300 hover:scale-105" />
             <p className="font-sans text-xs text-brand-cream/60 leading-relaxed">
               Africa's Best Teachers. The World's Best Students. Connecting local educators with international tutoring standards.
             </p>
+            <div className="pt-2 font-mono text-[11px] text-brand-cream/70 flex items-center gap-1.5">
+              <span>💬 WhatsApp:</span>
+              <a href="https://wa.me/2348136451607" target="_blank" rel="noopener noreferrer" className="text-brand-clay hover:underline font-bold">+234 813 645 1607</a>
+            </div>
           </div>
           
           <div>
@@ -2503,7 +2515,7 @@ export default function App() {
           </div>
           
           <div className="flex gap-6 font-sans text-[11px] text-brand-cream/50">
-            <span>© 2026 EduBridge Africa. A product of Zeerocodes Automation Limited. All rights reserved.</span>
+            <span>© 2026 EduVista Africa. A product of Zeerocodes Automation Limited. All rights reserved.</span>
           </div>
         </div>
       </footer>

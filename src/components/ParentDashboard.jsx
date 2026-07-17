@@ -126,12 +126,13 @@ export default function ParentDashboard({
   const [topupMethod, setTopupMethod] = useState('paystack');
   const [topupLoading, setTopupLoading] = useState(false);
   const [topupSuccess, setTopupSuccess] = useState('');
+  const [topupCurrency, setTopupCurrency] = useState(selectedCurrency || 'NGN');
 
   const API_BASE = '/api';
   const parentUid = currentUser?.uid || 'parent_1'; // Seeded test parent or active user
 
   const getAuthHeaders = (extraHeaders = {}) => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...extraHeaders,
@@ -293,13 +294,13 @@ export default function ParentDashboard({
     const amountMinor = Math.round(amountNum * 100);
 
     if (onTopupWallet) {
-      const res = await onTopupWallet(amountMinor, topupMethod, selectedCurrency);
+      const res = await onTopupWallet(amountMinor, topupMethod, topupCurrency);
       if (res && res.redirect) {
         // user is redirected, keep loading status until redirect completes
         return;
       }
       if (res) {
-        setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountMinor, selectedCurrency)} successfully credited via ${topupMethod.toUpperCase()}!`);
+        setTopupSuccess(`✓ Wallet top-up of ${formatCurrency(amountMinor, topupCurrency)} successfully credited via ${topupMethod.toUpperCase()}!`);
         setCustomAmount('');
         fetchDashboard();
       } else {
@@ -403,7 +404,7 @@ export default function ParentDashboard({
               </button>
             )}
           </div>
-          <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">EduBridge Parent Portal</span>
+          <span className="font-mono text-xs uppercase tracking-widest text-brand-clay font-bold block mb-1">EduVista Parent Portal</span>
           <h2 className="font-heading font-bold text-3xl text-brand-moss">Platform Parent Dashboard</h2>
           <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
             Monitor learning cognitive insights, browse marketplace tutors, manage billing deposits, and audit lesson dispute filings.
@@ -1192,9 +1193,29 @@ export default function ParentDashboard({
 
               <form onSubmit={handleTopupSubmit} className="space-y-6 font-sans text-xs">
                 
+                {/* Choose Base Currency */}
+                <div>
+                  <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-1.5">Select Deposit Currency</label>
+                  <select
+                    value={topupCurrency}
+                    onChange={(e) => {
+                      const newCur = e.target.value;
+                      setTopupCurrency(newCur);
+                      setTopupAmount(newCur === 'NGN' ? '10000' : '50');
+                    }}
+                    className="w-full bg-white border border-brand-moss/10 rounded-xl p-2.5 text-xs focus:outline-none text-brand-charcoal font-bold"
+                  >
+                    <option value="NGN">Nigerian Naira (NGN ₦)</option>
+                    <option value="USD">US Dollar (USD $)</option>
+                    <option value="GBP">British Pound (GBP £)</option>
+                    <option value="EUR">Euro (EUR €)</option>
+                    <option value="GHS">Ghanaian Cedi (GHS GH₵)</option>
+                  </select>
+                </div>
+
                 {/* Preset Amounts Grid */}
                 <div>
-                  <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-3">Select Top-up Preset ({selectedCurrency})</label>
+                  <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-3">Select Top-up Preset ({topupCurrency})</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {(() => {
                       const presetsByCurrency = {
@@ -1202,10 +1223,9 @@ export default function ParentDashboard({
                         USD: [{ label: '$10', value: '10' }, { label: '$25', value: '25' }, { label: '$50', value: '50' }],
                         GBP: [{ label: '£10', value: '10' }, { label: '£25', value: '25' }, { label: '£50', value: '50' }],
                         EUR: [{ label: '€10', value: '10' }, { label: '€25', value: '25' }, { label: '€50', value: '50' }],
-                        GHS: [{ label: 'GH₵50', value: '50' }, { label: 'GH₵100', value: '100' }, { label: 'GH₵250', value: '250' }],
-                        CAD: [{ label: 'C$15', value: '15' }, { label: 'C$30', value: '30' }, { label: 'C$75', value: '75' }]
+                        GHS: [{ label: 'GH₵50', value: '50' }, { label: 'GH₵100', value: '100' }, { label: 'GH₵250', value: '250' }]
                       };
-                      const activePresets = [...(presetsByCurrency[selectedCurrency] || presetsByCurrency.NGN), { label: 'Custom Amount', value: 'custom' }];
+                      const activePresets = [...(presetsByCurrency[topupCurrency] || presetsByCurrency.NGN), { label: 'Custom Amount', value: 'custom' }];
                       return activePresets.map((p) => (
                         <button
                           key={p.value}
@@ -1227,15 +1247,15 @@ export default function ParentDashboard({
                 {/* Custom Amount Input */}
                 {topupAmount === 'custom' && (
                   <div className="animate-fade-in">
-                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-1.5">Enter Custom Deposit Amount ({selectedCurrency})</label>
+                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/50 text-[9px] block mb-1.5">Enter Custom Deposit Amount ({topupCurrency})</label>
                     <div className="relative flex items-center">
                       <span className="absolute left-4 font-bold text-brand-moss">
-                        {selectedCurrency === 'NGN' ? '₦' : selectedCurrency === 'USD' ? '$' : selectedCurrency === 'GBP' ? '£' : selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'GHS' ? 'GH₵' : selectedCurrency === 'CAD' ? 'C$' : selectedCurrency}
+                        {topupCurrency === 'NGN' ? '₦' : topupCurrency === 'USD' ? '$' : topupCurrency === 'GBP' ? '£' : topupCurrency === 'EUR' ? '€' : topupCurrency === 'GHS' ? 'GH₵' : topupCurrency}
                       </span>
                       <input
                         type="number"
                         required
-                        placeholder={`e.g. ${selectedCurrency === 'NGN' ? '15000' : '100'}`}
+                        placeholder={`e.g. ${topupCurrency === 'NGN' ? '15000' : '100'}`}
                         value={customAmount}
                         onChange={(e) => setCustomAmount(e.target.value)}
                         className="w-full bg-white border border-brand-moss/10 rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:border-brand-clay text-sm font-bold"
@@ -1269,32 +1289,42 @@ export default function ParentDashboard({
                 </div>
 
                 {/* Inline Bank Details Info Box */}
-                {topupMethod === 'bank' && (
-                  <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 animate-fade-in font-sans text-xs space-y-2">
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">🏦 Direct Bank Transfer Details</span>
-                    <p className="text-brand-charcoal/70">Please make a transfer of the exact amount in your selected base currency. Ensure you include your parent user ID <strong className="font-mono">{currentUser?.uid || 'parent_1'}</strong> as the transfer description/reference.</p>
-                    <div className="bg-white border border-brand-moss/5 p-3 rounded-xl space-y-1.5 font-mono text-[10px]">
-                      <div className="flex justify-between">
-                        <span className="text-brand-charcoal/50">BANK NAME:</span>
-                        <span className="font-bold text-brand-moss">{selectedCurrency === 'NGN' ? 'Providus Bank' : 'Standard Chartered Bank'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-brand-charcoal/50">ACCOUNT NAME:</span>
-                        <span className="font-bold text-brand-moss">EduBridge Africa Ltd</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-brand-charcoal/50">ACCOUNT NUMBER:</span>
-                        <span className="font-bold text-brand-clay">{selectedCurrency === 'NGN' ? '1023948571' : '9988223311'}</span>
-                      </div>
-                      {selectedCurrency !== 'NGN' && (
+                {topupMethod === 'bank' && (() => {
+                  const details = {
+                    NGN: { bank: 'Providus Bank', number: '1023948571', name: 'EduVista Africa Ltd', extraLabel: null, extraVal: null },
+                    USD: { bank: 'Citibank NY', number: '9988223311', name: 'EduVista Africa Ltd', extraLabel: 'ROUTING / ABA', extraVal: '021000021' },
+                    GBP: { bank: 'Barclays Bank London', number: '88776655', name: 'EduVista Africa Ltd', extraLabel: 'SORT CODE', extraVal: '20-00-00' },
+                    EUR: { bank: 'Deutsche Bank Frankfurt', number: 'DE89370400440532013000', name: 'EduVista Africa Ltd', extraLabel: 'IBAN', extraVal: 'DE89370400440532013000' },
+                    GHS: { bank: 'Ecobank Ghana', number: '77665544', name: 'EduVista Africa Ltd', extraLabel: 'BRANCH', extraVal: 'Accra High St' }
+                  }[topupCurrency] || { bank: 'Providus Bank', number: '1023948571', name: 'EduVista Africa Ltd', extraLabel: null, extraVal: null };
+
+                  return (
+                    <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 animate-fade-in font-sans text-xs space-y-2">
+                      <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">🏦 Direct Bank Transfer Details</span>
+                      <p className="text-brand-charcoal/70">Please make a transfer of the exact amount in your selected deposit currency <strong className="uppercase">{topupCurrency}</strong>. Ensure you include your parent user ID <strong className="font-mono">{currentUser?.uid || 'parent_1'}</strong> as the transfer description/reference.</p>
+                      <div className="bg-white border border-brand-moss/5 p-3 rounded-xl space-y-1.5 font-mono text-[10px]">
                         <div className="flex justify-between">
-                          <span className="text-brand-charcoal/50">SWIFT / ROUTING:</span>
-                          <span className="font-bold text-brand-moss">SCBLNGLaXXX</span>
+                          <span className="text-brand-charcoal/50">BANK NAME:</span>
+                          <span className="font-bold text-brand-moss">{details.bank}</span>
                         </div>
-                      )}
+                        <div className="flex justify-between">
+                          <span className="text-brand-charcoal/50">ACCOUNT NAME:</span>
+                          <span className="font-bold text-brand-moss">{details.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-brand-charcoal/50">ACCOUNT NUMBER:</span>
+                          <span className="font-bold text-brand-clay">{details.number}</span>
+                        </div>
+                        {details.extraLabel && (
+                          <div className="flex justify-between">
+                            <span className="text-brand-charcoal/50">{details.extraLabel}:</span>
+                            <span className="font-bold text-brand-moss">{details.extraVal}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Action Submit */}
                 <button
@@ -1458,6 +1488,10 @@ export default function ParentDashboard({
             <h4 className="font-heading font-bold text-base text-white flex items-center gap-1.5 mb-2"><Info className="w-5 h-5 text-brand-clay" /> Dispute & Resolution Guidelines</h4>
             <p className="font-sans text-xs text-brand-cream/80 leading-relaxed space-y-2">
               If a tutor is a no-show, experiences continuous connectivity failures, or files incorrect hours, you can register a dispute within 48 hours of lesson completion. Escrow funds are immediately frozen pending manual administrator reviews.
+            </p>
+            <p className="font-sans text-xs text-brand-cream/80 leading-relaxed mt-3 pt-3 border-t border-white/10 flex items-center gap-2">
+              <span>For immediate priority support, WhatsApp our help desk directly at:</span>
+              <a href="https://wa.me/2348136451607" target="_blank" rel="noopener noreferrer" className="text-brand-clay hover:underline font-bold font-mono">+234 813 645 1607</a>
             </p>
           </div>
 

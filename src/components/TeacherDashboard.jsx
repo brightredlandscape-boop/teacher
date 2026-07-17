@@ -67,6 +67,10 @@ export default function TeacherDashboard({
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [avatar, setAvatar] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
+  const [currency, setCurrency] = useState('NGN');
+  const [timezone, setTimezone] = useState('Africa/Lagos');
+  const [classroomLink, setClassroomLink] = useState('');
+  const [recordingTool, setRecordingTool] = useState('recordly.site');
 
   // Homework grading panel states
   const [gradingScore, setGradingScore] = useState(95);
@@ -90,11 +94,15 @@ export default function TeacherDashboard({
   const [aiReportLoading, setAiReportLoading] = useState(false);
 
   // Payout settings states
-  const [payoutMethod, setPayoutMethod] = useState('Wise Bank Direct');
+  const [payoutMethod, setPayoutMethod] = useState('Paystack Bank Account');
   const [minPayout, setMinPayout] = useState(50000);
   const [payoutRequestAmount, setPayoutRequestAmount] = useState(0);
   const [payoutMessage, setPayoutMessage] = useState('');
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [selectedBankCode, setSelectedBankCode] = useState('058');
+  const [selectedBankName, setSelectedBankName] = useState('Guaranty Trust Bank (GTBank)');
 
   const handleGeminiSuggest = () => {
     const suggestions = [
@@ -123,7 +131,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
   const API_BASE = '/api';
 
   const getAuthHeaders = (extraHeaders = {}) => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...extraHeaders,
@@ -149,6 +157,10 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         setSelectedCurricula(data.teacher.curricula || []);
         setSelectedLanguages(data.teacher.languages || []);
         setAvatar(data.teacher.avatar || '');
+        setCurrency(data.teacher.currency || 'NGN');
+        setTimezone(data.teacher.timezone || 'Africa/Lagos');
+        setClassroomLink(data.teacher.classroomLink || '');
+        setRecordingTool(data.teacher.recordingTool || 'recordly.site');
 
         const teacherSessions = data.sessions || [];
         setBookingRequests(teacherSessions.filter(s => s.status === 'Pending Confirmation'));
@@ -218,7 +230,11 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
       subjects: selectedSubjects,
       curricula: selectedCurricula,
       languages: selectedLanguages,
-      avatar
+      avatar,
+      currency,
+      timezone,
+      classroomLink,
+      recordingTool
     };
 
     try {
@@ -371,7 +387,13 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         headers: getAuthHeaders(),
         body: JSON.stringify({ 
           amount: payoutRequestAmount,
-          payoutMethod: payoutMethod
+          payoutMethod: payoutMethod,
+          bankDetails: payoutMethod === 'Paystack Bank Account' ? {
+            accountNumber,
+            accountName,
+            bankCode: selectedBankCode,
+            bankName: selectedBankName
+          } : null
         })
       });
       const data = await response.json();
@@ -463,7 +485,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
               </span>
               <h3 className="font-heading font-bold text-2xl text-brand-moss">Access Gated: Vetting in Progress</h3>
               <p className="font-sans text-xs text-brand-charcoal/70 leading-relaxed">
-                Welcome to EduBridge Africa! You have successfully registered your educator profile. Before you can start taking classes, tutoring students, or earning payouts, our Admin team must manually audit your credentials.
+                Welcome to EduVista Africa! You have successfully registered your educator profile. Before you can start taking classes, tutoring students, or earning payouts, our Admin team must manually audit your credentials.
               </p>
             </div>
             
@@ -804,6 +826,25 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                 </div>
               )}
             </div>
+
+            {/* Direct Admin Support Box */}
+            <div className="bg-brand-moss text-brand-cream border border-brand-cream/10 rounded-[2.5rem] p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-heading font-bold text-base text-white">Need Support or Profile Audits?</h4>
+                <p className="font-sans text-xs text-brand-cream/80 mt-1 leading-relaxed">
+                  If you have questions about your onboarding status, class verification, payouts, or need help updating your banking details, please chat with our Admin team directly.
+                </p>
+              </div>
+              <a 
+                href="https://wa.me/2348136451607" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="py-3 px-6 rounded-full bg-brand-clay hover:bg-brand-clay/90 text-white font-heading font-bold text-xs uppercase tracking-wider text-center shrink-0 shadow-lg shadow-brand-clay/20 transition-all duration-300 hover-lift"
+              >
+                💬 WhatsApp Support
+              </a>
+            </div>
+
           </div>
         )}
 
@@ -861,25 +902,81 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Hourly rate (NGN)</label>
+                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Hourly Rate</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 4000"
+                        value={rate}
+                        onChange={(e) => setRate(parseFloat(e.target.value) || 0)}
+                        className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                      />
+                      <select
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="bg-white border border-brand-moss/10 rounded-xl px-3 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-xs font-bold h-[46px] shrink-0"
+                      >
+                        <option value="NGN">NGN (₦)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="GHS">GHS (₵)</option>
+                        <option value="KES">KES (KSh)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="EUR">EUR (€)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Timezone</label>
+                    <select
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      className="w-full bg-white border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm h-[46px]"
+                    >
+                      <option value="Africa/Lagos">West Africa Time (Lagos, UTC+1)</option>
+                      <option value="Africa/Nairobi">East Africa Time (Nairobi, UTC+3)</option>
+                      <option value="Africa/Johannesburg">South Africa Standard Time (UTC+2)</option>
+                      <option value="Africa/Accra">Greenwich Mean Time (Accra, UTC+0)</option>
+                      <option value="Europe/London">Europe / London (BST/GMT)</option>
+                      <option value="UTC">Coordinated Universal Time (UTC)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Preferred Classroom Link</label>
                     <input
-                      type="number"
-                      required
-                      placeholder="e.g. 4000"
-                      value={rate}
-                      onChange={(e) => setRate(parseFloat(e.target.value))}
+                      type="url"
+                      placeholder="e.g. Google Meet or Zoom URL"
+                      value={classroomLink}
+                      onChange={(e) => setClassroomLink(e.target.value)}
                       className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
                     />
                   </div>
                   <div>
-                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Profile Avatar URL</label>
-                    <input
-                      type="text"
-                      value={avatar}
-                      onChange={(e) => setAvatar(e.target.value)}
-                      className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
-                    />
+                    <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Recording Tool</label>
+                    <select
+                      value={recordingTool}
+                      onChange={(e) => setRecordingTool(e.target.value)}
+                      className="w-full bg-white border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm h-[46px]"
+                    >
+                      <option value="recordly.site">Recordly.site (Recommended)</option>
+                      <option value="zoom-cloud">Zoom Cloud Native</option>
+                      <option value="loom">Loom Personal</option>
+                      <option value="other">Other / Manual Upload</option>
+                    </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Profile Avatar URL</label>
+                  <input
+                    type="text"
+                    value={avatar}
+                    onChange={(e) => setAvatar(e.target.value)}
+                    className="w-full bg-brand-cream/30 border border-brand-moss/10 rounded-xl px-4 py-3 text-brand-charcoal focus:outline-none focus:border-brand-clay text-sm"
+                  />
                 </div>
 
                 <div>
@@ -1430,6 +1527,66 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                     />
                   </div>
                 </div>
+
+                {payoutMethod === 'Paystack Bank Account' && (
+                  <div className="border border-brand-moss/10 bg-brand-cream/10 p-4 rounded-2xl space-y-3.5 mt-2">
+                    <span className="font-mono text-[9px] text-brand-clay font-bold tracking-widest uppercase block mb-1">Local NGN Bank Details</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-1">Account Number</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. 0123456789 (10 digits)"
+                          maxLength="10"
+                          value={accountNumber}
+                          onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+                          className="w-full bg-white border border-brand-moss/10 rounded-xl p-2.5 focus:outline-none focus:border-brand-clay text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-1">Account Name</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. John Doe"
+                          value={accountName}
+                          onChange={(e) => setAccountName(e.target.value)}
+                          className="w-full bg-white border border-brand-moss/10 rounded-xl p-2.5 focus:outline-none focus:border-brand-clay text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-1">Select Bank</label>
+                      <select
+                        value={selectedBankCode}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedBankCode(val);
+                          const bName = [
+                            { code: '058', name: 'Guaranty Trust Bank (GTBank)' },
+                            { code: '057', name: 'Zenith Bank' },
+                            { code: '044', name: 'Access Bank' },
+                            { code: '033', name: 'United Bank for Africa (UBA)' },
+                            { code: '011', name: 'First Bank of Nigeria' },
+                            { code: '050', name: 'Sterling Bank' },
+                            { code: '219', name: 'Stanbic IBTC Bank' }
+                          ].find(b => b.code === val)?.name || 'GTBank';
+                          setSelectedBankName(bName);
+                        }}
+                        className="w-full bg-white border border-brand-moss/10 rounded-xl p-2.5 focus:outline-none text-xs"
+                      >
+                        <option value="058">Guaranty Trust Bank (GTBank)</option>
+                        <option value="057">Zenith Bank</option>
+                        <option value="044">Access Bank</option>
+                        <option value="033">United Bank for Africa (UBA)</option>
+                        <option value="011">First Bank of Nigeria</option>
+                        <option value="050">Sterling Bank</option>
+                        <option value="219">Stanbic IBTC Bank</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
                 
                 {/* payout ledger log */}
                 <div className="pt-4 border-t border-brand-moss/5">
@@ -1538,11 +1695,11 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                   <input
                     type="text"
                     readOnly
-                    value={`https://edubridge.com/register?ref=${currentUser.uid}`}
+                    value={`https://eduvista.com/register?ref=${currentUser.uid}`}
                     className="flex-1 bg-brand-cream/50 border border-brand-moss/10 rounded-xl px-3 py-2 text-xs font-mono select-all focus:outline-none"
                   />
                   <button
-                    onClick={() => { navigator.clipboard.writeText(`https://edubridge.com/register?ref=${currentUser.uid}`); alert('Referral link copied to clipboard!'); }}
+                    onClick={() => { navigator.clipboard.writeText(`https://eduvista.com/register?ref=${currentUser.uid}`); alert('Referral link copied to clipboard!'); }}
                     className="bg-brand-clay text-white px-4 py-2 rounded-xl font-heading font-bold text-xs uppercase tracking-wider shadow-sm hover:bg-brand-clay/90"
                   >
                     Copy Link
@@ -1615,7 +1772,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
           <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-8 animate-fade-up">
             <div>
               <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">ACADEMIC MODULE PROGRESSION</span>
-              <h3 className="font-heading font-bold text-xl text-brand-moss mt-0.5">EduBridge Teacher Academy</h3>
+              <h3 className="font-heading font-bold text-xl text-brand-moss mt-0.5">EduVista Teacher Academy</h3>
               <p className="font-sans text-xs text-brand-charcoal/60 mt-1">Complete structural teaching modules and receive certificate credentials.</p>
             </div>
 

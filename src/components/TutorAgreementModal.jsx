@@ -36,7 +36,7 @@ export default function TutorAgreementModal({ isOpen, onClose }) {
         {/* Content */}
         <div className="space-y-6 text-xs text-brand-charcoal/85 pr-2">
           <p className="italic text-brand-charcoal/70">
-            Please read this document carefully before submitting your application to the EduBridge Africa platform. By submitting your application, you agree to comply with all terms set forth by **Zeerocodes Automation Limited**.
+            Please read this document carefully before submitting your application to the EduVista Africa platform. By submitting your application, you agree to comply with all terms set forth by **Zeerocodes Automation Limited**.
           </p>
 
           {/* Section 1 */}
@@ -46,7 +46,7 @@ export default function TutorAgreementModal({ isOpen, onClose }) {
               1. Platform Commission & Fees
             </h3>
             <p>
-              EduBridge Africa charges a standard service commission fee for facilitating classroom matchmaking, escrow transactions, and support infrastructure:
+              EduVista Africa charges a standard service commission fee for facilitating classroom matchmaking, escrow transactions, and support infrastructure:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 font-bold text-brand-moss">
               <li>A commission fee of **15% (fifteen percent)** will be automatically deducted from your raw hourly teaching earnings for every completed session.</li>
@@ -93,7 +93,7 @@ export default function TutorAgreementModal({ isOpen, onClose }) {
               4. Platform Integrity & Non-Circumvention
             </h3>
             <p>
-              Tutors must conduct all educational bookings and transactional communications exclusively through the EduBridge Africa portal:
+              Tutors must conduct all educational bookings and transactional communications exclusively through the EduVista Africa portal:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 font-semibold text-red-700">
               <li>You agree not to solicit parents, exchange personal phone numbers, emails, or bank coordinates to process lessons off-platform (circumvention).</li>

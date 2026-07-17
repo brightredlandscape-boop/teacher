@@ -36,7 +36,7 @@ export default function PrivacyModal({ isOpen, onClose }) {
         {/* Content */}
         <div className="space-y-6 text-xs text-brand-charcoal/85 pr-2">
           <p className="italic text-brand-charcoal/70">
-            Last Updated: July 10, 2026. EduBridge Africa is a product of **Zeerocodes Automation Limited**. We are committed to safeguarding your personal data in compliance with the General Data Protection Regulation (GDPR) and the Nigeria Data Protection Regulation (NDPR).
+            Last Updated: July 10, 2026. EduVista Africa is a product of **Zeerocodes Automation Limited**. We are committed to safeguarding your personal data in compliance with the General Data Protection Regulation (GDPR) and the Nigeria Data Protection Regulation (NDPR).
           </p>
 
           {/* Section 1 */}
@@ -110,7 +110,7 @@ export default function PrivacyModal({ isOpen, onClose }) {
               5. Your Legal Rights (GDPR & NDPR)
             </h3>
             <p className="font-normal">
-              Under GDPR and NDPR guidelines, you retain full rights over your data. You may request access to, correction of, or permanent deletion of your account and personal records at any time by contacting our support team at **privacy@edubridge.com**.
+              Under GDPR and NDPR guidelines, you retain full rights over your data. You may request access to, correction of, or permanent deletion of your account and personal records at any time by contacting our support team at **privacy@eduvista.com**.
             </p>
           </div>
         </div>

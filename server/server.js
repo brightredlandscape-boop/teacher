@@ -131,7 +131,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'edubridge_jwt_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'eduvista_jwt_secret_2026';
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -216,7 +216,7 @@ async function guaranteeInitialProfiles() {
   if (!adminUser) {
     await db.insert('users', {
       uid: "admin_1",
-      email: "admin@edubridge.com",
+      email: "admin@eduvista.com",
       displayName: "System Admin",
       role: "Admin",
       country: "Nigeria",
@@ -224,7 +224,7 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    console.log("Guaranteed admin@edubridge.com admin profile.");
+    console.log("Guaranteed admin@eduvista.com admin profile.");
   }
 
   const zeerocodesAdmin = db.findOne('users', u => u.email.toLowerCase() === 'zeerocodes@gmail.com');
@@ -246,7 +246,7 @@ async function guaranteeInitialProfiles() {
   if (!teacher1User) {
     await db.insert('users', {
       uid: "teacher_1",
-      email: "teacher@edubridge.com",
+      email: "teacher@eduvista.com",
       displayName: "Mr. Adebayo Okafor",
       role: "Teacher",
       country: "Nigeria",
@@ -254,14 +254,14 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    console.log("Guaranteed teacher@edubridge.com teacher profile.");
+    console.log("Guaranteed teacher@eduvista.com teacher profile.");
   }
 
   const testPayTeacherUser = db.findOne('users', u => u.uid === 'teacher_test_pay');
   if (!testPayTeacherUser) {
     await db.insert('users', {
       uid: "teacher_test_pay",
-      email: "testpay@edubridge.com",
+      email: "testpay@eduvista.com",
       displayName: "Test Pay Teacher",
       role: "Teacher",
       country: "Nigeria",
@@ -269,14 +269,14 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    console.log("Guaranteed testpay@edubridge.com teacher profile.");
+    console.log("Guaranteed testpay@eduvista.com teacher profile.");
   }
 
   const parent1User = db.findOne('users', u => u.uid === 'parent_1');
   if (!parent1User) {
     await db.insert('users', {
       uid: "parent_1",
-      email: "parent@edubridge.com",
+      email: "parent@eduvista.com",
       displayName: "Ngozi Adeleke",
       role: "Parent",
       country: "Nigeria",
@@ -284,14 +284,14 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    console.log("Guaranteed parent@edubridge.com parent profile.");
+    console.log("Guaranteed parent@eduvista.com parent profile.");
   }
 
   const student1User = db.findOne('users', u => u.uid === 'student_1');
   if (!student1User) {
     await db.insert('users', {
       uid: "student_1",
-      email: "student@edubridge.com",
+      email: "student@eduvista.com",
       displayName: "Tunde Okafor",
       role: "Student",
       country: "Nigeria",
@@ -299,7 +299,7 @@ async function guaranteeInitialProfiles() {
       salt: defaultCreds.salt,
       passwordHash: defaultCreds.hash
     });
-    console.log("Guaranteed student@edubridge.com student profile.");
+    console.log("Guaranteed student@eduvista.com student profile.");
   }
 
   // Guarantee fresh teacher for onboarding flow testing
@@ -307,7 +307,7 @@ async function guaranteeInitialProfiles() {
   if (!freshTeacherUser) {
     await db.insert('users', {
       uid: "teacher_fresh",
-      email: "newteacher@edubridge.com",
+      email: "newteacher@eduvista.com",
       displayName: "Dr. Chidi Johnson",
       role: "Teacher",
       country: "Nigeria",
@@ -335,7 +335,7 @@ async function guaranteeInitialProfiles() {
       stats: { sessionsTaught: 0, responseRate: 100 },
       leaderboardOptIn: true
     });
-    console.log("Guaranteed newteacher@edubridge.com onboarding testing profile.");
+    console.log("Guaranteed newteacher@eduvista.com onboarding testing profile.");
   }
 
   // Guarantee SEO usernames for seeded teachers
@@ -525,6 +525,11 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   });
 
   if (finalRole === "Teacher") {
+    const { 
+      whatsapp, nin, linkedin, avatar, govIdUrl, cvUrl, videoUrl, degreeUrl, 
+      rate, currency, timezone, classroomLink, recordingTool 
+    } = req.body;
+
     let finalUsername;
     if (requestedUsername) {
       const cleanUsername = requestedUsername.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/(^-|-$)/g, '');
@@ -547,12 +552,12 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       location: sanitizedCountry,
       subjects: [],
       curricula: [],
-      rate: 0,
+      rate: rate ? Math.round(Number(rate) * 100) : 0,
       rating: 5.0,
       reviewsCount: 0,
       badges: eliteCertificate ? ["badge-ai-cert"] : [],
       bio: "",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+      avatar: avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
       coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
       online: true,
       availability: {
@@ -561,10 +566,36 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       },
       languages: ["English"],
       verified: false,
-      status: "onboarding",
+      status: "pending_approval",
       stats: { sessionsTaught: 0, responseRate: 100 },
-      leaderboardOptIn: true
+      leaderboardOptIn: true,
+      whatsapp: whatsapp ? sanitizeText(whatsapp) : "",
+      nin: nin ? sanitizeText(nin) : "",
+      linkedin: linkedin ? sanitizeText(linkedin) : "",
+      govIdUrl: govIdUrl ? sanitizeText(govIdUrl) : "",
+      cvUrl: cvUrl ? sanitizeText(cvUrl) : "",
+      videoUrl: videoUrl ? sanitizeText(videoUrl) : "",
+      degreeUrl: degreeUrl ? sanitizeText(degreeUrl) : "",
+      currency: currency ? sanitizeText(currency) : "NGN",
+      timezone: timezone ? sanitizeText(timezone) : "Africa/Lagos",
+      classroomLink: classroomLink ? sanitizeText(classroomLink) : "",
+      recordingTool: recordingTool ? sanitizeText(recordingTool) : "recordly.site"
     });
+
+    await db.insert('wallets', {
+      uid,
+      balance: 0,
+      escrow: 0
+    });
+
+    // Notify Admins of the new registration immediately
+    const admins = db.find('users', u => u.role === 'Admin');
+    for (const admin of admins) {
+      await createNotification(admin.uid, 'system', 'New Teacher Application', `${sanitizedDisplayName} (@${finalUsername}) has registered and is pending vetting.`);
+      sendTransactionalEmail(admin.email, "New Teacher Registration", "alert", {
+        message: `A new teacher, ${sanitizedDisplayName} (@${finalUsername}) from ${sanitizedCountry}, has registered directly and uploaded their credentials. WhatsApp: ${whatsapp || 'Not provided'}, LinkedIn: ${linkedin || 'Not provided'}. Please contact and vet them.`
+      });
+    }
   } else if (finalRole === "Parent") {
     await db.insert('parents', {
       uid,
@@ -586,7 +617,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   const token = jwt.sign({ uid, role: finalRole, email: sanitizedEmail }, JWT_SECRET, { expiresIn: '7d' });
 
   // Trigger transactional Welcome email
-  sendTransactionalEmail(sanitizedEmail, "Welcome to EduBridge Africa!", "welcome", {
+  sendTransactionalEmail(sanitizedEmail, "Welcome to EduVista Africa!", "welcome", {
     displayName: sanitizedDisplayName,
     role: finalRole
   });
@@ -629,16 +660,16 @@ app.post('/api/support/message', supportRateLimiter, async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     // Elegant regex-based local fallback support answers
-    let reply = "I'm the EduBridge Support Assistant. I'm here to help you coordinate with vetted teachers, secure escrow payments, or audit lessons. Could you please specify your concern?";
+    let reply = "I'm the EduVista Support Assistant. I'm here to help you coordinate with vetted teachers, secure escrow payments, or audit lessons. Could you please specify your concern?";
     const msgLower = message.toLowerCase();
     if (msgLower.includes('tutor') || msgLower.includes('teacher') || msgLower.includes('instructor')) {
       reply = "Our teachers undergo government ID checks, credentials handbook verification, and a 4-week onboarding priority audit. You can explore tutors directly on our marketplace.";
     } else if (msgLower.includes('escrow') || msgLower.includes('pay') || msgLower.includes('fee') || msgLower.includes('cost')) {
-      reply = "EduBridge operates a timed escrow payment engine. When you book a lesson, funds are secured in escrow and only released to the teacher 24 hours after a class validation check. A 15% commission is kept by the platform.";
+      reply = "EduVista operates a timed escrow payment engine. When you book a lesson, funds are secured in escrow and only released to the teacher 24 hours after a class validation check. A 15% commission is kept by the platform.";
     } else if (msgLower.includes('dispute') || msgLower.includes('refund') || msgLower.includes('cancel')) {
       reply = "If a session has an issue, you can file a dispute claim directly from the session log. Escrow funds will remain locked while an admin resolves the claim within 24 hours.";
     } else if (msgLower.includes('language') || msgLower.includes('translate') || msgLower.includes('french') || msgLower.includes('swahili')) {
-      reply = "EduBridge provides a multilingual interface supporting English, French, and Swahili. You can switch your preferred language at the top navbar.";
+      reply = "EduVista provides a multilingual interface supporting English, French, and Swahili. You can switch your preferred language at the top navbar.";
     } else if (msgLower.includes('b2b') || msgLower.includes('school') || msgLower.includes('api')) {
       reply = "We offer robust school B2B APIs for partner academic institutions to request tutor batches and compliance audits programmatically. Generate a B2B API token inside the Admin Portal.";
     }
@@ -665,7 +696,7 @@ app.post('/api/support/message', supportRateLimiter, async (req, res) => {
 
     const systemInstruction = {
       parts: [{
-        text: "You are the official EduBridge AI Customer Support Agent. You represent EduBridge Africa, an elite tutoring marketplace connecting verified African educators (specializing in WAEC, Cambridge, SAT, and foundational tutoring) with global parent markets. You explain concepts clearly, resolve dispute inquiries gracefully, explain escrow locks (which release 24 hours after a lesson is verified), and explain commission rates (15% commission fee). Maintain a polite, professional, and supportive tone. Keep answers under 100 words."
+        text: "You are the official EduVista AI Customer Support Agent. You represent EduVista Africa, an elite tutoring marketplace connecting verified African educators (specializing in WAEC, Cambridge, SAT, and foundational tutoring) with global parent markets. You explain concepts clearly, resolve dispute inquiries gracefully, explain escrow locks (which release 24 hours after a lesson is verified), and explain commission rates (15% commission fee). Maintain a polite, professional, and supportive tone. Keep answers under 100 words."
       }]
     };
 
@@ -969,7 +1000,7 @@ app.post('/api/admin/applications/respond', authenticateToken, requireRole(['Adm
     "application_response",
     action === "Approve" ? "Application Approved!" : "Application Rejected",
     action === "Approve"
-      ? "Welcome to EduBridge! Your teacher onboarding profile is approved and live."
+      ? "Welcome to EduVista! Your teacher onboarding profile is approved and live."
       : "Your onboarding application was declined. Please verify your credentials and submit again."
   );
 
@@ -1274,8 +1305,8 @@ app.post('/api/assignments/grade', authenticateToken, requireRole(['Teacher']), 
   );
 
   // Trigger transactional email to parent
-  const parentUser = db.findOne('users', u => u.uid === parentUid) || { email: "parent@edubridge.com" };
-  sendTransactionalEmail(parentUser.email, "EduBridge: Assignment Graded Card", "assignment_graded", {
+  const parentUser = db.findOne('users', u => u.uid === parentUid) || { email: "parent@eduvista.com" };
+  sendTransactionalEmail(parentUser.email, "EduVista: Assignment Graded Card", "assignment_graded", {
     studentName: assignment.studentName,
     title: assignment.title,
     score,
@@ -1353,7 +1384,7 @@ app.post('/api/assignments/submit', authenticateToken, async (req, res) => {
     const studentObj = db.findOne('students', s => s.id === assignment.studentId) || { name: "Student" };
     const teacherUser = db.findOne('users', u => u.uid === assignment.teacherId);
     if (teacherUser && teacherUser.email) {
-      sendTransactionalEmail(teacherUser.email, "EduBridge: Homework Assignment Submitted", "assignment_submitted", {
+      sendTransactionalEmail(teacherUser.email, "EduVista: Homework Assignment Submitted", "assignment_submitted", {
         studentName: studentObj.name,
         title: assignment.title,
         submittedAt: new Date().toLocaleDateString()
@@ -1473,8 +1504,8 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   );
 
   // Retrieve parent email to notify
-  const parentUser = db.findOne('users', u => u.uid === parentId) || { email: "parent@edubridge.com" };
-  sendTransactionalEmail(parentUser.email, "EduBridge: Session Escrow Secured", "booking_secured", {
+  const parentUser = db.findOne('users', u => u.uid === parentId) || { email: "parent@eduvista.com" };
+  sendTransactionalEmail(parentUser.email, "EduVista: Session Escrow Secured", "booking_secured", {
     teacherName,
     formattedCost: `₦${cost/100}`,
     slot
@@ -1484,7 +1515,7 @@ app.post('/api/sessions/book', authenticateToken, requireRole(['Parent']), requi
   try {
     const teacherUser = db.findOne('users', u => u.uid === teacherId);
     if (teacherUser && teacherUser.email) {
-      sendTransactionalEmail(teacherUser.email, "EduBridge: New Session Booking Request", "booking_received", {
+      sendTransactionalEmail(teacherUser.email, "EduVista: New Session Booking Request", "booking_received", {
         parentName: parentUser.displayName || parentUser.email.split('@')[0],
         studentName,
         subject,
@@ -1535,7 +1566,7 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), a
     try {
       const parentUser = db.findOne('users', u => u.uid === session.parentId);
       if (parentUser && parentUser.email) {
-        sendTransactionalEmail(parentUser.email, "EduBridge: Booking Request Confirmed", "booking_confirmed", {
+        sendTransactionalEmail(parentUser.email, "EduVista: Booking Request Confirmed", "booking_confirmed", {
           teacherName: session.teacherName,
           slot: session.slot
         });
@@ -1569,7 +1600,7 @@ app.post('/api/sessions/respond', authenticateToken, requireRole(['Teacher']), a
     try {
       const parentUser = db.findOne('users', u => u.uid === session.parentId);
       if (parentUser && parentUser.email) {
-        sendTransactionalEmail(parentUser.email, "EduBridge: Booking Request Declined", "booking_rejected", {
+        sendTransactionalEmail(parentUser.email, "EduVista: Booking Request Declined", "booking_rejected", {
           teacherName: session.teacherName,
           formattedCost: `₦${session.cost/100}`
         });
@@ -1710,46 +1741,61 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     actualEnd: new Date().toISOString()
   });
 
-  // 2. Release Escrow from Parent wallet
-  const wallet = db.findOne('wallets', w => w.uid === session.parentId);
-  if (wallet) {
-    await db.update('wallets', wallet.id, {
-      escrow: Math.max(0, wallet.escrow - session.cost)
-    });
-  }
-
-  // 3. Deduct commission (15%) and payout to teacher
+  // 2. Release Escrow & Apportion payout/commission based on booking source
   const config = db.findOne('platform_config', c => c.id === 'default') || { commissionRate: 15 };
   const commissionRate = config.commissionRate || 15;
   const commission = Math.round(session.cost * (commissionRate / 100));
   const payout = session.cost - commission;
 
-  // Add payout to teacher's wallet balance
-  let teacherWallet = db.findOne('wallets', w => w.uid === session.teacherId);
-  if (!teacherWallet) {
-    teacherWallet = await db.insert('wallets', {
-      uid: session.teacherId,
-      balance: payout,
-      escrow: 0
-    });
-  } else {
-    await db.update('wallets', teacherWallet.id, {
-      balance: Number(teacherWallet.balance) + payout
-    });
-  }
+  const parentWallet = db.findOne('wallets', w => w.uid === session.parentId);
 
-  // Add commission to admin's wallet balance
-  let adminWallet = db.findOne('wallets', w => w.uid === 'admin_1');
-  if (!adminWallet) {
-    adminWallet = await db.insert('wallets', {
-      uid: 'admin_1',
-      balance: commission,
-      escrow: 0
+  if (parentWallet && Number(parentWallet.escrow) >= session.cost) {
+    // Booked via Parent Wallet: release parent escrow, add platform commission to admin, and add teacher payout
+    await db.update('wallets', parentWallet.id, {
+      escrow: Math.max(0, Number(parentWallet.escrow) - session.cost)
     });
+
+    let teacherWallet = db.findOne('wallets', w => w.uid === session.teacherId);
+    if (!teacherWallet) {
+      await db.insert('wallets', {
+        uid: session.teacherId,
+        balance: payout,
+        escrow: 0
+      });
+    } else {
+      await db.update('wallets', teacherWallet.id, {
+        balance: Number(teacherWallet.balance) + payout
+      });
+    }
+
+    let adminWallet = db.findOne('wallets', w => w.uid === 'admin_1');
+    if (!adminWallet) {
+      await db.insert('wallets', {
+        uid: 'admin_1',
+        balance: commission,
+        escrow: 0
+      });
+    } else {
+      await db.update('wallets', adminWallet.id, {
+        balance: Number(adminWallet.balance) + commission
+      });
+    }
   } else {
-    await db.update('wallets', adminWallet.id, {
-      balance: Number(adminWallet.balance) + commission
-    });
+    // Booked via Card checkout: payout (85%) was already locked in teacher's escrow, so release it to teacher's balance
+    let teacherWallet = db.findOne('wallets', w => w.uid === session.teacherId);
+    if (teacherWallet) {
+      await db.update('wallets', teacherWallet.id, {
+        escrow: Math.max(0, Number(teacherWallet.escrow) - payout),
+        balance: Number(teacherWallet.balance) + payout
+      });
+    } else {
+      await db.insert('wallets', {
+        uid: session.teacherId,
+        balance: payout,
+        escrow: 0
+      });
+    }
+    // Admin commission was already allocated to admin wallet balance at booking checkout webhook
   }
 
   await createNotification(
@@ -1770,14 +1816,14 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
   try {
     const parentUser = db.findOne('users', u => u.uid === session.parentId);
     if (parentUser && parentUser.email) {
-      sendTransactionalEmail(parentUser.email, "EduBridge: Tutoring Session Completed Summary", "session_completed", {
+      sendTransactionalEmail(parentUser.email, "EduVista: Tutoring Session Completed Summary", "session_completed", {
         teacherName: session.teacherName
       });
     }
 
     const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
     if (teacherUser && teacherUser.email) {
-      sendTransactionalEmail(teacherUser.email, "EduBridge: Escrow Funds Released", "escrow_released", {
+      sendTransactionalEmail(teacherUser.email, "EduVista: Escrow Funds Released", "escrow_released", {
         formattedPayout: `₦${payout/100}`,
         formattedCommission: `₦${commission/100}`
       });
@@ -1831,11 +1877,71 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
   });
 });
 
+// Helper function to execute a bank transfer via Paystack Transfer APIs
+async function executePaystackTransfer(amountMinor, recipient) {
+  const secretKey = process.env.PAYSTACK_SECRET_KEY;
+  if (!secretKey || secretKey.startsWith('pk_') || secretKey.includes('mock') || secretKey.includes('test')) {
+    console.log(`[PAYSTACK TRANSFER] Sandbox Simulation Mode: Initiated transfer of ₦${(amountMinor / 100).toLocaleString()} to ${recipient.name} (${recipient.bankName || 'GTBank'} - ${recipient.accountNumber})`);
+    return { status: 'success', reference: `trsf_${Date.now()}` };
+  }
+
+  try {
+    const recipientResponse = await fetch('https://api.paystack.co/transferrecipient', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secretKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        type: 'nuban',
+        name: recipient.name,
+        account_number: recipient.accountNumber,
+        bank_code: recipient.bankCode,
+        currency: 'NGN'
+      })
+    });
+
+    const recipientData = await recipientResponse.json();
+    if (!recipientResponse.ok || !recipientData.status) {
+      throw new Error(recipientData.message || 'Failed to create transfer recipient on Paystack');
+    }
+
+    const recipientCode = recipientData.data.recipient_code;
+
+    const transferResponse = await fetch('https://api.paystack.co/transfer', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secretKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        source: 'balance',
+        amount: Math.round(amountMinor),
+        recipient: recipientCode,
+        reason: 'EduVista Payout Withdrawal'
+      })
+    });
+
+    const transferData = await transferResponse.json();
+    if (!transferResponse.ok || !transferData.status) {
+      throw new Error(transferData.message || 'Failed to execute bank transfer on Paystack');
+    }
+
+    return {
+      status: transferData.data.status,
+      reference: transferData.data.reference
+    };
+  } catch (err) {
+    console.error("[PAYSTACK TRANSFER] API Error:", err.message);
+    throw err;
+  }
+}
+
 // --- PAYOUT ENDPOINTS ---
 
 // POST Request Payout (Teacher & Admin)
 app.post('/api/payout/request', authenticateToken, requireRole(['Teacher', 'Admin']), async (req, res) => {
-  const { amount, payoutMethod } = req.body;
+  const { amount, payoutMethod, bankDetails } = req.body;
   if (!amount || amount <= 0) {
     return res.status(400).json({ error: "Valid amount is required." });
   }
@@ -1853,6 +1959,7 @@ app.post('/api/payout/request', authenticateToken, requireRole(['Teacher', 'Admi
     teacherId: req.user.uid,
     amount: Number(amount),
     payoutMethod: payoutMethod || 'Wise Bank Direct',
+    bankDetails: bankDetails || null,
     status: 'pending',
     requestedAt: new Date().toISOString()
   });
@@ -1910,13 +2017,44 @@ app.post('/api/admin/payouts/:id/respond', authenticateToken, requireRole(['Admi
   }
 
   if (action === 'approve') {
-    await db.update('payout_requests', payoutReq.id, { status: 'approved', processedAt: new Date().toISOString() });
+    const bankDetails = payoutReq.bankDetails;
+    if (bankDetails && bankDetails.accountNumber && bankDetails.bankCode) {
+      try {
+        const transferResult = await executePaystackTransfer(payoutReq.amount, {
+          name: bankDetails.accountName || 'EduVista Partner',
+          accountNumber: bankDetails.accountNumber,
+          bankCode: bankDetails.bankCode,
+          bankName: bankDetails.bankName
+        });
+        await db.update('payout_requests', payoutReq.id, { 
+          status: 'approved', 
+          processedAt: new Date().toISOString(),
+          transferReference: transferResult.reference || 'simulated',
+          transferStatus: transferResult.status || 'success'
+        });
+      } catch (transferErr) {
+        console.error("[PAYOUT] Paystack Transfer failed:", transferErr.message);
+        const wallet = db.findOne('wallets', w => w.uid === payoutReq.teacherId);
+        if (wallet) {
+          await db.update('wallets', wallet.id, { balance: Number(wallet.balance) + payoutReq.amount });
+        }
+        await db.update('payout_requests', payoutReq.id, {
+          status: 'failed',
+          errorDetails: transferErr.message,
+          processedAt: new Date().toISOString()
+        });
+        return res.status(500).json({ error: `Transfer failed: ${transferErr.message}. Funds refunded to tutor wallet.` });
+      }
+    } else {
+      await db.update('payout_requests', payoutReq.id, { status: 'approved', processedAt: new Date().toISOString() });
+    }
+
     await createNotification(payoutReq.teacherId, 'payout_approved', 'Payout Approved', `Your payout of ₦${payoutReq.amount/100} has been processed and sent to your bank account.`);
 
     try {
       const teacherUser = db.findOne('users', u => u.uid === payoutReq.teacherId);
       if (teacherUser && teacherUser.email) {
-        sendTransactionalEmail(teacherUser.email, "EduBridge: Payout Request Approved", "payout_approved", {
+        sendTransactionalEmail(teacherUser.email, "EduVista: Payout Request Approved", "payout_approved", {
           formattedAmount: `₦${payoutReq.amount/100}`
         });
       }
@@ -1936,7 +2074,7 @@ app.post('/api/admin/payouts/:id/respond', authenticateToken, requireRole(['Admi
     try {
       const teacherUser = db.findOne('users', u => u.uid === payoutReq.teacherId);
       if (teacherUser && teacherUser.email) {
-        sendTransactionalEmail(teacherUser.email, "EduBridge: Payout Request Declined", "payout_rejected", {
+        sendTransactionalEmail(teacherUser.email, "EduVista: Payout Request Declined", "payout_rejected", {
           formattedAmount: `₦${payoutReq.amount/100}`,
           reason: "Administrative verification check required."
         });
@@ -2347,7 +2485,7 @@ app.post('/api/admin/emails/send-welcome', authenticateToken, requireRole(['Admi
     return res.status(400).json({ error: "Email, display name, and role are required." });
   }
   try {
-    const record = sendTransactionalEmail(email, "Welcome to EduBridge Africa!", "welcome", {
+    const record = sendTransactionalEmail(email, "Welcome to EduVista Africa!", "welcome", {
       displayName,
       role
     });
@@ -2447,24 +2585,24 @@ app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), asy
 
   // Automated dispute email alerts (teacher, parent, admins)
   try {
-    const parentUser = db.findOne('users', u => u.uid === session.parentId) || { email: "parent@edubridge.com" };
+    const parentUser = db.findOne('users', u => u.uid === session.parentId) || { email: "parent@eduvista.com" };
     const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
     if (teacherUser && teacherUser.email) {
-      sendTransactionalEmail(teacherUser.email, "EduBridge: Billing Dispute Opened", "dispute_created", {
+      sendTransactionalEmail(teacherUser.email, "EduVista: Billing Dispute Opened", "dispute_created", {
         slot: session.slot,
         parentName: parentUser.displayName || parentUser.email.split('@')[0],
         reason
       });
     }
     
-    sendTransactionalEmail(parentUser.email, "EduBridge: Dispute Registered", "admin_notification", {
+    sendTransactionalEmail(parentUser.email, "EduVista: Dispute Registered", "admin_notification", {
       displayName: parentUser.displayName || "Parent",
       message: `Your dispute for the session on ${session.slot.day} at ${session.slot.time} with ${session.teacherName} has been registered. Our billing support team is reviewing it and will contact you shortly.`
     });
 
     const admins = db.find('users', u => u.role === 'Admin');
     for (const admin of admins) {
-      sendTransactionalEmail(admin.email, "EduBridge ADMIN: New Dispute Filed", "dispute_created", {
+      sendTransactionalEmail(admin.email, "EduVista ADMIN: New Dispute Filed", "dispute_created", {
         slot: session.slot,
         parentName: parentUser.displayName || parentUser.email.split('@')[0],
         reason
@@ -2592,7 +2730,7 @@ app.get('/api/reports/download/:studentId', authenticateToken, (req, res) => {
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>EduBridge Progress Report - ${student.name}</title>
+      <title>EduVista Progress Report - ${student.name}</title>
       <style>
         body { font-family: 'Inter', system-ui, sans-serif; background: #FAF8F5; color: #1A1A1A; padding: 40px; margin: 0; }
         .card { max-width: 800px; margin: 0 auto; background: #FFF; border: 1px solid #2E4036; border-radius: 24px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -2620,7 +2758,7 @@ app.get('/api/reports/download/:studentId', authenticateToken, (req, res) => {
     <body>
       <div class="card">
         <div class="header">
-          <div class="logo">EduBridge Africa</div>
+          <div class="logo">EduVista Africa</div>
           <div class="title">Official Progress Report</div>
         </div>
         
@@ -2667,7 +2805,7 @@ app.get('/api/reports/download/:studentId', authenticateToken, (req, res) => {
         </div>
 
         <div class="footer">
-          Generated on ${new Date().toLocaleDateString()} · Official EduBridge Academic Registry Record.
+          Generated on ${new Date().toLocaleDateString()} · Official EduVista Academic Registry Record.
         </div>
       </div>
     </body>
@@ -2680,19 +2818,19 @@ app.get('/api/reports/download/:studentId', authenticateToken, (req, res) => {
 
 // App initialization status check
 app.get('/api/status', (req, res) => {
-  res.json({ status: "healthy", version: "2.0.0", message: "EduBridge API Server Active." });
+  res.json({ status: "healthy", version: "2.0.0", message: "EduVista API Server Active." });
 });
 
 // Start Server conditionally (only when not running inside Vercel serverless environment)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   ensureDb().then(() => {
     app.listen(PORT, () => {
-      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT}`);
+      console.log(`EduVista Africa Backend Server running on http://localhost:${PORT}`);
     });
   }).catch(err => {
     console.error("Database initialization failed, starting server with fallback...", err);
     app.listen(PORT, () => {
-      console.log(`EduBridge Africa Backend Server running on http://localhost:${PORT} (failed init fallback)`);
+      console.log(`EduVista Africa Backend Server running on http://localhost:${PORT} (failed init fallback)`);
     });
   });
 }

@@ -79,10 +79,14 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
   // Admin Wallet State
   const [adminWalletBalance, setAdminWalletBalance] = useState(0);
-  const [adminPayoutMethod, setAdminPayoutMethod] = useState('Wise Bank Direct');
+  const [adminPayoutMethod, setAdminPayoutMethod] = useState('Paystack Bank Account');
   const [adminWithdrawAmount, setAdminWithdrawAmount] = useState('');
   const [adminPayoutMessage, setAdminPayoutMessage] = useState('');
   const [isRequestingAdminPayout, setIsRequestingAdminPayout] = useState(false);
+  const [adminAccountNumber, setAdminAccountNumber] = useState('');
+  const [adminAccountName, setAdminAccountName] = useState('');
+  const [adminSelectedBankCode, setAdminSelectedBankCode] = useState('058');
+  const [adminSelectedBankName, setAdminSelectedBankName] = useState('Guaranty Trust Bank (GTBank)');
 
   // Disputes State
   const [disputes, setDisputes] = useState([]);
@@ -297,9 +301,10 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             name: p.teacherName || p.teacherId,
             amount: p.amount,
             processor: p.payoutMethod || 'Wallet/Bank',
-            status: p.status === 'pending' ? 'Pending' : (p.status === 'approved' ? 'Scheduled' : 'Failed'),
+            status: p.status === 'pending' ? 'Pending' : (p.status === 'approved' ? 'Scheduled' : (p.status === 'failed' ? 'Failed' : 'Paid')),
             date: new Date(p.requestedAt).toLocaleDateString(),
-            error: null
+            bankDetails: p.bankDetails || null,
+            error: p.errorDetails || null
           }));
           setPayouts(mappedPayouts);
         }
@@ -519,7 +524,13 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
         headers: getAuthHeaders(),
         body: JSON.stringify({
           amount: amountNgnMinor,
-          payoutMethod: adminPayoutMethod
+          payoutMethod: adminPayoutMethod,
+          bankDetails: adminPayoutMethod === 'Paystack Bank Account' ? {
+            accountNumber: adminAccountNumber,
+            accountName: adminAccountName,
+            bankCode: adminSelectedBankCode,
+            bankName: adminSelectedBankName
+          } : null
         })
       });
       const data = await response.json();
@@ -531,14 +542,15 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
         const payoutsRes = await fetch(`${API_BASE}/admin/payouts`, { headers: getAuthHeaders() });
         if (payoutsRes.ok) {
           const rawPayouts = await payoutsRes.json();
-          const mappedPayouts = rawPayouts.map(p => ({
+           const mappedPayouts = rawPayouts.map(p => ({
             id: p.id,
             name: p.teacherName || p.teacherId,
             amount: p.amount,
             processor: p.payoutMethod || 'Wallet/Bank',
-            status: p.status === 'pending' ? 'Pending' : (p.status === 'approved' ? 'Scheduled' : 'Failed'),
+            status: p.status === 'pending' ? 'Pending' : (p.status === 'approved' ? 'Scheduled' : (p.status === 'failed' ? 'Failed' : 'Paid')),
             date: new Date(p.requestedAt).toLocaleDateString(),
-            error: null
+            bankDetails: p.bankDetails || null,
+            error: p.errorDetails || null
           }));
           setPayouts(mappedPayouts);
         }
@@ -564,7 +576,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
       const response = await fetch(`${API_BASE}/admin/payouts/${payoutId}/respond`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ action: action === 'Scheduled' ? 'approve' : 'reject' })
+        body: JSON.stringify({ action: (action === 'Paid' || action === 'Scheduled') ? 'approve' : 'reject' })
       });
       if (response.ok) {
         setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: action } : p));
@@ -1100,6 +1112,65 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                       <option value="Paystack Bank Account">Paystack Bank Account</option>
                     </select>
                   </div>
+                  {adminPayoutMethod === 'Paystack Bank Account' && (
+                    <div className="border border-brand-moss/10 bg-brand-cream/10 p-4 rounded-2xl space-y-3 mt-1.5 animate-fade-in text-[10px]">
+                      <span className="font-mono text-[9px] text-brand-clay font-bold tracking-widest uppercase block mb-1">Local NGN Bank Details</span>
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-0.5">Account Number</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 0123456789 (10 digits)"
+                            maxLength="10"
+                            value={adminAccountNumber}
+                            onChange={(e) => setAdminAccountNumber(e.target.value.replace(/\D/g, ''))}
+                            className="w-full bg-white border border-brand-moss/10 rounded-xl p-2 focus:outline-none focus:border-brand-clay text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-0.5">Account Name</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. John Doe"
+                            value={adminAccountName}
+                            onChange={(e) => setAdminAccountName(e.target.value)}
+                            className="w-full bg-white border border-brand-moss/10 rounded-xl p-2 focus:outline-none focus:border-brand-clay text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-brand-charcoal/50 uppercase font-bold mb-0.5">Select Bank</label>
+                          <select
+                            value={adminSelectedBankCode}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAdminSelectedBankCode(val);
+                              const bName = [
+                                { code: '058', name: 'Guaranty Trust Bank (GTBank)' },
+                                { code: '057', name: 'Zenith Bank' },
+                                { code: '044', name: 'Access Bank' },
+                                { code: '033', name: 'United Bank for Africa (UBA)' },
+                                { code: '011', name: 'First Bank of Nigeria' },
+                                { code: '050', name: 'Sterling Bank' },
+                                { code: '219', name: 'Stanbic IBTC Bank' }
+                              ].find(b => b.code === val)?.name || 'GTBank';
+                              setAdminSelectedBankName(bName);
+                            }}
+                            className="w-full bg-white border border-brand-moss/10 rounded-xl p-2 focus:outline-none text-xs"
+                          >
+                            <option value="058">Guaranty Trust Bank (GTBank)</option>
+                            <option value="057">Zenith Bank</option>
+                            <option value="044">Access Bank</option>
+                            <option value="033">United Bank for Africa (UBA)</option>
+                            <option value="011">First Bank of Nigeria</option>
+                            <option value="050">Sterling Bank</option>
+                            <option value="219">Stanbic IBTC Bank</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={isRequestingAdminPayout || adminWalletBalance <= 0}
@@ -1209,6 +1280,14 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                         <span className="font-mono text-[9px] text-brand-charcoal/50 block uppercase mt-0.5">
                           Method: {pay.processor} · Scheduled: {pay.date}
                         </span>
+                        {pay.bankDetails && pay.bankDetails.accountNumber && (
+                          <div className="bg-brand-cream border border-brand-moss/10 p-2.5 rounded-xl text-[10px] text-brand-moss mt-2 font-mono space-y-0.5 w-fit">
+                            <div className="font-bold text-brand-clay uppercase tracking-wider text-[8px] mb-1">Destination Bank Account</div>
+                            <div>Acc: <span className="font-bold text-brand-charcoal">{pay.bankDetails.accountNumber}</span></div>
+                            <div>Name: <span className="font-bold text-brand-charcoal">{pay.bankDetails.accountName}</span></div>
+                            <div>Bank: <span className="font-bold text-brand-charcoal">{pay.bankDetails.bankName || 'N/A'}</span></div>
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="font-heading font-bold text-xs text-brand-moss block">

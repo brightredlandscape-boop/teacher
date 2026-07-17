@@ -2,11 +2,11 @@ import React from 'react';
 
 export default function BrandLogo({ light = false, className = '', iconOnly = false }) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div className={`flex items-center gap-3.5 ${className}`}>
       {/* Emblem Circle */}
       <svg 
         viewBox="0 0 200 200" 
-        className="h-full w-auto aspect-square flex-shrink-0"
+        className="h-full w-auto aspect-square flex-shrink-0 hover:rotate-12 transition-transform duration-300"
         aria-hidden="true"
       >
         <circle 
@@ -14,7 +14,7 @@ export default function BrandLogo({ light = false, className = '', iconOnly = fa
           cy="100" 
           r="90" 
           fill="#2E4036" 
-          stroke={light ? "rgba(242, 240, 233, 0.15)" : "rgba(46, 64, 54, 0.1)"} 
+          stroke={light ? "rgba(242, 240, 233, 0.25)" : "rgba(46, 64, 54, 0.15)"} 
           strokeWidth="4" 
         />
         <path 
@@ -33,10 +33,10 @@ export default function BrandLogo({ light = false, className = '', iconOnly = fa
           {/* Vertical divider line with top and bottom serifs/ticks */}
           <svg 
             viewBox="0 0 12 60" 
-            className={`h-full w-auto aspect-[12/60] flex-shrink-0 ${light ? 'text-white/60' : 'text-brand-charcoal/40'}`} 
+            className={`h-full w-auto aspect-[12/60] flex-shrink-0 ${light ? 'text-white/70' : 'text-brand-charcoal/50'}`} 
             fill="none" 
             stroke="currentColor" 
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           >
             <path d="M 2 6 L 10 6" />
@@ -46,10 +46,10 @@ export default function BrandLogo({ light = false, className = '', iconOnly = fa
 
           {/* Text branding */}
           <div className="flex flex-col select-none leading-none justify-center">
-            <span className={`font-heading font-extrabold text-sm md:text-base tracking-tight uppercase ${light ? 'text-white' : 'text-brand-charcoal'}`}>
-              EDUBRIDGE
+            <span className={`font-heading font-black text-base md:text-lg lg:text-xl tracking-tight uppercase ${light ? 'text-white' : 'text-brand-charcoal'}`}>
+              EDUVISTA
             </span>
-            <span className={`font-heading font-bold text-[8px] md:text-[9px] tracking-[0.24em] uppercase mt-0.5 ${light ? 'text-brand-cream/80' : 'text-brand-charcoal/70'}`}>
+            <span className={`font-heading font-bold text-[9px] md:text-[10px] lg:text-[11px] tracking-[0.26em] uppercase mt-1 ${light ? 'text-brand-cream/80' : 'text-brand-charcoal/70'}`}>
               AFRICA
             </span>
           </div>

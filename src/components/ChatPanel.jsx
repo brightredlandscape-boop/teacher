@@ -10,7 +10,7 @@ export default function ChatPanel({ isOpen, onClose, session, currentUser }) {
   const API_BASE = '/api';
 
   const getAuthHeaders = (extraHeaders = {}) => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...extraHeaders,

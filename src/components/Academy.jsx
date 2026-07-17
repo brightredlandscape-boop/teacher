@@ -143,7 +143,7 @@ export default function Academy({
   ];
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -718,7 +718,7 @@ export default function Academy({
                   
                   <div className="flex flex-col gap-3 max-w-xs mx-auto pt-2">
                     <a
-                      href="https://classroom.google.com/c/edubridge-elite-academy"
+                      href="https://classroom.google.com/c/eduvista-elite-academy"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-magnetic w-full py-3 bg-brand-clay hover:bg-brand-clay/90 text-white rounded-full font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-1.5 shadow-lg shadow-brand-clay/15"
@@ -742,7 +742,7 @@ export default function Academy({
                   </p>
                   <div className="bg-brand-cream/5 border border-brand-cream/10 rounded-xl p-3 flex justify-between items-center font-mono">
                     <span className="text-brand-cream/50">Merchant:</span>
-                    <span className="text-white font-bold">EduBridge Academy</span>
+                    <span className="text-white font-bold">EduVista Academy</span>
                   </div>
                   <div>
                     <label className="font-heading font-bold text-[10px] uppercase text-brand-cream/60 block mb-2">One-Time Password (OTP)</label>
@@ -1437,7 +1437,7 @@ export default function Academy({
                         </svg>
                       </div>
                       <div className="font-mono text-[8px] text-brand-charcoal/50 leading-relaxed max-w-[100px]">
-                        Scan to verify educator status on EduBridge live directory.
+                        Scan to verify educator status on EduVista live directory.
                       </div>
                     </div>
                   </div>

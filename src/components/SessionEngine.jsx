@@ -160,7 +160,7 @@ export default function SessionEngine({
 
   const logClockEvent = async (sessionId, eventType) => {
     try {
-      const token = localStorage.getItem('edubridge_token');
+      const token = localStorage.getItem('eduvista_token');
       await fetch('/api/sessions/clock', {
         method: 'POST',
         headers: {
@@ -395,7 +395,7 @@ export default function SessionEngine({
                   <span className="font-heading font-bold text-lg text-white block">
                     {formatCurrency(convertMinor(activeSession.cost, selectedCurrency), selectedCurrency)} Locked
                   </span>
-                  <span className="font-sans text-[10px] text-brand-cream/50 block">Protected by EduBridge Escrow Guard</span>
+                  <span className="font-sans text-[10px] text-brand-cream/50 block">Protected by EduVista Escrow Guard</span>
                 </div>
 
                 {/* Actions */}

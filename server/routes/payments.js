@@ -11,7 +11,7 @@ import { sendTransactionalEmail } from '../services/email.js';
 dotenv.config();
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'edubridge_jwt_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'eduvista_jwt_secret_2026';
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -96,7 +96,7 @@ router.post('/checkout', authenticateToken, checkoutRateLimiter, async (req, res
     try {
       // Find parent user to get email
       const parentUser = db.findOne('users', u => u.uid === parentId || u.id === parentId);
-      const email = parentUser ? parentUser.email : 'customer@edubridge.com';
+      const email = parentUser ? parentUser.email : 'customer@eduvista.com';
 
       // We need to send amount in minor units to Paystack.
       // Paystack expects amount as integer.
@@ -282,53 +282,175 @@ router.post('/webhook', async (req, res) => {
       }
     }
 
-    let wallet = db.findOne('wallets', w => w.uid === parentId);
-    if (!wallet) {
-      wallet = await db.insert('wallets', {
-        uid: parentId,
-        balance: amountNgnMinor,
-        escrow: 0
+    if (paymentType === 'session_booking') {
+      const teacherId = dataMetadata.teacherId || payload.teacherId;
+      const teacherName = dataMetadata.teacherName || payload.teacherName;
+      const subject = dataMetadata.subject || payload.subject || 'General';
+      const curriculum = dataMetadata.curriculum || payload.curriculum || 'Standard';
+      const studentId = dataMetadata.studentId || payload.studentId || 'student_1';
+      const studentName = dataMetadata.studentName || payload.studentName || 'Tunde';
+      
+      const slots = typeof dataMetadata.slots === 'string' 
+        ? JSON.parse(dataMetadata.slots) 
+        : (dataMetadata.slots || payload.slots || []);
+
+      const commission = Math.round(amountNgnMinor * 0.15);
+      const payout = amountNgnMinor - commission;
+
+      // Update admin wallet (balance)
+      const adminUser = db.findOne('users', u => u.role === 'Admin') || { uid: 'admin_1' };
+      let adminWallet = db.findOne('wallets', w => w.uid === adminUser.uid);
+      if (!adminWallet) {
+        await db.insert('wallets', {
+          uid: adminUser.uid,
+          balance: commission,
+          escrow: 0
+        });
+      } else {
+        await db.update('wallets', adminWallet.id, {
+          balance: Number(adminWallet.balance) + commission
+        });
+      }
+
+      // Update teacher wallet (escrow)
+      let teacherWallet = db.findOne('wallets', w => w.uid === teacherId);
+      if (!teacherWallet) {
+        await db.insert('wallets', {
+          uid: teacherId,
+          balance: 0,
+          escrow: payout
+        });
+      } else {
+        await db.update('wallets', teacherWallet.id, {
+          escrow: Number(teacherWallet.escrow) + payout
+        });
+      }
+
+      // Create session booking records
+      if (Array.isArray(slots) && slots.length > 0) {
+        for (const slot of slots) {
+          const sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+          await db.insert('sessions', {
+            id: sessionId,
+            parentId,
+            studentId,
+            studentName,
+            teacherId,
+            teacherName,
+            slot,
+            subject,
+            curriculum,
+            status: 'Scheduled',
+            classLink: '',
+            recordingUrl: '',
+            cost: Math.floor(amountNgnMinor / slots.length),
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+
+      // Log transactions
+      await db.insert('transactions', {
+        fromUserId: parentId,
+        toUserId: teacherId,
+        amount: amountNgnMinor,
+        type: 'session_booking',
+        paymentProcessor: 'paystack',
+        paymentReference: reference,
+        date: new Date().toISOString()
       });
+
+      await db.insert('transactions', {
+        fromUserId: teacherId,
+        toUserId: adminUser.uid,
+        amount: commission,
+        type: 'commission',
+        paymentProcessor: 'virtual',
+        paymentReference: `comm_${reference}`,
+        date: new Date().toISOString()
+      });
+
+      // Send notifications and emails
+      await db.insert('notifications', {
+        id: 'notif_' + Date.now(),
+        userId: teacherId,
+        title: 'New Session Booking Request',
+        body: `A new session has been booked. ₦${(payout / 100).toLocaleString()} is secured in escrow.`,
+        read: false,
+        type: 'booking_received',
+        timestamp: new Date().toISOString()
+      });
+
+      const parentUser = db.findOne('users', u => u.uid === parentId);
+      if (parentUser) {
+        sendTransactionalEmail(parentUser.email, "EduVista: Session Escrow Secured", "booking_secured", {
+          displayName: parentUser.displayName,
+          formattedAmount: `₦${(amountNgnMinor / 100).toLocaleString()}`,
+          reference: reference || 'N/A',
+          tutorName: teacherName
+        });
+      }
+
+      const teacherUser = db.findOne('users', u => u.uid === teacherId);
+      if (teacherUser) {
+        sendTransactionalEmail(teacherUser.email, "EduVista: New Booking Request", "booking_received", {
+          displayName: teacherUser.displayName,
+          studentName: studentName,
+          subject: subject
+        });
+      }
+
+      return res.json({ success: true, message: "Session booked and fees split successfully." });
+
     } else {
-      await db.update('wallets', wallet.id, {
-        balance: Number(wallet.balance) + amountNgnMinor
+      let wallet = db.findOne('wallets', w => w.uid === parentId);
+      if (!wallet) {
+        wallet = await db.insert('wallets', {
+          uid: parentId,
+          balance: amountNgnMinor,
+          escrow: 0
+        });
+      } else {
+        await db.update('wallets', wallet.id, {
+          balance: Number(wallet.balance) + amountNgnMinor
+        });
+      }
+
+      // Insert transaction log
+      await db.insert('transactions', {
+        fromUserId: 'system',
+        toUserId: parentId,
+        amount: amountNgnMinor,
+        type: 'wallet_topup',
+        paymentProcessor: 'paystack',
+        paymentReference: reference,
+        date: new Date().toISOString()
       });
-    }
 
-    // Insert transaction log
-    await db.insert('transactions', {
-      fromUserId: 'system',
-      toUserId: parentId,
-      amount: amountNgnMinor,
-      type: 'wallet_topup',
-      paymentProcessor: 'paystack',
-      paymentReference: reference,
-      date: new Date().toISOString()
-    });
-
-    // Create system notification
-    await db.insert('notifications', {
-      id: 'notif_' + Date.now(),
-      userId: parentId,
-      title: 'Wallet Top-up Successful',
-      body: `Successfully added ₦${(amountNgnMinor / 100).toLocaleString()} to your wallet.`,
-      read: false,
-      type: 'wallet_topup',
-      timestamp: new Date().toISOString()
-    });
-
-    // Send transactional confirmation email
-    const parentUser = db.findOne('users', u => u.uid === parentId || u.id === parentId);
-    if (parentUser) {
-      sendTransactionalEmail(parentUser.email, "EduBridge: Wallet Deposit Confirmed", "wallet_topup", {
-        displayName: parentUser.displayName,
-        formattedAmount: `₦${(amountNgnMinor / 100).toLocaleString()}`,
-        reference: reference || 'N/A',
-        paymentProcessor: 'paystack'
+      // Create system notification
+      await db.insert('notifications', {
+        id: 'notif_' + Date.now(),
+        userId: parentId,
+        title: 'Wallet Top-up Successful',
+        body: `Successfully added ₦${(amountNgnMinor / 100).toLocaleString()} to your wallet.`,
+        read: false,
+        type: 'wallet_topup',
+        timestamp: new Date().toISOString()
       });
-    }
 
-    return res.json({ success: true, message: "Wallet topped up successfully." });
+      // Send transactional confirmation email
+      const parentUser = db.findOne('users', u => u.uid === parentId || u.id === parentId);
+      if (parentUser) {
+        sendTransactionalEmail(parentUser.email, "EduVista: Wallet Deposit Confirmed", "wallet_topup", {
+          displayName: parentUser.displayName,
+          formattedAmount: `₦${(amountNgnMinor / 100).toLocaleString()}`,
+          reference: reference || 'N/A',
+          paymentProcessor: 'paystack'
+        });
+      }
+
+      return res.json({ success: true, message: "Wallet topped up successfully." });
+    }
   }
 
   res.status(400).json({ error: "Payment failed." });

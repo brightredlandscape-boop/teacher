@@ -124,7 +124,7 @@ export default function TeacherPublicProfile({
           setTeacher(data);
           
           // SEO Metadata optimization on mount
-          document.title = `${data.name || 'Tutor'} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${data.name || 'Tutor'} | Online Home Tutoring & Lessons | EduVista`;
           
           // Update or insert SEO meta description tag
           let metaDesc = document.querySelector('meta[name="description"]');
@@ -134,7 +134,7 @@ export default function TeacherPublicProfile({
             document.head.appendChild(metaDesc);
           }
           const subjects = Array.isArray(data.subjects) ? data.subjects.join(', ') : 'subjects';
-          metaDesc.setAttribute('content', `Book premium online home tutoring and private lessons with ${data.name || 'this tutor'} on EduBridge. Specializes in ${subjects}. Vetted credentials, secure escrow payment protection.`);
+          metaDesc.setAttribute('content', `Book premium online home tutoring and private lessons with ${data.name || 'this tutor'} on EduVista. Specializes in ${subjects}. Vetted credentials, secure escrow payment protection.`);
         } else {
           const errData = await response.json().catch(() => ({}));
           setError(errData.error || 'Tutor public profile page not found.');
@@ -169,7 +169,7 @@ export default function TeacherPublicProfile({
             ]
           };
           setTeacher(mockAdebayo);
-          document.title = `${mockAdebayo.name} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${mockAdebayo.name} | Online Home Tutoring & Lessons | EduVista`;
         } else if (usernameLower === 'kofi') {
           const mockKofi = {
             uid: "teacher_2",
@@ -193,7 +193,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockKofi);
-          document.title = `${mockKofi.name} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${mockKofi.name} | Online Home Tutoring & Lessons | EduVista`;
         } else if (usernameLower === 'chioma') {
           const mockChioma = {
             uid: "teacher_3",
@@ -217,7 +217,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockChioma);
-          document.title = `${mockChioma.name} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${mockChioma.name} | Online Home Tutoring & Lessons | EduVista`;
         } else if (usernameLower === 'aminata') {
           const mockAminata = {
             uid: "teacher_4",
@@ -240,7 +240,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockAminata);
-          document.title = `${mockAminata.name} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${mockAminata.name} | Online Home Tutoring & Lessons | EduVista`;
         } else if (usernameLower === 'fatima') {
           const mockFatima = {
             uid: "teacher_5",
@@ -263,7 +263,7 @@ export default function TeacherPublicProfile({
             reviews: []
           };
           setTeacher(mockFatima);
-          document.title = `${mockFatima.name} | Online Home Tutoring & Lessons | EduBridge`;
+          document.title = `${mockFatima.name} | Online Home Tutoring & Lessons | EduVista`;
         } else {
           setError('Tutor public profile page not found.');
         }
@@ -276,7 +276,7 @@ export default function TeacherPublicProfile({
 
     // Clean up SEO tags when unmounting
     return () => {
-      document.title = 'EduBridge | Premium 1-on-1 Online Home Tutoring & Private Lessons';
+      document.title = 'EduVista | Premium 1-on-1 Online Home Tutoring & Private Lessons';
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute('content', 'Connect with certified, background-checked private tutors for online home tutoring and personalized academic lessons.');

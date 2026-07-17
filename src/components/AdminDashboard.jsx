@@ -39,7 +39,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const API_BASE = '/api';
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('edubridge_token');
+    const token = localStorage.getItem('eduvista_token');
     return {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -2826,7 +2826,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                   <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">TECHNICAL SPECS</span>
                   <h3 className="font-heading font-bold text-lg text-brand-moss">Integration Endpoints</h3>
                   <p className="font-sans text-xs text-brand-charcoal/70 font-bold">
-                    Integrate EduBridge matching and tracking systems directly into your school's LMS/ERP portal using these secure API endpoints.
+                    Integrate EduVista matching and tracking systems directly into your school's LMS/ERP portal using these secure API endpoints.
                   </p>
 
                   <div className="space-y-4 font-sans text-xs">
@@ -3435,7 +3435,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             <div className="border border-brand-moss/10 rounded-2xl p-6 bg-brand-cream/10 space-y-4">
               <div className="space-y-1 font-mono text-[10px] border-b border-brand-moss/5 pb-3">
                 <div><span className="text-brand-charcoal/40">ID:</span> <span className="text-brand-moss font-bold">{selectedViewEmail.id}</span></div>
-                <div><span className="text-brand-charcoal/40">FROM:</span> <span className="text-brand-moss">EduBridge Africa &lt;onboarding@resend.dev&gt;</span></div>
+                <div><span className="text-brand-charcoal/40">FROM:</span> <span className="text-brand-moss">EduVista Africa &lt;onboarding@resend.dev&gt;</span></div>
                 <div><span className="text-brand-charcoal/40">TO:</span> <span className="text-brand-moss font-bold">{selectedViewEmail.to}</span></div>
                 <div><span className="text-brand-charcoal/40">SUBJECT:</span> <span className="text-brand-clay font-bold">{selectedViewEmail.subject}</span></div>
                 <div><span className="text-brand-charcoal/40">DATE:</span> <span className="text-brand-charcoal">{new Date(selectedViewEmail.sentAt).toLocaleString()}</span></div>
@@ -3485,7 +3485,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             <div className="bg-brand-cream/30 border border-brand-moss/10 rounded-2xl p-6 shadow-inner text-center space-y-4 relative overflow-hidden">
               {/* Security Watermark */}
               <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none opacity-[0.03] font-mono text-3xl font-extrabold rotate-12">
-                EDUBRIDGE SECURE DOCK
+                EDUVISTA SECURE DOCK
               </div>
               
               <div className="w-16 h-16 bg-brand-moss/5 rounded-full flex items-center justify-center mx-auto border border-brand-moss/15">

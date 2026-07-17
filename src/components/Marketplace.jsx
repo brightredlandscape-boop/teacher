@@ -225,8 +225,19 @@ export default function Marketplace({
       </div>
 
       {/* Grid listing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {[...filteredTeachers].sort((a, b) => {
+      {filteredTeachers.length === 0 ? (
+        <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-12 text-center max-w-xl mx-auto space-y-4 my-8 shadow-sm">
+          <div className="w-16 h-16 bg-brand-cream/50 rounded-full flex items-center justify-center mx-auto border border-brand-moss/5">
+            <Search className="w-8 h-8 text-brand-clay animate-pulse" />
+          </div>
+          <h3 className="font-heading font-bold text-xl text-brand-moss">No Vetted Tutors Available</h3>
+          <p className="font-sans text-xs text-brand-charcoal/70 leading-relaxed">
+            We are preparing for our launch. All instructors are currently undergoing vetting and credentials verification. Please check back shortly or register on the waitlist below!
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...filteredTeachers].sort((a, b) => {
           const aHasElite = (a.badges || []).includes('badge-ai-cert');
           const bHasElite = (b.badges || []).includes('badge-ai-cert');
           if (aHasElite && !bHasElite) return -1;
@@ -401,6 +412,7 @@ export default function Marketplace({
           );
         })}
       </div>
+      )}
     </section>
   );
 }

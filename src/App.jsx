@@ -2454,7 +2454,7 @@ export default function App() {
       </div>
 
       {/* Universal Footer */}
-      <footer className="bg-brand-charcoal text-brand-cream pt-24 pb-12 rounded-t-[4rem] border-t border-brand-cream/10">
+      <footer className={`bg-brand-charcoal text-brand-cream pt-24 pb-12 rounded-t-[4rem] border-t border-brand-cream/10 ${currentUser && currentView === 'dashboard' ? 'hidden' : ''}`}>
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="space-y-4">
             <BrandLogo light={true} className="h-11 md:h-12 lg:h-13 transition-transform duration-300 hover:scale-105" />

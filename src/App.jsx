@@ -1564,9 +1564,9 @@ export default function App() {
         <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-moss/80 to-transparent mix-blend-multiply opacity-95" />
 
         <div className="relative z-10 max-w-4xl text-left md:text-right flex flex-col items-start md:items-end w-full">
-          <h1 className="hero-fade font-heading font-bold text-white text-3xl sm:text-5xl md:text-7xl tracking-tight mb-4 flex flex-col gap-2 md:gap-3 w-full">
-            <span className="block leading-tight">{t('heroTitleFirst')}</span>
-            <span className="hero-fade font-drama italic font-light text-brand-clay text-4xl sm:text-6xl md:text-8xl tracking-normal block leading-tight mt-1">
+          <h1 className="font-heading font-bold text-white text-3xl sm:text-5xl md:text-7xl tracking-tight mb-4 flex flex-col gap-2 md:gap-4 w-full">
+            <span className="hero-fade block leading-normal">{t('heroTitleFirst')}</span>
+            <span className="hero-fade font-drama italic font-light text-brand-clay text-4xl sm:text-6xl md:text-8xl tracking-normal block leading-normal mt-2">
               {t('heroTitleSecond')}
             </span>
           </h1>

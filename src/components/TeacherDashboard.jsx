@@ -1330,7 +1330,6 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                   </div>
                 )}
               </div>
-              </div>
 
               {/* Group Class Manager */}
               <div className="lg:col-span-5 bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm">

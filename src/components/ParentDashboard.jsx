@@ -1737,7 +1737,10 @@ export default function ParentDashboard({
                 </button>
               </div>
 
-      {/* REVIEW & RATING MODAL */}
+            </form>
+          </div>
+        </div>
+      )}
       {isReviewOpen && reviewSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-brand-charcoal/40 backdrop-blur-xs" onClick={() => setIsReviewOpen(false)} />

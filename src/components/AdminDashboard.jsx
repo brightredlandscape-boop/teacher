@@ -305,6 +305,10 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             date: new Date(p.requestedAt).toLocaleDateString(),
             bankDetails: p.bankDetails || null,
             error: p.errorDetails || null
+          }));
+          setPayouts(mappedPayouts);
+        }
+
         // Fetch Disputes
         try {
           const disputesRes = await fetch(`${API_BASE}/admin/disputes`, { headers });
@@ -631,16 +635,6 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const handleRetryPayout = (payoutId) => {
     setPayouts(prev => prev.map(p => p.id === payoutId ? { ...p, status: 'Processing', error: null } : p));
     triggerToast(`Retrying failed payout ID ${payoutId} via API...`);
-  };
-
-  const handleResolveDispute = (disputeId, decision) => {
-    const note = disputeResolutionNotes[disputeId] || '';
-    if (!note.trim()) {
-      triggerToast('Error: Dispute resolution note is required before ruling.');
-      return;
-    }
-    setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: `Resolved: ${decision}` } : d));
-    triggerToast(`Dispute resolved: ${decision}. Resolution Note: "${note}" sent to both parties.`);
   };
 
   const handleProcessRefund = (refundId) => {

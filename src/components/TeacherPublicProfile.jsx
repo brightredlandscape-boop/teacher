@@ -259,7 +259,13 @@ export default function TeacherPublicProfile({
             availability: {
               Tomorrow: ["1:00 PM", "2:00 PM"],
               Thursday: ["10:00 AM", "11:00 AM"]
-        console.warn("Failed to fetch profile:", err);
+            },
+            reviews: []
+          };
+          setTeacher(mockFatima);
+        } else {
+          setError('Tutor profile not found.');
+        }
       } finally {
         setLoading(false);
       }

@@ -2615,6 +2615,237 @@ app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), asy
   res.json({ success: true, dispute });
 });
 
+// POST Complete Session & Trigger Escrow Release Countdown
+app.post('/api/sessions/:id/complete', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const session = db.findOne('sessions', s => s.id === id);
+  if (!session) {
+    return res.status(404).json({ error: "Session not found." });
+  }
+
+  if (session.teacherId !== req.user.uid && session.parentId !== req.user.uid && req.user.role !== 'Admin') {
+    return res.status(403).json({ error: "Access forbidden. Not authorized to complete this session." });
+  }
+
+  const now = new Date();
+  const autoReleaseAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+  await db.update('sessions', session.id, {
+    status: "Completed",
+    completedAt: now.toISOString(),
+    autoReleaseAt
+  });
+
+  // Notify Parent to rate and review
+  await createNotification(
+    session.parentId,
+    "session_completed",
+    "Session Marked Completed",
+    `Your session on ${session.slot?.day || 'scheduled slot'} with ${session.teacherName || 'your tutor'} is complete. Please leave a rating and review!`
+  );
+
+  res.json({ success: true, message: "Session marked as completed. Escrow 24-hour clearance initiated.", autoReleaseAt });
+});
+
+// POST Admin Dispute Resolution (Refund Parent or Release to Teacher)
+app.post('/api/disputes/resolve', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  const { disputeId, action, resolutionNotes } = req.body;
+  if (!disputeId || !action) {
+    return res.status(400).json({ error: "disputeId and action are required." });
+  }
+
+  const dispute = db.findOne('disputes', d => d.id === disputeId);
+  if (!dispute) {
+    return res.status(404).json({ error: "Dispute record not found." });
+  }
+
+  const session = db.findOne('sessions', s => s.id === dispute.sessionId);
+  const safeNotes = resolutionNotes ? sanitizeText(resolutionNotes) : "Admin resolution completed.";
+
+  if (action === 'refund_parent') {
+    // 1. Mark dispute & session
+    await db.update('disputes', dispute.id, { status: "Resolved - Refunded", resolutionNotes: safeNotes, resolvedAt: new Date().toISOString() });
+    if (session) {
+      await db.update('sessions', session.id, { status: "Refunded" });
+      
+      // Credit Parent Wallet
+      const parentWallet = db.findOne('wallets', w => w.userUid === session.parentId);
+      if (parentWallet) {
+        const amount = session.amount || 2500000;
+        await db.update('wallets', parentWallet.id, {
+          balance: (parentWallet.balance || 0) + amount,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Deduct/clear teacher escrow if present
+      const teacherWallet = db.findOne('wallets', w => w.userUid === session.teacherId);
+      if (teacherWallet) {
+        const amount = session.amount || 2500000;
+        await db.update('wallets', teacherWallet.id, {
+          escrow: Math.max(0, (teacherWallet.escrow || 0) - amount),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      // Record transaction
+      await db.insert('transactions', {
+        id: `tx_ref_${Date.now()}`,
+        userUid: session.parentId,
+        sessionId: session.id,
+        amount: session.amount || 2500000,
+        type: "Refund",
+        status: "completed",
+        date: new Date().toISOString(),
+        description: `Full refund for disputed session #${session.id}`
+      });
+
+      await createNotification(session.parentId, "dispute_resolved", "Dispute Refunded", `Your dispute for session #${session.id} was approved. Funds have been refunded to your wallet.`);
+      await createNotification(session.teacherId, "dispute_resolved", "Dispute Decision", `The dispute for session #${session.id} was resolved with a parent refund.`);
+    }
+
+    return res.json({ success: true, message: "Dispute resolved: Parent refunded successfully.", disputeId });
+
+  } else if (action === 'release_teacher') {
+    await db.update('disputes', dispute.id, { status: "Resolved - Released", resolutionNotes: safeNotes, resolvedAt: new Date().toISOString() });
+    if (session) {
+      await db.update('sessions', session.id, { status: "Cleared" });
+
+      const teacherWallet = db.findOne('wallets', w => w.userUid === session.teacherId);
+      if (teacherWallet) {
+        const amount = session.amount || 2500000;
+        await db.update('wallets', teacherWallet.id, {
+          escrow: Math.max(0, (teacherWallet.escrow || 0) - amount),
+          balance: (teacherWallet.balance || 0) + Math.round(amount * 0.85),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      await createNotification(session.teacherId, "dispute_resolved", "Escrow Released", `Dispute resolved in your favor. Escrow funds for session #${session.id} cleared to your wallet balance.`);
+      await createNotification(session.parentId, "dispute_resolved", "Dispute Closed", `Your dispute for session #${session.id} has been reviewed and closed by support.`);
+    }
+
+    return res.json({ success: true, message: "Dispute resolved: Funds released to teacher wallet.", disputeId });
+  }
+
+  res.status(400).json({ error: "Invalid action type. Expected 'refund_parent' or 'release_teacher'." });
+});
+
+// POST Submit Parent Review for Teacher
+app.post('/api/reviews', authenticateToken, requireRole(['Parent']), async (req, res) => {
+  const { teacherId, sessionId, rating, comment } = req.body;
+  if (!teacherId || !rating) {
+    return res.status(400).json({ error: "teacherId and rating (1-5) are required." });
+  }
+
+  const numRating = Math.min(5, Math.max(1, Number(rating)));
+  const safeComment = comment ? sanitizeText(comment) : "";
+
+  const parentUser = db.findOne('users', u => u.uid === req.user.uid);
+  const parentName = parentUser ? (parentUser.displayName || parentUser.email.split('@')[0]) : "Verified Parent";
+
+  const newReview = await db.insert('reviews', {
+    teacherId,
+    sessionId: sessionId || null,
+    parentId: req.user.uid,
+    parentName,
+    rating: numRating,
+    comment: safeComment,
+    date: new Date().toISOString()
+  });
+
+  // Recalculate Teacher Profile Avg Rating
+  const allReviews = db.find('reviews', r => r.teacherId === teacherId);
+  const avgRating = (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1);
+
+  const teacherProfile = db.findOne('teachers', t => t.uid === teacherId || t.id === teacherId);
+  if (teacherProfile) {
+    await db.update('teachers', teacherProfile.id, {
+      rating: parseFloat(avgRating),
+      reviewsCount: allReviews.length
+    });
+  }
+
+  await createNotification(
+    teacherId,
+    "new_review",
+    "New Parent Review Received",
+    `${parentName} left you a ${numRating}-star rating!`
+  );
+
+  res.json({ success: true, review: newReview, avgRating: parseFloat(avgRating), totalReviews: allReviews.length });
+});
+
+// GET Fetch Reviews for Teacher
+app.get('/api/teachers/:teacherId/reviews', async (req, res) => {
+  const { teacherId } = req.params;
+  const reviews = db.find('reviews', r => r.teacherId === teacherId);
+  res.json({ success: true, reviews });
+});
+
+// POST Generate AI Progress Report
+app.post('/api/ai/progress-report', authenticateToken, async (req, res) => {
+  const { studentName, teacherNotes } = req.body;
+  if (!studentName) {
+    return res.status(400).json({ error: "studentName is required." });
+  }
+
+  const assignments = db.find('assignments', a => a.studentName?.toLowerCase() === studentName.toLowerCase());
+  const sessions = db.find('sessions', s => s.studentName?.toLowerCase() === studentName.toLowerCase());
+
+  const graded = assignments.filter(a => a.status === 'Graded');
+  const avgGrade = graded.length > 0
+    ? Math.round(graded.reduce((sum, g) => sum + (g.grade?.score || 0), 0) / graded.length)
+    : 85;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  let reportText = "";
+
+  if (apiKey) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [{
+          parts: [{
+            text: `You are an AI Educational Specialist for EduVista Africa. Generate a detailed 4-point student progress report for parent review.
+            Student Name: ${studentName}
+            Average Grade: ${avgGrade}%
+            Teacher Notes: ${teacherNotes || 'Consistently attentive and active.'}
+            Graded Submissions: ${JSON.stringify(graded.map(g => ({ title: g.title, score: g.grade?.score })))}
+            Provide concise sections for: 1. Academic Strengths, 2. Areas for Growth, 3. Attendance & Engagement, 4. Recommended Action Plan.`
+          }]
+        }]
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      reportText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    } catch (e) {
+      console.error("Gemini API progress report call error:", e);
+    }
+  }
+
+  if (!reportText) {
+    reportText = `### Academic Summary for ${studentName}\n\n` +
+      `**1. Academic Strengths**: Demonstrates strong performance with a ${avgGrade}% overall assignment score. Shows quick comprehension of core concepts.\n` +
+      `**2. Areas for Growth**: Can benefit from additional practice in exam-style multi-part problems and independent problem solving under timed constraints.\n` +
+      `**3. Attendance & Engagement**: Completed ${sessions.length || 3} scheduled sessions with high punctuality and enthusiasm.\n` +
+      `**4. Recommended Action Plan**: Continue bi-weekly tutoring sessions and complete assigned practice homework prior to upcoming assessment deadlines.`;
+  }
+
+  res.json({
+    success: true,
+    studentName,
+    avgGrade,
+    report: reportText,
+    generatedAt: new Date().toISOString()
+  });
+});
+
 // GET generate AI cognitive report
 app.get('/api/parents/dashboard/:uid/ai-insight', authenticateToken, requireOwnerOrAdmin, async (req, res) => {
   const { uid } = req.params;

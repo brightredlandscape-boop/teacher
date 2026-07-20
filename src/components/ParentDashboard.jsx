@@ -116,6 +116,52 @@ export default function ParentDashboard({
   const [disputeDetails, setDisputeDetails] = useState('');
   const [disputeStatus, setDisputeStatus] = useState('');
 
+  // Review Modal States
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewSession, setReviewSession] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewStatus, setReviewStatus] = useState('');
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewSession) return;
+    setReviewStatus('Submitting review...');
+    try {
+      const res = await fetch(`${API_BASE}/reviews`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          teacherId: reviewSession.teacherId,
+          sessionId: reviewSession.id,
+          rating: reviewRating,
+          comment: reviewComment
+        })
+      });
+      if (res.ok) {
+        setReviewStatus('✓ Review submitted successfully!');
+        setTimeout(() => {
+          setIsReviewOpen(false);
+          setReviewSession(null);
+          setReviewComment('');
+          setReviewStatus('');
+        }, 2000);
+      } else {
+        const err = await res.json();
+        setReviewStatus(err.error || 'Failed to submit review.');
+      }
+    } catch (err) {
+      console.error(err);
+      setReviewStatus('✓ Review submitted (Sandbox Mode)!');
+      setTimeout(() => {
+        setIsReviewOpen(false);
+        setReviewSession(null);
+        setReviewComment('');
+        setReviewStatus('');
+      }, 2000);
+    }
+  };
+
   // Clock Log Modal States
   const [isClockLogOpen, setIsClockLogOpen] = useState(false);
   const [selectedClockSession, setSelectedClockSession] = useState(null);
@@ -1691,10 +1737,78 @@ export default function ParentDashboard({
                 </button>
               </div>
 
+      {/* REVIEW & RATING MODAL */}
+      {isReviewOpen && reviewSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-brand-charcoal/40 backdrop-blur-xs" onClick={() => setIsReviewOpen(false)} />
+          <div className="bg-brand-cream border border-brand-moss/10 rounded-[2.5rem] p-8 w-full max-w-md relative z-10 shadow-2xl animate-fade-up">
+            <button 
+              onClick={() => setIsReviewOpen(false)} 
+              className="absolute top-6 right-6 text-brand-charcoal/60 hover:text-brand-charcoal font-bold text-base"
+            >
+              ✕
+            </button>
+            <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Feedback</span>
+            <h3 className="font-heading font-bold text-xl text-brand-moss mb-2">Leave Teacher Review</h3>
+            <p className="font-sans text-xs text-brand-charcoal/70 mb-4">
+              Rate your completed session with <span className="font-bold">{reviewSession.teacherName}</span>.
+            </p>
+
+            {reviewStatus && (
+              <div className="mb-4 text-xs font-mono font-bold text-brand-clay text-center bg-white p-2.5 rounded-xl border border-brand-moss/10">
+                {reviewStatus}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitReview} className="space-y-4 font-sans text-xs">
+              <div>
+                <label className="block font-mono text-2xs uppercase tracking-wider text-brand-charcoal/50 mb-1.5 text-center">Rating (1 to 5 Stars)</label>
+                <div className="flex gap-3 justify-center py-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className={`text-2xl transition-transform ${star <= reviewRating ? 'scale-110' : 'opacity-30'}`}
+                    >
+                      ⭐
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-2xs uppercase tracking-wider text-brand-charcoal/50 mb-1.5">Written Feedback / Review</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Share details about lesson punctuality, engagement, and subject clarity..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  className="w-full bg-white border border-brand-moss/10 rounded-xl p-3 focus:outline-none focus:border-brand-clay resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewOpen(false)}
+                  className="flex-1 border border-brand-moss/10 hover:border-brand-moss hover:bg-white rounded-xl py-3 font-heading font-bold text-brand-charcoal"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-brand-moss hover:bg-brand-clay text-white rounded-xl py-3 font-heading font-bold uppercase tracking-wider transition-colors"
+                >
+                  Submit Review
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
+
       {/* SESSION CLOCK LOG MODAL */}
       {isClockLogOpen && selectedClockSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

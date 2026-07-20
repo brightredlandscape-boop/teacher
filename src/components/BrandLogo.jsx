@@ -46,10 +46,10 @@ export default function BrandLogo({ light = false, className = '', iconOnly = fa
 
           {/* Text branding */}
           <div className="flex flex-col select-none leading-none justify-center">
-            <span className={`font-heading font-black text-base md:text-lg lg:text-xl tracking-tight uppercase ${light ? 'text-white' : 'text-brand-charcoal'}`}>
+            <span className={`font-heading font-black text-lg md:text-xl lg:text-2xl tracking-tight uppercase ${light ? 'text-white' : 'text-brand-charcoal'}`}>
               EDUVISTA
             </span>
-            <span className={`font-heading font-bold text-[9px] md:text-[10px] lg:text-[11px] tracking-[0.26em] uppercase mt-1 ${light ? 'text-brand-cream/80' : 'text-brand-charcoal/70'}`}>
+            <span className={`font-heading font-bold text-[10px] md:text-[11px] lg:text-[12px] tracking-[0.28em] uppercase mt-1 ${light ? 'text-brand-cream/80' : 'text-brand-charcoal/70'}`}>
               AFRICA
             </span>
           </div>

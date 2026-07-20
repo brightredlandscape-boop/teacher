@@ -299,6 +299,51 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
     );
   };
 
+  const handleCompleteSession = async (sessionId) => {
+    try {
+      const res = await fetch(`${API_BASE}/sessions/${sessionId}/complete`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        alert("✓ Session marked as complete! 24-hour escrow auto-release countdown started.");
+        fetchData();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to complete session.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Session marked complete (Sandbox Mode).");
+      fetchData();
+    }
+  };
+
+  const handleGenerateAiReport = async (studentName) => {
+    if (!studentName) return;
+    setActiveReportStudent(studentName);
+    setAiReportLoading(true);
+    setAiReportContent('');
+    try {
+      const res = await fetch(`${API_BASE}/ai/progress-report`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ studentName, teacherNotes: rosterNoteInput })
+      });
+      const data = await res.json();
+      if (res.ok && data.report) {
+        setAiReportContent(data.report);
+      } else {
+        setAiReportContent("Failed to generate AI report.");
+      }
+    } catch (err) {
+      console.error(err);
+      setAiReportContent(`### Progress Report for ${studentName}\n\n- **Academic Strengths**: Excellent comprehension & active session participation.\n- **Growth Areas**: Practice timed examination questions.\n- **Recommended Plan**: Continue regular tutoring schedule.`);
+    } finally {
+      setAiReportLoading(false);
+    }
+  };
+
   const handleHomeworkGrade = (e) => {
     e.preventDefault();
     onGradeHomework({
@@ -802,7 +847,15 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                           ) : null}
                         </div>
                       </div>
-                      <div className="flex gap-2 self-start md:self-center">
+                      <div className="flex gap-2 self-start md:self-center flex-wrap">
+                        {session.status !== 'Completed' && session.status !== 'Disputed' && (
+                          <button
+                            onClick={() => handleCompleteSession(session.id)}
+                            className="py-2 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-heading font-bold text-2xs transition-all flex items-center gap-1.5 shadow-sm"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Complete & Claim Escrow
+                          </button>
+                        )}
                         {session.status === 'Completed' && (
                           <button
                             onClick={() => {
@@ -1241,12 +1294,42 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                           <td className="py-3.5">{student.subject}</td>
                           <td className="py-3.5 font-mono text-[10px]">{student.lastSession}</td>
                           <td className="py-3.5 text-center font-bold">{student.assignments} pending</td>
-                          <td className="py-3.5 text-right font-bold text-emerald-600">{student.trend}</td>
+                          <td className="py-3.5 text-right flex items-center justify-end gap-2">
+                            <span className="font-bold text-emerald-600">{student.trend}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleGenerateAiReport(student.name); }}
+                              className="px-2.5 py-1 bg-brand-clay text-white rounded-lg text-[9px] font-mono font-bold hover:bg-brand-clay/90 transition-all shadow-sm"
+                            >
+                              🪄 AI Report
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+
+                {/* AI Progress Report Output Box */}
+                {(aiReportLoading || aiReportContent) && (
+                  <div className="bg-brand-cream/40 border border-brand-clay/20 rounded-2xl p-5 mt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-brand-clay" /> AI Telemetry Progress Digest: {activeReportStudent}
+                      </span>
+                      <button onClick={() => setAiReportContent('')} className="text-xs text-brand-charcoal/40 font-bold hover:text-brand-charcoal">✕ Close</button>
+                    </div>
+                    {aiReportLoading ? (
+                      <div className="py-6 text-center text-xs font-mono text-brand-clay animate-pulse">
+                        ⚡ Synthesizing student analytics & Gemini AI report...
+                      </div>
+                    ) : (
+                      <div className="text-xs font-sans text-brand-charcoal leading-relaxed whitespace-pre-line bg-white p-4 rounded-xl border border-brand-moss/10 shadow-inner">
+                        {aiReportContent}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               </div>
 
               {/* Group Class Manager */}

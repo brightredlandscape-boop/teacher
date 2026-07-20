@@ -259,22 +259,39 @@ export default function TeacherPublicProfile({
             availability: {
               Tomorrow: ["1:00 PM", "2:00 PM"],
               Thursday: ["10:00 AM", "11:00 AM"]
-            },
-            reviews: []
-          };
-          setTeacher(mockFatima);
-          document.title = `${mockFatima.name} | Online Home Tutoring & Lessons | EduVista`;
-        } else {
-          setError('Tutor public profile page not found.');
-        }
+        console.warn("Failed to fetch profile:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProfile();
+  }, [username]);
 
-    // Clean up SEO tags when unmounting
+  useEffect(() => {
+    if (!teacher) return;
+    const teacherId = teacher.uid || teacher.id;
+    fetch(`${API_BASE}/teachers/${teacherId}/reviews`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.reviews && data.reviews.length > 0) {
+          setReviews(data.reviews.map(r => ({
+            parent: r.parentName || 'Verified Parent',
+            text: r.comment || 'Great session!',
+            score: r.rating || 5,
+            date: r.date
+          })));
+        } else if (teacher.reviews && teacher.reviews.length > 0) {
+          setReviews(teacher.reviews);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch live reviews:", err);
+        if (teacher.reviews) setReviews(teacher.reviews);
+      });
+  }, [teacher]);
+
+  // Clean up SEO tags when unmounting
+  useEffect(() => {
     return () => {
       document.title = 'EduVista | Premium 1-on-1 Online Home Tutoring & Private Lessons';
       const metaDesc = document.querySelector('meta[name="description"]');

@@ -352,6 +352,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL ? firebaseUser.photoURL.replace('=s96-c', '=s400-c') : '',
           token: token
         });
         if (firebaseUser.displayName) {
@@ -384,6 +385,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         username: role === 'Teacher' ? username : undefined,
         role,
         country,
+        avatar: role === 'Teacher' ? undefined : (googleUserForSetup.photoURL || undefined),
+        photoURL: googleUserForSetup.photoURL || undefined,
         referredBy: refCode || undefined,
         uid: googleUserForSetup.uid,
         eliteCertificate: role === 'Teacher' ? eliteCertificate : undefined

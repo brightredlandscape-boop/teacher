@@ -86,13 +86,29 @@ function sanitizeText(str) {
     .replace(/\//g, '&#x2F;');
 }
 
+function isRawOrUrlKey(k) {
+  const lk = k.toLowerCase();
+  return (
+    lk.includes('password') ||
+    lk === 'rawbody' ||
+    lk === 'bio' ||
+    lk.includes('avatar') ||
+    lk.includes('image') ||
+    lk.includes('photo') ||
+    lk.includes('url') ||
+    lk.includes('link') ||
+    lk.includes('preset') ||
+    lk.includes('email')
+  );
+}
+
 function sanitizeObject(obj) {
   if (Array.isArray(obj)) {
     return obj.map(v => sanitizeObject(v));
   } else if (obj !== null && typeof obj === 'object') {
     return Object.keys(obj).reduce((result, key) => {
-      // Don't sanitize passwords or explicitly raw fields
-      if (key.toLowerCase().includes('password') || key === 'rawBody' || key === 'bio') {
+      // Don't sanitize passwords, URLs, image links, or explicitly raw fields
+      if (isRawOrUrlKey(key)) {
         result[key] = obj[key];
       } else {
         result[key] = sanitizeObject(obj[key]);
@@ -326,7 +342,7 @@ async function guaranteeInitialProfiles() {
       reviewsCount: 0,
       badges: [],
       bio: "",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
+      avatar: "https://ui-avatars.com/api/?name=Dr+Chidi+Johnson&background=1B3B2B&color=fff&size=200&bold=true",
       online: true,
       availability: {},
       languages: [],
@@ -483,7 +499,7 @@ function requireOwnerOrAdmin(req, res, next) {
 
 // Register a new user (Parent or Teacher)
 app.post('/api/auth/register', authRateLimiter, async (req, res) => {
-  const { email, displayName, role, country, password, username: requestedUsername, referredBy, uid: clientUid, eliteCertificate } = req.body;
+  const { email, displayName, role, country, password, username: requestedUsername, referredBy, uid: clientUid, eliteCertificate, avatar, photoURL } = req.body;
   if (!email || !displayName || !role) {
     return res.status(400).json({ error: "Email, display name, and role are required." });
   }
@@ -513,6 +529,8 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     finalRole = 'Admin';
   }
 
+  const userAvatar = avatar || photoURL || null;
+
   const newUser = await db.insert('users', {
     uid,
     email: sanitizedEmail,
@@ -520,6 +538,8 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
     role: finalRole,
     country: sanitizedCountry,
     status: "active",
+    avatar: userAvatar,
+    photoURL: userAvatar,
     salt,
     passwordHash: hash
   });
@@ -557,7 +577,7 @@ app.post('/api/auth/register', authRateLimiter, async (req, res) => {
       reviewsCount: 0,
       badges: eliteCertificate ? ["badge-ai-cert"] : [],
       bio: "",
-      avatar: avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+      avatar: avatar || "",
       coverImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=600&auto=format&fit=crop",
       online: true,
       availability: {
@@ -818,8 +838,13 @@ app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), r
     curricula: curricula || teacher.curricula,
     languages: languages || teacher.languages,
     bio: bio ? sanitizeText(bio) : teacher.bio,
-    avatar: avatar || teacher.avatar
+    avatar: avatar !== undefined ? avatar : teacher.avatar
   });
+
+  const user = db.findOne('users', u => u.uid === uid || u.id === uid);
+  if (user && avatar !== undefined) {
+    await db.update('users', user.id, { avatar, photoURL: avatar });
+  }
 
   res.json(updated);
 });

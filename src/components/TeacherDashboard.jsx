@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ShieldCheck, CheckCircle2, ChevronRight, Activity, Calendar, Download, RefreshCw, Star, MessageSquare, Clipboard, User, Users, Award, Trophy, TrendingUp, Video, Clock, Lock, PlusCircle, FolderOpen, AlertOctagon } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function TeacherDashboard({
   currentUser,
@@ -66,6 +67,8 @@ export default function TeacherDashboard({
   const [customCurriculumInput, setCustomCurriculumInput] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [avatar, setAvatar] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarUploadProgress, setAvatarUploadProgress] = useState(0);
   const [profileMessage, setProfileMessage] = useState('');
   const [currency, setCurrency] = useState('NGN');
   const [timezone, setTimezone] = useState('Africa/Lagos');
@@ -137,6 +140,54 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
       ...extraHeaders,
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dbyb4c1jq';
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'vilb3pi3';
+
+    setAvatarUploading(true);
+    setAvatarUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setAvatarUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          setAvatar(response.secure_url);
+        } else {
+          alert('Upload failed: ' + xhr.statusText);
+        }
+        setAvatarUploading(false);
+      };
+
+      xhr.onerror = () => {
+        alert('Network error during photo upload.');
+        setAvatarUploading(false);
+      };
+
+      xhr.send(formData);
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert('Error occurred during upload.');
+      setAvatarUploading(false);
+    }
   };
 
   const fetchData = async () => {
@@ -1019,6 +1070,35 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
                       <option value="loom">Loom Personal</option>
                       <option value="other">Other / Manual Upload</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="bg-brand-cream/20 p-5 rounded-2xl border border-brand-moss/10">
+                  <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Teacher Profile Photo</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay shrink-0 bg-brand-moss/10 shadow-sm">
+                      <img 
+                        src={getTeacherAvatar(avatar, name)} 
+                        alt={name || 'Teacher Avatar'} 
+                        className="w-full h-full object-cover" 
+                        onError={handleAvatarError(name)}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        disabled={avatarUploading}
+                        className="text-xs text-brand-charcoal/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-brand-moss/10 file:text-brand-moss hover:file:bg-brand-moss/20 cursor-pointer"
+                      />
+                      {avatarUploading && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-brand-clay font-bold animate-pulse">Uploading photo to Cloudinary... {avatarUploadProgress}%</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-brand-charcoal/50">Upload your real, authentic portrait photo for student trust and verification.</p>
+                    </div>
                   </div>
                 </div>
 

@@ -32,6 +32,7 @@ import { translations } from './locales/i18n';
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import BrandLogo from './components/BrandLogo';
+import { getTeacherAvatar } from './utils/avatar';
 
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const Marketplace = lazy(() => import('./components/Marketplace'));
@@ -261,7 +262,7 @@ export default function App() {
               id: s.id,
               teacherId: s.teacherId,
               teacherName: s.teacherName,
-              avatar: s.avatar || matchedTeacher?.avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
+              avatar: getTeacherAvatar(s.avatar || matchedTeacher?.avatar, s.teacherName || matchedTeacher?.name),
               subject: s.subject,
               slot: s.slot,
               cost: s.cost,

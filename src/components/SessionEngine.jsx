@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, AlertTriangle, CheckCircle, Video, MessageSquare, Edit3, Trash2, Send, Star } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function SessionEngine({ 
   bookedSessions, 
@@ -321,9 +322,10 @@ export default function SessionEngine({
                   {/* Video simulation using a placeholder video loop or image */}
                   <div className="absolute inset-0 w-full h-full">
                     <img 
-                      src={activeSession.avatar} 
-                      alt={activeSession.teacherName} 
+                      src={getTeacherAvatar(activeSession.avatar, activeSession.teacherName)} 
+                      alt={activeSession.teacherName || 'Tutor'} 
                       className="w-full h-full object-cover opacity-90 mix-blend-luminosity hover:mix-blend-normal transition-all duration-700" 
+                      onError={handleAvatarError(activeSession.teacherName)}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#121A20]/90 via-transparent to-transparent"></div>
                   </div>

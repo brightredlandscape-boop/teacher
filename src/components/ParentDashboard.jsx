@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Marketplace from './Marketplace';
 import { translations } from '../locales/i18n';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function ParentDashboard({ 
   currentUser,
@@ -862,9 +863,10 @@ export default function ParentDashboard({
                   <div key={session.id} className="bg-brand-cream/30 border border-brand-moss/5 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover-lift">
                     <div className="flex items-center gap-3">
                       <img 
-                        src={session.avatar || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"} 
-                        alt={session.teacherName} 
+                        src={getTeacherAvatar(session.avatar, session.teacherName)} 
+                        alt={session.teacherName || 'Tutor'} 
                         className="w-10 h-10 rounded-full object-cover border border-brand-moss/10"
+                        onError={handleAvatarError(session.teacherName)}
                       />
                       <div>
                         <div className="flex items-center gap-2">

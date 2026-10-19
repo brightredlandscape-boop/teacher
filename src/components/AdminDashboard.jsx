@@ -34,6 +34,7 @@ import {
   Download,
   Percent
 } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function AdminDashboard({ currentUser, selectedCurrency, formatCurrency, convertMinor, onBack }) {
   const API_BASE = '/api';
@@ -246,8 +247,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
               rate: app.rate || 0,
               status: app.status || 'pending_approval',
               videoUrl: app.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ",
-              bio: app.bio || "No biography provided yet.",
-              avatar: app.avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop",
+              avatar: getTeacherAvatar(app.avatar, app.name),
               govId: app.govId || "NGA-ID-9182049",
               degree: app.degree || "B.Ed. Education (Verified)",
               geminiBioScore: app.bio ? Math.min(100, 60 + app.bio.length % 35) : 75,
@@ -1429,9 +1429,10 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                       >
                         <div className="flex items-center gap-3">
                           <img 
-                            src={app.avatar} 
-                            alt={app.name} 
+                            src={getTeacherAvatar(app.avatar, app.name)} 
+                            alt={app.name || 'Tutor'} 
                             className="w-11 h-11 rounded-full object-cover border border-brand-moss/10"
+                            onError={handleAvatarError(app.name)}
                           />
                           <div>
                             <h4 className="font-heading font-bold text-sm text-brand-moss">{app.name}</h4>
@@ -1501,9 +1502,10 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                     </div>
                     <div className="flex items-start gap-4 pb-4 border-b border-brand-moss/5">
                       <img 
-                        src={selectedApp.avatar} 
-                        alt={selectedApp.name} 
+                        src={getTeacherAvatar(selectedApp.avatar, selectedApp.name)} 
+                        alt={selectedApp.name || 'Tutor'} 
                         className="w-16 h-16 rounded-[1.25rem] object-cover border border-brand-moss/10"
+                        onError={handleAvatarError(selectedApp.name)}
                       />
                       <div>
                         <h3 className="font-heading font-bold text-lg text-brand-moss">{selectedApp.name}</h3>

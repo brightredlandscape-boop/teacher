@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle, Play } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function Marketplace({ 
   teachers = [], 
@@ -112,7 +113,12 @@ export default function Marketplace({
                     {idx + 1}
                   </div>
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay bg-brand-moss z-10">
-                    <img src={teacher.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop'} alt={teacher.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={getTeacherAvatar(teacher.avatar, teacher.name)} 
+                      alt={teacher.name || 'Verified Tutor'} 
+                      className="w-full h-full object-cover" 
+                      onError={handleAvatarError(teacher.name)}
+                    />
                   </div>
                   <div className="z-10">
                     <h4 className="font-heading font-bold text-lg text-white flex items-center gap-1.5">
@@ -336,7 +342,12 @@ export default function Marketplace({
                     onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
                     className="w-14 h-14 rounded-full overflow-hidden border border-brand-moss/10 bg-brand-moss/5 cursor-pointer"
                   >
-                    <img src={teacher.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop'} alt={teacher.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={getTeacherAvatar(teacher.avatar, teacher.name)} 
+                      alt={teacher.name || 'Verified Tutor'} 
+                      className="w-full h-full object-cover" 
+                      onError={handleAvatarError(teacher.name)}
+                    />
                   </div>
                   <div>
                     <h3 

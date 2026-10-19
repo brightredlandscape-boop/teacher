@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle, ShieldCheck, Video, Calendar, BookOpen, User } from 'lucide-react';
 import TutorAgreementModal from './TutorAgreementModal';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [step, setStep] = useState(1);
@@ -16,7 +17,7 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
   const [whatsapp, setWhatsapp] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [bio, setBio] = useState('');
-  const [avatar, setAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop');
+  const [avatar, setAvatar] = useState(currentUser?.avatar || '');
 
   // Step 2: Subjects & Curriculums
   const [selectedSubjects, setSelectedSubjects] = useState([]);
@@ -360,7 +361,12 @@ export default function TeacherOnboarding({ currentUser, onComplete, onBack }) {
                 <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Profile Avatar</label>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden border border-brand-moss/20 shrink-0">
-                    <img src={avatar} alt="Avatar Preview" className="w-full h-full object-cover" />
+                    <img 
+                      src={getTeacherAvatar(avatar, name || currentUser?.displayName)} 
+                      alt="Avatar Preview" 
+                      className="w-full h-full object-cover" 
+                      onError={handleAvatarError(name || currentUser?.displayName)}
+                    />
                   </div>
                   <div className="flex-1">
                     <input

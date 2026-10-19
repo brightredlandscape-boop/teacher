@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Calendar, CreditCard, Shield, Clock, Lock } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function BookingModal({ 
   isOpen, 
@@ -439,7 +440,12 @@ export default function BookingModal({
             <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 mb-6 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-brand-moss/10">
-                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={getTeacherAvatar(teacher.avatar, teacher.name)} 
+                    alt={teacher.name || 'Verified Tutor'} 
+                    className="w-full h-full object-cover" 
+                    onError={handleAvatarError(teacher.name)}
+                  />
                 </div>
                 <div>
                   <span className="font-heading font-bold text-sm text-brand-moss">{selectedSubject || '1-on-1'} Trial Class</span>

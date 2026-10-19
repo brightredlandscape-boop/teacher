@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Star, ShieldCheck, Video, Calendar, ArrowLeft, Heart, Languages, MapPin, Award, CheckCircle2, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function TeacherPublicProfile({ 
   username, 
@@ -377,9 +378,10 @@ export default function TeacherPublicProfile({
           <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 md:p-10 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-5">
               <img 
-                src={teacher.avatar} 
-                alt={teacher.name} 
+                src={getTeacherAvatar(teacher.avatar, teacher.name)} 
+                alt={teacher.name || 'Verified Tutor'} 
                 className="w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] object-cover border-2 border-white shadow-md"
+                onError={handleAvatarError(teacher.name)}
               />
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-1">

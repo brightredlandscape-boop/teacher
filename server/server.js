@@ -121,6 +121,25 @@ function sanitizeObject(obj) {
   return obj;
 }
 
+// Teacher avatar helper to ensure authentic images or branded initials fallback
+function getTeacherAvatar(avatar, name = 'Tutor') {
+  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Tutor')}&background=1B3B2B&color=fff&size=200&bold=true`;
+  if (!avatar || typeof avatar !== 'string') {
+    return fallback;
+  }
+  const clean = avatar.trim();
+  if (
+    !clean ||
+    clean.includes('unsplash.com') ||
+    clean.includes('photo-1573496359142') ||
+    clean.includes('photo-1500648767791') ||
+    clean.includes('photo-1472099645785')
+  ) {
+    return fallback;
+  }
+  return clean;
+}
+
 // Global Input Sanitization Middleware to prevent XSS
 app.use((req, res, next) => {
   if (req.body) req.body = sanitizeObject(req.body);
@@ -772,6 +791,11 @@ app.get('/api/teachers', (req, res) => {
     teachers = teachers.filter(t => t.location.toLowerCase().includes(location.toLowerCase()));
   }
   
+  teachers = teachers.map(t => ({
+    ...t,
+    avatar: getTeacherAvatar(t.avatar, t.name)
+  }));
+
   res.json(teachers);
 });
 
@@ -782,7 +806,10 @@ app.get('/api/teachers/:uid', (req, res) => {
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });
   }
-  res.json(teacher);
+  res.json({
+    ...teacher,
+    avatar: getTeacherAvatar(teacher.avatar, teacher.name)
+  });
 });
 
 // POST optimize bio using Gemini AI
@@ -1046,7 +1073,10 @@ app.get('/api/teachers/by-username/:username', (req, res) => {
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });
   }
-  res.json(teacher);
+  res.json({
+    ...teacher,
+    avatar: getTeacherAvatar(teacher.avatar, teacher.name)
+  });
 });
 
 
@@ -2123,7 +2153,11 @@ app.get('/api/leaderboard', (req, res) => {
   // Sort logic: Higher rating, higher reviewsCount, and badges
   teachers = teachers.map(t => {
     let score = (t.rating * 10) + ((t.reviewsCount || 0) * 5) + ((t.badges || []).length * 15);
-    return { ...t, leaderboardScore: score };
+    return { 
+      ...t, 
+      avatar: getTeacherAvatar(t.avatar, t.name),
+      leaderboardScore: score 
+    };
   });
   teachers.sort((a, b) => b.leaderboardScore - a.leaderboardScore);
   res.json(teachers.slice(0, 3)); // Return Top 3

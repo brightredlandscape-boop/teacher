@@ -423,7 +423,7 @@ export const db = {
 // Seed initial data for live site
 export async function seedDatabase() {
   // Force reset data directories and files to 0 metrics for live site
-  const collectionsToWipe = ['sessions', 'assignments', 'transactions', 'disputes', 'reviews', 'teachers'];
+  const collectionsToWipe = ['sessions', 'assignments', 'transactions', 'disputes', 'reviews'];
   for (const col of collectionsToWipe) {
     CACHE[col] = [];
     const filepath = getFilePath(col);

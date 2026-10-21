@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle, Play } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Star, ShieldCheck, CheckCircle2, Award, Zap, HelpCircle, Play, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
 import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 export default function Marketplace({ 
@@ -16,13 +16,76 @@ export default function Marketplace({
   const [curriculumFilter, setCurriculumFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [leaderboard, setLeaderboard] = useState([]);
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const [countdownSeconds, setCountdownSeconds] = useState(60);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetch('/api/leaderboard')
       .then(res => res.json())
-      .then(data => setLeaderboard(Array.isArray(data) ? data : []))
-      .catch(console.error);
-  }, []);
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLeaderboard(data);
+        } else if (Array.isArray(teachers) && teachers.length > 0) {
+          // Fallback to active teachers in props
+          const sorted = [...teachers]
+            .filter(t => !t.status || t.status === 'verified' || t.status === 'active')
+            .sort((a, b) => (b.rating || 5) - (a.rating || 5));
+          setLeaderboard(sorted);
+        }
+      })
+      .catch(err => {
+        console.warn("Failed to fetch leaderboard, falling back to teachers props:", err);
+        if (Array.isArray(teachers) && teachers.length > 0) {
+          setLeaderboard(teachers.filter(t => !t.status || t.status === 'verified' || t.status === 'active'));
+        }
+      });
+  }, [teachers]);
+
+  // 1-minute (60 seconds) automatic rotation timer
+  useEffect(() => {
+    if (!leaderboard || leaderboard.length <= 3) return;
+
+    const timer = setInterval(() => {
+      setCountdownSeconds(prev => {
+        if (prev <= 1) {
+          setRotationIndex(curr => (curr + 3) % leaderboard.length);
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [leaderboard]);
+
+  const handleNextBatch = () => {
+    if (!leaderboard || leaderboard.length <= 3) return;
+    setRotationIndex(curr => (curr + 3) % leaderboard.length);
+    setCountdownSeconds(60);
+  };
+
+  const handlePrevBatch = () => {
+    if (!leaderboard || leaderboard.length <= 3) return;
+    setRotationIndex(curr => (curr - 3 + leaderboard.length) % leaderboard.length);
+    setCountdownSeconds(60);
+  };
+
+  // Slice currently featured batch of 3 educators
+  const currentFeaturedBatch = useMemo(() => {
+    if (!leaderboard || leaderboard.length === 0) return [];
+    if (leaderboard.length <= 3) {
+      return leaderboard.map((t, i) => ({ ...t, rank: i + 1 }));
+    }
+    const batch = [];
+    for (let i = 0; i < Math.min(3, leaderboard.length); i++) {
+      const idx = (rotationIndex + i) % leaderboard.length;
+      batch.push({
+        ...leaderboard[idx],
+        rank: idx + 1
+      });
+    }
+    return batch;
+  }, [leaderboard, rotationIndex]);
 
   // Filter teachers based on state
   const filteredTeachers = (teachers || []).filter(t => {
@@ -85,34 +148,68 @@ export default function Marketplace({
         </p>
       </div>
 
-      {/* Leaderboard Section */}
-      {leaderboard.length > 0 && (
+      {/* Leaderboard Section with 1-Minute Live Auto-Rotation */}
+      {currentFeaturedBatch.length > 0 && (
         <div className="mb-16">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="font-heading font-bold text-2xl text-brand-moss flex items-center gap-2">
-                <Award className="w-6 h-6 text-brand-clay" /> Featured Elite Tutors
-              </h3>
-              <p className="font-sans text-xs text-brand-charcoal/60 mt-1">This week's top-rated educators by parent reviews and platform achievements.</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-heading font-bold text-2xl text-brand-moss flex items-center gap-2">
+                  <Award className="w-6 h-6 text-brand-clay" /> Featured Elite Tutors
+                </h3>
+                {leaderboard.length > 3 && (
+                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[9px] uppercase tracking-wider font-bold py-0.5 px-2.5 rounded-full flex items-center gap-1.5 animate-pulse">
+                    <RotateCw className="w-3 h-3 animate-spin text-emerald-600" /> Rotates in {countdownSeconds}s
+                  </span>
+                )}
+              </div>
+              <p className="font-sans text-xs text-brand-charcoal/60 mt-1">
+                Rotates every 1 minute highlighting top-rated African educators by verified parent achievements.
+              </p>
             </div>
-            <span className="bg-[#FEF3C7] text-[#92400E] font-mono text-[10px] uppercase tracking-wider font-bold py-1.5 px-3 rounded-full border border-[#FDE68A]">
-              Top 3 Global
-            </span>
+
+            <div className="flex items-center gap-2">
+              {leaderboard.length > 3 && (
+                <div className="flex items-center bg-white border border-brand-moss/10 rounded-full px-2 py-1 shadow-xs gap-1">
+                  <button
+                    onClick={handlePrevBatch}
+                    aria-label="Previous tutors"
+                    className="p-1 rounded-full text-brand-moss hover:bg-brand-moss/10 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-mono text-[10px] font-bold text-brand-charcoal/60 px-1.5">
+                    {Math.floor(rotationIndex / 3) + 1} / {Math.ceil(leaderboard.length / 3)}
+                  </span>
+                  <button
+                    onClick={handleNextBatch}
+                    aria-label="Next tutors"
+                    className="p-1 rounded-full text-brand-moss hover:bg-brand-moss/10 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <span className="bg-[#FEF3C7] text-[#92400E] font-mono text-[10px] uppercase tracking-wider font-bold py-1.5 px-3 rounded-full border border-[#FDE68A] whitespace-nowrap shadow-xs">
+                ★ Top Global Showcase
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {leaderboard.map((teacher, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-500">
+            {currentFeaturedBatch.map((teacher, idx) => {
               const teacherId = teacher.username || teacher.uid || teacher.id;
+              const displayRank = teacher.rank || (idx + 1);
               return (
                 <div 
                   key={teacher.id || teacher.uid || idx}
                   onClick={() => onTeacherSelect && onTeacherSelect(teacherId)}
-                  className="bg-brand-charcoal text-brand-cream border border-brand-cream/10 rounded-3xl p-5 flex items-center gap-4 cursor-pointer hover:border-brand-clay/50 transition-colors shadow-lg shadow-brand-charcoal/20 relative overflow-hidden"
+                  className="bg-brand-charcoal text-brand-cream border border-brand-cream/10 rounded-3xl p-5 flex items-center gap-4 cursor-pointer hover:border-brand-clay/50 transition-all duration-300 shadow-lg shadow-brand-charcoal/20 relative overflow-hidden group hover:-translate-y-1"
                 >
-                  <div className="absolute -right-6 -top-6 text-brand-cream/5 font-heading font-bold text-9xl pointer-events-none">
-                    {idx + 1}
+                  <div className="absolute -right-6 -top-6 text-brand-cream/5 group-hover:text-brand-clay/10 transition-colors font-heading font-bold text-9xl pointer-events-none">
+                    {displayRank}
                   </div>
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay bg-brand-moss z-10">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-brand-clay bg-brand-moss z-10 shrink-0 shadow-md">
                     <img 
                       src={getTeacherAvatar(teacher.avatar, teacher.name)} 
                       alt={teacher.name || 'Verified Tutor'} 
@@ -120,16 +217,21 @@ export default function Marketplace({
                       onError={handleAvatarError(teacher.name)}
                     />
                   </div>
-                  <div className="z-10">
-                    <h4 className="font-heading font-bold text-lg text-white flex items-center gap-1.5">
-                      {teacher.name || 'Elite Tutor'}
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <div className="z-10 min-w-0 flex-1">
+                    <h4 className="font-heading font-bold text-lg text-white flex items-center gap-1.5 truncate">
+                      <span className="truncate">{teacher.name || 'Elite Tutor'}</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     </h4>
                     <div className="flex items-center text-brand-clay mt-1">
-                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <Star className="w-3.5 h-3.5 fill-current shrink-0" />
                       <span className="font-heading font-bold text-xs ml-1 text-white">{teacher.rating || '5.0'}</span>
-                      <span className="text-xs text-brand-cream/50 ml-1">({teacher.reviewsCount || 0})</span>
+                      <span className="text-xs text-brand-cream/50 ml-1">({teacher.reviewsCount || 0} reviews)</span>
                     </div>
+                    {teacher.subjects && teacher.subjects.length > 0 && (
+                      <div className="text-[10px] text-brand-cream/60 truncate mt-1">
+                        {teacher.subjects.slice(0, 2).join(' · ')}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

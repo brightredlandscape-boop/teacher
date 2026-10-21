@@ -3,6 +3,7 @@ import { X, Mail, User, Shield, Lock, Phone, Link2, Clock, Video, FileText, Came
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import BrandLogo from './BrandLogo';
+import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
 const Linkedin = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -30,7 +31,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const [whatsapp, setWhatsapp] = useState('');
   const [nin, setNin] = useState('');
   const [linkedin, setLinkedin] = useState('');
-  const [avatar, setAvatar] = useState('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop');
+  const [avatar, setAvatar] = useState('');
   const [govIdUrl, setGovIdUrl] = useState('');
   const [cvUrl, setCvUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
@@ -973,7 +974,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                   <Camera className="w-3.5 h-3.5 text-brand-clay" /> Profile Picture Upload *
                 </label>
                 <div className="flex items-center gap-4 border border-dashed border-brand-moss/20 rounded-xl p-3 bg-white">
-                  <img src={avatar} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-brand-moss/10" />
+                  <img src={getTeacherAvatar(avatar, name)} onError={handleAvatarError(name)} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-brand-moss/10" />
                   <div className="flex-1">
                     <input 
                       type="file" 

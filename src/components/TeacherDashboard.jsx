@@ -257,7 +257,7 @@ Conclusion: Trajectory remains fully on-track to WAEC/JAMB exam standards.`);
         reviewsCount: 1,
         badges: ["badge-verified"],
         bio: "Bio description here.",
-        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop"
+        avatar: ""
       });
     }
   };

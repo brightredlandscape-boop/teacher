@@ -170,7 +170,7 @@ export default function App() {
       reviewsCount: 247,
       badges: ["badge-verified", "badge-top-rated", "badge-bg-checked"],
       bio: "12 years teaching mathematics preparation. Specializes in algebra speed calculations and IGCSE/WAEC exam setups.",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
+      avatar: "",
       coverImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop",
       online: true,
       reviews: [

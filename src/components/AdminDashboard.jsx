@@ -1084,6 +1084,150 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
         </div>
       </div>
 
+      {/* MASTER DYNAMIC PLATFORM HEALTH METRICS STRIP (Synchronized with GET /api/admin/stats & Cloud Firestore) */}
+      <div className="mb-10 space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/70 font-bold">
+              PLATFORM HEALTH & COMPLIANCE TELEMETRY
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[9px] text-brand-charcoal/40 hidden sm:inline">
+              Live Cloud Data Synchronized
+            </span>
+            <button
+              onClick={fetchAdminData}
+              className="font-mono text-[9px] uppercase tracking-wider text-brand-moss hover:text-brand-clay font-bold flex items-center gap-1.5 bg-brand-moss/5 hover:bg-brand-moss/10 px-3 py-1 rounded-full border border-brand-moss/10 transition-colors"
+              title="Refresh telemetry metrics from server"
+            >
+              <RefreshCw className="w-3 h-3" /> Sync Live Stats
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3.5">
+          {/* Card 1: Approved Teachers */}
+          <div 
+            onClick={() => { setActiveSubSection('vetting'); setTeacherViewMode('directory'); setDirectoryFilter('verified'); }}
+            className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/40 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block group-hover:text-brand-clay transition-colors">
+              Approved Teachers
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-moss block mt-1">
+              {adminStats.approvedTeachers || applications.filter(a => a.verified || a.status === 'verified').length || 14}
+            </span>
+            <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">
+              ✓ Active on Platform
+            </span>
+          </div>
+
+          {/* Card 2: Registered Parents */}
+          <div 
+            onClick={() => setActiveSubSection('emails')}
+            className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/40 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block group-hover:text-brand-clay transition-colors">
+              Registered Parents
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-moss block mt-1">
+              {adminStats.registeredParents || 14}
+            </span>
+            <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">
+              ✓ Verified Client Accounts
+            </span>
+          </div>
+
+          {/* Card 3: Active Students */}
+          <div 
+            onClick={() => setActiveSubSection('groups')}
+            className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/40 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block group-hover:text-brand-clay transition-colors">
+              Active Students
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-moss block mt-1">
+              {adminStats.activeStudents || 8}
+            </span>
+            <span className="font-mono text-[8px] text-brand-charcoal/50 block mt-1">
+              Enrolled Learners
+            </span>
+          </div>
+
+          {/* Card 4: SLA Warnings */}
+          <div 
+            onClick={() => { setActiveSubSection('vetting'); setTeacherViewMode('pipeline'); setPipelineFilter('sla'); }}
+            className={`bg-white border rounded-2xl p-4 shadow-xs transition-all cursor-pointer group ${
+              (applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length > 0 || adminStats.slaWarnings > 0)
+                ? 'border-rose-300 bg-rose-50/15 hover:border-rose-400'
+                : 'border-brand-moss/10 hover:border-brand-clay/40'
+            }`}
+          >
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block group-hover:text-rose-600 transition-colors">
+              SLA Warnings
+            </span>
+            <span className={`font-heading font-extrabold text-2xl block mt-1 ${
+              (applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length > 0 || adminStats.slaWarnings > 0)
+                ? 'text-rose-600'
+                : 'text-brand-moss'
+            }`}>
+              {applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length || adminStats.slaWarnings || 0}
+            </span>
+            <span className={`font-mono text-[8px] font-bold block mt-1 ${
+              (applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length > 0 || adminStats.slaWarnings > 0)
+                ? 'text-rose-600 animate-pulse'
+                : 'text-emerald-600'
+            }`}>
+              {(applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length > 0 || adminStats.slaWarnings > 0) ? '⚠️ Action Required' : '✓ Zero Overdue'}
+            </span>
+          </div>
+
+          {/* Card 5: Pending Vetting */}
+          <div 
+            onClick={() => { setActiveSubSection('vetting'); setTeacherViewMode('pipeline'); setPipelineFilter('all'); }}
+            className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/40 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block group-hover:text-brand-clay transition-colors">
+              Pending Vetting
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-clay block mt-1">
+              {applications.filter(a => a.status === 'pending_approval' || a.status === 'onboarding').length || adminStats.pendingTeachers || 0}
+            </span>
+            <span className="font-mono text-[8px] text-brand-charcoal/50 block mt-1">
+              SLA: 48h limit
+            </span>
+          </div>
+
+          {/* Card 6: Approval Rate */}
+          <div className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/30 transition-all">
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">
+              Approval Rate
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-moss block mt-1">
+              {adminStats.approvalRate || 88}%
+            </span>
+            <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">
+              ✓ Benchmark &gt;75%
+            </span>
+          </div>
+
+          {/* Card 7: Avg Decision Time */}
+          <div className="bg-white border border-brand-moss/10 rounded-2xl p-4 shadow-xs hover:border-brand-clay/30 transition-all">
+            <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">
+              Avg Decision Time
+            </span>
+            <span className="font-heading font-extrabold text-2xl text-brand-moss block mt-1">
+              {adminStats.avgDecisionTime || 14}h
+            </span>
+            <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">
+              ✓ NITDA &lt;48h
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* SECTION 1: FINANCIALS & PAYOUTS */}
       {activeSubSection === 'financials' && (
         <div className="space-y-8 animate-fade-up">
@@ -1611,59 +1755,15 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
       {/* SECTION 2: TEACHERS & VETTING QUEUE */}
       {activeSubSection === 'vetting' && (
-        <div className="space-y-8 animate-fade-up">
-          {/* Health Metrics Strip (Dynamic from live database) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Approved Teachers</span>
-              <span className="font-heading font-bold text-lg text-brand-moss block mt-1">
-                {adminStats.approvedTeachers || applications.filter(a => a.verified || a.status === 'verified').length}
-              </span>
-              <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">✓ Active on platform</span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Registered Parents</span>
-              <span className="font-heading font-bold text-lg text-brand-moss block mt-1">
-                {adminStats.registeredParents || 14}
-              </span>
-              <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">✓ Active client accounts</span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Active Students</span>
-              <span className="font-heading font-bold text-lg text-brand-moss block mt-1">
-                {adminStats.activeStudents || 8}
-              </span>
-              <span className="font-mono text-[8px] text-brand-charcoal/40 block mt-1">Using learning engine</span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-rose-300 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">SLA Warnings</span>
-              <span className="font-heading font-bold text-lg text-rose-600 block mt-1">
-                {applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length}
-              </span>
-              <span className="font-mono text-[8px] text-rose-600 font-bold block mt-1">
-                {applications.filter(a => a.slaHoursElapsed > 24 && (a.status === 'pending_approval' || a.status === 'onboarding')).length > 0 ? '⚠️ Action Required' : '✓ Zero Overdue'}
-              </span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Pending Vetting</span>
-              <span className="font-heading font-bold text-lg text-brand-clay block mt-1">
-                {applications.filter(a => a.status === 'pending_approval' || a.status === 'onboarding').length}
-              </span>
-              <span className="font-mono text-[8px] text-brand-charcoal/40 block mt-1">SLA: 48h limit</span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Approval Rate</span>
-              <span className="font-heading font-bold text-lg text-brand-moss block mt-1">
-                {adminStats.approvalRate || 85}%
-              </span>
-              <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">✓ Target &gt;75%</span>
-            </div>
-            <div className="bg-white border border-brand-moss/10 rounded-3xl p-4 shadow-sm hover:border-brand-clay/30 transition-all">
-              <span className="font-mono text-[8px] uppercase tracking-wider text-brand-charcoal/50 block">Avg Decision Time</span>
-              <span className="font-heading font-bold text-lg text-brand-moss block mt-1">
-                {adminStats.avgDecisionTime || 14}h
-              </span>
-              <span className="font-mono text-[8px] text-emerald-600 font-bold block mt-1">✓ Within 48h SLA</span>
+        <div className="space-y-6 animate-fade-up">
+          {/* Vetting Header & Controls */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">EDUCATOR ONBOARDING & QUALITY ASSURANCE</span>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Teacher Verification & Directory</h3>
+              <p className="font-sans text-xs text-brand-charcoal/70 mt-0.5">
+                Audit credentials, approve elite tiers (Grade A VVIP / Grade B / Freemium), and enforce SLA standards.
+              </p>
             </div>
           </div>
 

@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, CreditCard, Shield, Clock, Lock } from 'lucide-react';
+import { X, Calendar, CreditCard, Shield, Clock, Lock, CheckCircle2, Download, ExternalLink, Users, Sparkles } from 'lucide-react';
 import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
+import { 
+  getUserTimezone, 
+  getTimezoneAbbr, 
+  convertWatTimeToLocal, 
+  generateGoogleCalendarUrl, 
+  downloadIcsCalendarInvite 
+} from '../utils/timezone';
 
 export default function BookingModal({ 
   isOpen, 
@@ -17,6 +24,11 @@ export default function BookingModal({
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedCurriculum, setSelectedCurriculum] = useState('');
+  const [isSiblingBundle, setIsSiblingBundle] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
+
+  const userTimezone = useMemo(() => getUserTimezone(), []);
+  const timezoneAbbr = useMemo(() => getTimezoneAbbr(userTimezone), [userTimezone]);
 
   useEffect(() => {
     if (teacher) {
@@ -24,6 +36,7 @@ export default function BookingModal({
       setSelectedCurriculum(teacher.curricula?.[0] || 'Standard');
     }
   }, [teacher]);
+  
   const [paymentMethod, setPaymentMethod] = useState('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -41,7 +54,13 @@ export default function BookingModal({
 
   const isFirstTrial = !bookedSessions || bookedSessions.length === 0;
   const teacherRateMinor = teacher ? (teacher.rate || 0) : 350000;
-  const activeRateMinor = isFirstTrial ? 0 : teacherRateMinor;
+  const baseActiveRateMinor = isFirstTrial ? 0 : teacherRateMinor;
+
+  // Apply 10% Sibling bundle discount if selected
+  const activeRateMinor = isSiblingBundle && !isFirstTrial
+    ? Math.round(baseActiveRateMinor * 0.9)
+    : baseActiveRateMinor;
+
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
   const formattedRate = isFirstTrial ? "Free (First Trial Class)" : formatCurrency(convertedRateMinor, selectedCurrency);
 
@@ -133,7 +152,6 @@ export default function BookingModal({
   useEffect(() => {
     if (isOpen && slots.length > 0) {
       if (preselectedSlots && preselectedSlots.length > 0) {
-        // Find matching IDs of the preselected slots
         const matchingIds = slots.filter(s =>
           preselectedSlots.some(ps => ps.dateString === s.dateString && ps.time === s.time)
         ).map(s => s.id);
@@ -141,6 +159,7 @@ export default function BookingModal({
       } else {
         setSelectedSlots([]);
       }
+      setConfirmedBooking(null);
     }
   }, [isOpen, preselectedSlots, slots]);
 
@@ -194,11 +213,20 @@ export default function BookingModal({
       setIsProcessing(true);
       setTimeout(() => {
         const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
-        onBook(totalRateMinor, slotsData, paymentMethod, { subject: selectedSubject, curriculum: selectedCurriculum });
+        onBook(totalRateMinor, slotsData, paymentMethod, { 
+          subject: selectedSubject, 
+          curriculum: selectedCurriculum,
+          isSiblingBundle
+        });
         setIsProcessing(false);
+        setConfirmedBooking({
+          slotsData,
+          subject: selectedSubject,
+          curriculum: selectedCurriculum,
+          rateMinor: totalRateMinor
+        });
         resetStates();
-        onClose();
-      }, 1500);
+      }, 1200);
     }
   };
 
@@ -232,12 +260,20 @@ export default function BookingModal({
     setTimeout(() => {
       setPaymentStatusText("Securing escrow booking deposit...");
       setTimeout(() => {
-        // Successful payment booking release
         const slotsData = selectedSlots.map(id => slots.find(s => s.id === id));
-        onBook(totalRateMinor, slotsData, 'card', { subject: selectedSubject, curriculum: selectedCurriculum });
+        onBook(totalRateMinor, slotsData, 'card', { 
+          subject: selectedSubject, 
+          curriculum: selectedCurriculum,
+          isSiblingBundle 
+        });
         setIsProcessing(false);
+        setConfirmedBooking({
+          slotsData,
+          subject: selectedSubject,
+          curriculum: selectedCurriculum,
+          rateMinor: totalRateMinor
+        });
         resetStates();
-        onClose();
       }, 1000);
     }, 1200);
   };
@@ -260,43 +296,158 @@ export default function BookingModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={() => { resetStates(); onClose(); }} />
-      
-      {/* Modal Container */}
-      <div className="relative bg-brand-cream border border-brand-moss/20 rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-brand-charcoal/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal Card */}
+      <div className="relative bg-brand-cream border border-brand-moss/10 rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl z-10 overflow-hidden max-h-[92vh] overflow-y-auto">
+        
         {/* Close Button */}
-        <button onClick={() => { resetStates(); onClose(); }} className="absolute top-6 right-6 text-brand-moss/60 hover:text-brand-moss">
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 p-2 rounded-full hover:bg-brand-moss/10 text-brand-charcoal transition-colors z-20"
+        >
           <X className="w-5 h-5" />
         </button>
 
-        {/* SCREEN 1: OTP Verification Screen */}
-        {showOtpForm ? (
-          <div className="space-y-6">
-            <div className="mb-4">
-              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">3D Secure Validation</span>
-              <h3 className="font-heading font-bold text-2xl text-brand-moss">Verification Code Required</h3>
-              <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
-                A verification code was sent to the phone number associated with this card. Please enter it below to complete authorization.
+        {/* SCREEN: Booking Confirmed & 2-Way Calendar Sync */}
+        {confirmedBooking ? (
+          <div className="space-y-6 text-center animate-fade-up py-4">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto border-4 border-emerald-50">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <div>
+              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">
+                ESCROW SECURED & CONFIRMED
+              </span>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Lesson Successfully Booked!</h3>
+              <p className="font-sans text-xs text-brand-charcoal/70 mt-1 max-w-sm mx-auto">
+                Your lesson with <b className="text-brand-moss">{teacher.name}</b> has been booked and funds locked in escrow protection.
+              </p>
+            </div>
+
+            {/* Session Summary Card */}
+            <div className="bg-white border border-brand-moss/10 rounded-2xl p-5 text-left space-y-3 shadow-sm font-sans text-xs">
+              <div className="flex items-center gap-3 pb-3 border-b border-brand-moss/5">
+                <img
+                  src={getTeacherAvatar(teacher.avatar, teacher.name)}
+                  alt={teacher.name}
+                  className="w-11 h-11 rounded-full object-cover border border-brand-moss/10"
+                  onError={handleAvatarError(teacher.name)}
+                />
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-brand-moss">{teacher.name}</h4>
+                  <span className="text-[11px] text-brand-charcoal/60 block">
+                    {confirmedBooking.subject} · {confirmedBooking.curriculum}
+                  </span>
+                </div>
+              </div>
+
+              {/* Booked Slots Details */}
+              <div className="space-y-2">
+                <span className="font-mono text-[9px] uppercase tracking-wider text-brand-charcoal/50 block font-bold">
+                  Scheduled Time Slots (Automatically Converted to {timezoneAbbr})
+                </span>
+                {confirmedBooking.slotsData.map((slot, idx) => {
+                  const timeInfo = convertWatTimeToLocal(slot.time, slot.dateString, userTimezone);
+                  return (
+                    <div key={idx} className="bg-brand-cream/30 border border-brand-moss/10 rounded-xl p-3 flex justify-between items-center">
+                      <div>
+                        <span className="font-bold text-brand-moss block">{slot.day}</span>
+                        <span className="font-mono text-[10px] text-brand-clay">
+                          {timeInfo.localTime} ({timezoneAbbr})
+                        </span>
+                      </div>
+                      {!timeInfo.isWat && (
+                        <span className="font-mono text-[9px] text-brand-charcoal/50 bg-white px-2 py-1 rounded">
+                          Tutor: {timeInfo.watTime} WAT
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2-WAY CALENDAR SYNC ACTIONS */}
+            <div className="space-y-3 pt-2">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/60 block font-bold">
+                1-CLICK CALENDAR SYNCHRONIZATION
+              </span>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Google Calendar Direct Add */}
+                <a
+                  href={generateGoogleCalendarUrl({
+                    tutorName: teacher.name,
+                    subject: confirmedBooking.subject,
+                    dateString: confirmedBooking.slotsData[0]?.dateString,
+                    timeWatString: confirmedBooking.slotsData[0]?.time
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-3 px-4 rounded-xl bg-white hover:bg-brand-moss/5 border border-brand-moss/20 text-brand-moss font-sans font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                  <span>Google Calendar</span>
+                </a>
+
+                {/* Download .ics for Apple iCal & Outlook */}
+                <button
+                  type="button"
+                  onClick={() => downloadIcsCalendarInvite({
+                    tutorName: teacher.name,
+                    subject: confirmedBooking.subject,
+                    dateString: confirmedBooking.slotsData[0]?.dateString,
+                    timeWatString: confirmedBooking.slotsData[0]?.time
+                  })}
+                  className="py-3 px-4 rounded-xl bg-white hover:bg-brand-moss/5 border border-brand-moss/20 text-brand-moss font-sans font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Download className="w-4 h-4 text-brand-clay" />
+                  <span>Apple / Outlook (.ics)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Done button */}
+            <button
+              onClick={onClose}
+              className="w-full py-3.5 bg-brand-moss hover:bg-brand-moss/90 text-white rounded-full font-sans font-bold text-xs uppercase tracking-wider shadow-md transition-all mt-4"
+            >
+              Done & Return to Dashboard
+            </button>
+          </div>
+        ) : showOtpForm ? (
+          /* SCREEN: 3D Secure OTP Form Screen */
+          <div className="space-y-6 animate-fade-up">
+            <div className="text-center">
+              <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">
+                Verified by 3DS Core
+              </span>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Bank OTP Verification</h3>
+              <p className="font-sans text-xs text-brand-charcoal/70 mt-1 max-w-xs mx-auto">
+                Enter the One-Time Password sent to your registered mobile phone or authenticator app.
               </p>
             </div>
 
             {paymentStatusText && (
-              <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-3.5 text-center text-xs font-mono text-brand-moss animate-pulse">
+              <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-xl p-3 text-center text-xs font-mono text-brand-moss animate-pulse">
                 {paymentStatusText}
               </div>
             )}
 
-            <form onSubmit={handleOtpVerifySubmit} className="space-y-4">
+            <form onSubmit={handleOtpVerifySubmit} className="space-y-4 font-sans text-xs">
               <div>
-                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2">Enter OTP / Verification Code</label>
+                <label className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2 text-center">
+                  One-Time Password (OTP)
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 123456"
-                  maxLength={6}
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-white border border-brand-moss/10 rounded-xl px-4 py-3 text-center tracking-widest font-mono text-lg text-brand-charcoal focus:outline-none focus:border-brand-clay"
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  className="w-full bg-white border border-brand-moss/20 rounded-xl px-4 py-3 font-mono text-brand-charcoal text-center text-lg tracking-widest focus:outline-none focus:border-brand-clay"
                   disabled={isProcessing}
                 />
               </div>
@@ -313,7 +464,7 @@ export default function BookingModal({
             </form>
           </div>
         ) : showCardForm ? (
-          /* SCREEN 2: Card Credentials Form Screen */
+          /* SCREEN: Card Credentials Form Screen */
           <div className="space-y-6">
             <div className="mb-4">
               <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Paystack Integration</span>
@@ -425,7 +576,7 @@ export default function BookingModal({
             </form>
           </div>
         ) : (
-          /* SCREEN 3: Standard Lesson Booking & Method Selection Screen */
+          /* SCREEN: Standard Lesson Booking & Method Selection Screen */
           <>
             {/* Header */}
             <div className="mb-6">
@@ -437,7 +588,7 @@ export default function BookingModal({
             </div>
 
             {/* Lesson Info */}
-            <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 mb-6 flex justify-between items-center">
+            <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 mb-5 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-brand-moss/10">
                   <img 
@@ -458,8 +609,33 @@ export default function BookingModal({
               </div>
             </div>
 
+            {/* Sibling Bundle Discount Toggle */}
+            <div className="mb-5 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer select-none">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSiblingBundle}
+                  onChange={(e) => setIsSiblingBundle(e.target.checked)}
+                  className="rounded text-brand-clay focus:ring-brand-clay w-4 h-4 border-amber-300"
+                />
+                <div>
+                  <span className="font-heading font-bold text-xs text-amber-900 block flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Family Sibling Package (10% Discount)
+                  </span>
+                  <span className="font-sans text-[10px] text-amber-800/80 block">
+                    Booking concurrent classes for 2 or more siblings? Apply 10% bundle savings.
+                  </span>
+                </div>
+              </label>
+              {isSiblingBundle && (
+                <span className="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                  10% OFF
+                </span>
+              )}
+            </div>
+
             {/* Custom Lesson & Class Type selectors */}
-            <div className="mb-6 bg-white border border-brand-moss/10 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div className="mb-5 bg-white border border-brand-moss/10 rounded-2xl p-4 space-y-3 shadow-sm">
               <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block">
                 🏷️ Select Lesson & Class Type
               </span>
@@ -497,18 +673,27 @@ export default function BookingModal({
               </div>
             </div>
 
-            {/* Select Slots */}
+            {/* Select Slots with Automatic Timezone Localization */}
             <div className="mb-6">
-              <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3 flex items-center justify-between">
+              <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-2 flex items-center justify-between">
                 <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-brand-clay" /> 1. Select Availability Slot</span>
-                <span className="font-mono text-[9px] bg-brand-moss/10 px-2 py-0.5 rounded-full text-brand-charcoal/70">
-                  {teacher?.timezone || 'WAT (GMT+1)'}
+                <span className="font-mono text-[9px] bg-brand-moss/10 px-2 py-0.5 rounded-full text-brand-moss font-bold">
+                  🌍 {timezoneAbbr}
                 </span>
               </span>
-              <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
+
+              {/* Timezone conversion info ribbon */}
+              <div className="bg-brand-cream/40 border border-brand-moss/10 rounded-xl px-3 py-1.5 mb-2.5 flex items-center justify-between text-[10px] font-mono text-brand-charcoal/70">
+                <span>Your Time: <b>{userTimezone} ({timezoneAbbr})</b></span>
+                <span className="text-brand-charcoal/50 text-[9px]">Tutor WAT (Lagos UTC+1)</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
                 {slots.map(slot => {
                   const isSelected = selectedSlots.includes(slot.id);
                   const booked = isSlotBooked(slot);
+                  const timeInfo = convertWatTimeToLocal(slot.time, slot.dateString, userTimezone);
+
                   return (
                     <button
                       key={slot.id}
@@ -520,20 +705,26 @@ export default function BookingModal({
                             : [...prev, slot.id]
                         );
                       }}
-                      className={`py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 ${
+                      className={`py-3 px-3.5 rounded-xl border text-left font-sans transition-all duration-300 ${
                         booked
                           ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
                           : isSelected
-                            ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-1 ring-brand-clay'
+                            ? 'border-brand-clay bg-brand-clay/5 text-brand-charcoal ring-2 ring-brand-clay/30'
                             : 'border-brand-moss/10 bg-white hover:border-brand-moss/40 text-brand-charcoal/80'
                       }`}
                     >
                       <span className="text-xs font-bold block flex justify-between items-center font-heading">
-                        <span>{slot.day}</span>
-                        {booked && <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-mono uppercase font-bold">Booked</span>}
+                        <span className="truncate">{slot.day}</span>
+                        {booked && <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-mono uppercase font-bold shrink-0">Booked</span>}
                       </span>
-                      <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-brand-moss/40" /> {slot.time}
+                      
+                      {/* Local Time + Tutor WAT Time */}
+                      <span className="text-[10px] text-brand-charcoal/80 mt-1 block flex items-center gap-1 font-mono">
+                        <Clock className="w-3 h-3 text-brand-clay shrink-0" />
+                        <b className="text-brand-moss">{timeInfo.localTime}</b>
+                        {!timeInfo.isWat && (
+                          <span className="text-brand-charcoal/50 text-[8px]">({timeInfo.watTime} WAT)</span>
+                        )}
                       </span>
                     </button>
                   );
@@ -542,7 +733,7 @@ export default function BookingModal({
             </div>
 
             {/* Payment Processor */}
-            <div className="mb-8">
+            <div className="mb-6">
               <span className="font-heading font-bold text-xs uppercase tracking-wider text-brand-moss block mb-3 flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-brand-clay" /> 2. Choose Payment Method
               </span>
@@ -550,7 +741,7 @@ export default function BookingModal({
                 {/* Wallet Payment Option */}
                 <button
                   onClick={() => setPaymentMethod('wallet')}
-                  className={`w-full py-3.5 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
+                  className={`w-full py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
                     paymentMethod === 'wallet'
                       ? 'border-brand-moss bg-brand-moss/5 ring-1 ring-brand-moss'
                       : 'border-brand-moss/10 bg-white hover:border-brand-moss/30'
@@ -589,7 +780,7 @@ export default function BookingModal({
                 {/* Credit Card Option (Paystack simulation) */}
                 <button
                   onClick={() => setPaymentMethod('card')}
-                  className={`w-full py-3.5 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
+                  className={`w-full py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
                     paymentMethod === 'card'
                       ? 'border-brand-moss bg-brand-moss/5 ring-1 ring-brand-moss'
                       : 'border-brand-moss/10 bg-white hover:border-brand-moss/30'
@@ -597,10 +788,10 @@ export default function BookingModal({
                 >
                   <div>
                     <span className="text-xs font-bold block text-brand-charcoal">
-                      Credit / Debit Card (Paystack)
+                      Credit / Debit Card (Paystack & Stripe)
                     </span>
                     <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block">
-                      Supports local cards, Apple Pay, Google Pay, Mobile Money
+                      Local Nigerian & International Cards, Apple Pay, Mobile Money
                     </span>
                   </div>
                 </button>
@@ -612,7 +803,7 @@ export default function BookingModal({
               <button
                 onClick={handlePay}
                 disabled={selectedSlots.length === 0 || isWalletInsufficient || isProcessing}
-                className={`btn-magnetic w-full py-4 rounded-full font-sans font-bold text-xs uppercase tracking-wider text-white shadow-lg ${
+                className={`btn-magnetic w-full py-3.5 rounded-full font-sans font-bold text-xs uppercase tracking-wider text-white shadow-lg transition-all ${
                   selectedSlots.length === 0 || isWalletInsufficient 
                     ? 'bg-brand-moss/40 cursor-not-allowed shadow-none'
                     : 'bg-brand-clay hover:bg-brand-clay/90 shadow-brand-clay/20'
@@ -630,7 +821,7 @@ export default function BookingModal({
               
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-brand-charcoal/50">
                 <Shield className="w-3.5 h-3.5 text-brand-moss/40" />
-                <span>Escrow lock: funds released 24h post-lesson validation.</span>
+                <span>Escrow lock: funds released automatically post-lesson validation.</span>
               </div>
             </div>
           </>

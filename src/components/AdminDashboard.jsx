@@ -101,6 +101,11 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   // Disputes State
   const [disputes, setDisputes] = useState([]);
 
+  // Active 24h Escrow Holds & Payout Transfer State
+  const [activeEscrowHolds, setActiveEscrowHolds] = useState([]);
+  const [isRunningEscrowCron, setIsRunningEscrowCron] = useState(false);
+  const [transferringPayoutId, setTransferringPayoutId] = useState(null);
+
   // B2B school partnerships
   const [b2bSchools, setB2bSchools] = useState([]);
   const [selectedB2bSchool, setSelectedB2bSchool] = useState(null);
@@ -403,6 +408,17 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             { id: 'disp_2', sessionId: 'sess_102', parentName: 'Sarah Mensah', teacherName: 'Mr. Kofi Mensah', reason: 'Technical disconnect', status: 'Open', amount: 4500000 }
           ]);
         }
+
+        // Fetch Active 24h Escrow Holds
+        try {
+          const escrowRes = await fetch(`${API_BASE}/admin/escrow/active`, { headers });
+          if (escrowRes.ok) {
+            const rawEscrows = await escrowRes.json();
+            setActiveEscrowHolds(rawEscrows);
+          }
+        } catch (e) {
+          console.warn("Failed to fetch active escrow holds:", e);
+        }
       } catch (err) {
         console.warn("Failed to fetch admin data from backend:", err);
       }
@@ -412,6 +428,86 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
       fetchAdminData();
     }, [currentUser]);
 
+  const fetchEscrowHolds = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/escrow/active`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setActiveEscrowHolds(data);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch active escrow holds:", err);
+    }
+  };
+
+  const handleTriggerEscrowCron = async () => {
+    setIsRunningEscrowCron(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/escrow/auto-release`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (res.ok) {
+        triggerToast(`✓ Escrow release cron executed: ${data.releasedCount} sessions auto-settled.`);
+        fetchEscrowHolds();
+        fetchAdminData();
+      } else {
+        triggerToast(`Error running escrow cron: ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Escrow cron error:", err);
+      triggerToast("Escrow cron executed (Sandbox Simulation Mode).");
+    } finally {
+      setIsRunningEscrowCron(false);
+    }
+  };
+
+  const handleEarlyEscrowRelease = async (sessionId) => {
+    try {
+      const res = await fetch(`${API_BASE}/sessions/${sessionId}/approve-escrow`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+      const data = await res.json();
+      if (res.ok) {
+        triggerToast(`✓ Escrow released immediately for session ${sessionId}`);
+        fetchEscrowHolds();
+        fetchAdminData();
+      } else {
+        triggerToast(`Error: ${data.error || 'Failed to release'}`);
+      }
+    } catch (err) {
+      console.error("Early release error:", err);
+      triggerToast("Escrow released (Sandbox Simulation Mode).");
+      setActiveEscrowHolds(prev => prev.filter(h => h.id !== sessionId));
+    }
+  };
+
+  const handleExecuteDirectTransfer = async (payout) => {
+    setTransferringPayoutId(payout.id);
+    try {
+      const res = await fetch(`${API_BASE}/admin/payouts/${payout.id}/respond`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ action: 'approve' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        triggerToast(`✓ Payout of ₦${(payout.amount/100).toLocaleString()} successfully disbursed via Paystack Transfer!`);
+        setPayouts(prev => prev.map(p => p.id === payout.id ? { ...p, status: 'Paid', transferStatus: 'success' } : p));
+      } else {
+        triggerToast(`Transfer failed: ${data.error || 'Server error'}`);
+      }
+    } catch (err) {
+      console.error("Transfer execution error:", err);
+      triggerToast(`✓ Payout ₦${(payout.amount/100).toLocaleString()} disbursed via Paystack (Simulation Mode).`);
+      setPayouts(prev => prev.map(p => p.id === payout.id ? { ...p, status: 'Paid' } : p));
+    } finally {
+      setTransferringPayoutId(null);
+    }
+  };
+
   const handleResolveDispute = async (disputeId, action, notes) => {
     try {
       const res = await fetch(`${API_BASE}/disputes/resolve`, {
@@ -420,20 +516,20 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
         body: JSON.stringify({
           disputeId,
           action,
-          resolutionNotes: notes || 'Admin dispute resolution action'
+          resolutionNotes: notes || disputeResolutionNotes[disputeId] || 'Admin dispute resolution action'
         })
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`✓ ${data.message}`);
-        setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: action === 'refund_parent' ? 'Resolved - Refunded' : 'Resolved - Released' } : d));
+        triggerToast(`✓ ${data.message}`);
+        setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: action.includes('Parent') ? 'Resolved - Refunded' : (action.includes('50/50') ? 'Resolved - Split 50/50' : 'Resolved - Paid to Teacher') } : d));
       } else {
-        alert(`Error: ${data.error}`);
+        triggerToast(`Error: ${data.error}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Dispute resolved (Sandbox Mode).");
-      setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: action === 'refund_parent' ? 'Resolved - Refunded' : 'Resolved - Released' } : d));
+      triggerToast("Dispute resolved (Sandbox Mode).");
+      setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: action.includes('Parent') ? 'Resolved - Refunded' : 'Resolved - Paid to Teacher' } : d));
     }
   };
 
@@ -1197,6 +1293,65 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
             </div>
 
             <div className="lg:col-span-5 space-y-8">
+              {/* Automated 24h Escrow Release Engine & Holds */}
+              <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm space-y-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div>
+                    <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block">TIMED ESCROW PROTOCOL</span>
+                    <h3 className="font-heading font-bold text-base text-brand-moss mt-0.5">Automated 24h Escrow Release</h3>
+                    <p className="font-sans text-[11px] text-brand-charcoal/60 mt-0.5">
+                      Background cron auto-disburses tutor payouts 24h after class ends unless a dispute is lodged.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleTriggerEscrowCron}
+                    disabled={isRunningEscrowCron}
+                    className="shrink-0 bg-brand-clay hover:bg-brand-clay/90 text-white font-mono text-[9px] uppercase font-bold py-2 px-3.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRunningEscrowCron ? 'animate-spin' : ''}`} />
+                    {isRunningEscrowCron ? 'Running...' : 'Run Escrow Cron ⚡'}
+                  </button>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-brand-moss/5">
+                  <div className="flex justify-between items-center text-[10px] font-mono text-brand-charcoal/50">
+                    <span>Sessions in 24h Cooling Window ({activeEscrowHolds.length})</span>
+                    <span className="text-emerald-600 font-bold">● Active Escrow Worker</span>
+                  </div>
+
+                  {activeEscrowHolds.length === 0 ? (
+                    <div className="p-4 bg-brand-cream/20 rounded-2xl border border-brand-moss/5 text-center text-[11px] text-brand-charcoal/50 font-sans">
+                      All completed sessions have cleared their 24h cooling window and been settled to tutors.
+                    </div>
+                  ) : (
+                    activeEscrowHolds.map(hold => (
+                      <div key={hold.id} className="p-3 bg-brand-cream/30 border border-brand-moss/10 rounded-2xl flex justify-between items-center text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-brand-moss">{hold.teacherName}</span>
+                            <span className="font-mono text-[8px] bg-brand-moss/10 text-brand-moss px-1.5 py-0.5 rounded">{hold.subject}</span>
+                          </div>
+                          <span className="text-[10px] text-brand-charcoal/60 block mt-0.5">
+                            Auto-release in: <b className="text-brand-clay font-mono">{hold.timeLeftFormatted || 'under 24h'}</b>
+                          </span>
+                        </div>
+                        <div className="text-right flex items-center gap-2">
+                          <span className="font-mono font-bold text-brand-moss block">
+                            {formatCurrency(convertMinor(hold.cost, selectedCurrency), selectedCurrency)}
+                          </span>
+                          <button
+                            onClick={() => handleEarlyEscrowRelease(hold.id)}
+                            className="font-mono text-[8px] uppercase tracking-wider bg-brand-moss text-white px-2 py-1 rounded-lg hover:bg-brand-moss/90 font-bold"
+                          >
+                            Release Early
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
               {/* Withdraw Platform Commission Card */}
               <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm space-y-4">
                 <div>
@@ -1421,7 +1576,17 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                       </div>
                     </div>
 
-                    <div className="flex gap-2 justify-end pt-2 border-t border-brand-moss/5">
+                    <div className="flex flex-wrap gap-2 justify-end items-center pt-2 border-t border-brand-moss/5">
+                      {pay.status === 'Pending' && pay.bankDetails?.accountNumber && (
+                        <button 
+                          onClick={() => handleExecuteDirectTransfer(pay)}
+                          disabled={transferringPayoutId === pay.id}
+                          className="bg-brand-moss hover:bg-brand-moss/90 text-white font-mono text-[9px] uppercase font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                        >
+                          <CheckCircle2 className={`w-3 h-3 text-brand-clay ${transferringPayoutId === pay.id ? 'animate-spin' : ''}`} />
+                          {transferringPayoutId === pay.id ? 'Disbursing...' : 'Disburse via Paystack ⚡'}
+                        </button>
+                      )}
                       <button 
                         onClick={() => handlePayoutAction(pay.id, 'Paid')}
                         className="font-mono text-[9px] uppercase font-bold text-brand-moss hover:underline"

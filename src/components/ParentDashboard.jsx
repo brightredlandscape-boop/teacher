@@ -730,7 +730,7 @@ export default function ParentDashboard({
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {students.map((student) => {
                     const sId = student.uid || student.id || student.name.toLowerCase();
                     const isSelected = selectedChild === sId || selectedChild === student.name.toLowerCase();
@@ -740,7 +740,7 @@ export default function ParentDashboard({
                         onClick={() => setSelectedChild(sId)}
                         className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl border text-center font-heading font-bold text-xs transition-all duration-300 ${
                           isSelected
-                            ? 'border-brand-moss bg-brand-moss/5 text-brand-moss'
+                            ? 'border-brand-moss bg-brand-moss/5 text-brand-moss shadow-xs'
                             : 'border-brand-moss/10 hover:border-brand-moss/20 text-brand-charcoal'
                         }`}
                       >
@@ -752,6 +752,29 @@ export default function ParentDashboard({
                     <span className="text-[10px] text-brand-charcoal/50 w-full text-center py-2 italic">No children registered yet. Click Add Child to start.</span>
                   )}
                 </div>
+
+                {/* Family Sibling Package Tier Badge */}
+                {students.length >= 2 ? (
+                  <div className="mb-6 bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3 flex items-center gap-2.5 text-xs text-emerald-800 animate-fade-in">
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span className="font-sans text-[11px] leading-tight">
+                      <b>Family Sibling Package Active:</b> 10% multi-child discount unlocked across all scheduled lessons for {students.map(s => s.name).join(' & ')}.
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mb-6 bg-brand-cream/40 border border-brand-moss/10 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs text-brand-charcoal/70">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-brand-clay shrink-0" />
+                      <span className="font-sans text-[10px]">Add a 2nd child profile to unlock the <b>10% Family Sibling Discount</b>.</span>
+                    </div>
+                    <button
+                      onClick={() => setIsAddChildOpen(true)}
+                      className="font-mono text-[9px] uppercase font-bold text-brand-clay hover:underline shrink-0"
+                    >
+                      + Add Sibling
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Attendance and Score Bars */}

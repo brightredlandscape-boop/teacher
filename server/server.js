@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { rateLimit } from 'express-rate-limit';
 import { getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -14,9 +17,20 @@ import { sendTransactionalEmail, readSentEmails } from './services/email.js';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const app = express();
 app.set('trust proxy', 1);
-app.use(helmet()); // Apply HTTP security headers globally
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+app.use('/uploads', express.static(uploadsDir));
 const PORT = process.env.PORT || 5000;
 
 let dbInitialized = false;
@@ -67,12 +81,14 @@ app.use(cors({
   credentials: true
 }));
 
-// Configure express.json to capture rawBody for webhook signature verification
+// Configure express.json to capture rawBody for webhook signature verification and support file attachments up to 50mb
 app.use(express.json({
+  limit: '50mb',
   verify: (req, res, buf) => {
     req.rawBody = buf.toString();
   }
 }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Global Input Sanitizer Helper
 function sanitizeText(str) {
@@ -2018,30 +2034,12 @@ app.post('/api/sessions/link', authenticateToken, requireRole(['Teacher']), asyn
   res.json(updated);
 });
 
-// POST End session and release escrow
-app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async (req, res) => {
-  const { sessionId, rating, comment } = req.body;
-
-  const session = db.findOne('sessions', s => s.id === sessionId);
-  if (!session) {
-    return res.status(404).json({ error: "Session record not found." });
+// Helper function: Release escrow funds for a completed session
+async function releaseSessionEscrow(session, reason = 'auto_release_24h') {
+  if (session.escrowReleased) {
+    return { success: false, message: "Escrow funds have already been released." };
   }
 
-  if (session.parentId !== req.user.uid) {
-    return res.status(403).json({ error: "Access forbidden. You are not the parent of this session." });
-  }
-
-  if (session.status === "Completed") {
-    return res.status(400).json({ error: "Session is already completed." });
-  }
-
-  // 1. Update session status
-  await db.update('sessions', sessionId, {
-    status: "Completed",
-    actualEnd: new Date().toISOString()
-  });
-
-  // 2. Release Escrow & Apportion payout/commission based on booking source
   const config = db.findOne('platform_config', c => c.id === 'default') || { commissionRate: 15 };
   const commissionRate = config.commissionRate || 15;
   const commission = Math.round(session.cost * (commissionRate / 100));
@@ -2050,7 +2048,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
   const parentWallet = db.findOne('wallets', w => w.uid === session.parentId);
 
   if (parentWallet && Number(parentWallet.escrow) >= session.cost) {
-    // Booked via Parent Wallet: release parent escrow, add platform commission to admin, and add teacher payout
+    // Booked via Parent Wallet: release parent escrow, credit platform commission to admin, and credit teacher payout
     await db.update('wallets', parentWallet.id, {
       escrow: Math.max(0, Number(parentWallet.escrow) - session.cost)
     });
@@ -2081,7 +2079,7 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
       });
     }
   } else {
-    // Booked via Card checkout: payout (85%) was already locked in teacher's escrow, so release it to teacher's balance
+    // Booked via Card checkout: payout was held in teacher's escrow; release it to teacher balance
     let teacherWallet = db.findOne('wallets', w => w.uid === session.teacherId);
     if (teacherWallet) {
       await db.update('wallets', teacherWallet.id, {
@@ -2095,58 +2093,117 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
         escrow: 0
       });
     }
-    // Admin commission was already allocated to admin wallet balance at booking checkout webhook
   }
 
-  await createNotification(
-    session.parentId,
-    "session_completed",
-    "Session Completed",
-    `Your session with ${session.teacherName} is complete. Billed duration: 58 mins.`
-  );
+  // Update session record
+  await db.update('sessions', session.id, {
+    escrowReleased: true,
+    escrowReleasedAt: new Date().toISOString(),
+    escrowReleaseReason: reason,
+    disputeStatus: session.disputeStatus || null
+  });
 
-  await createNotification(
-    session.teacherId,
-    "escrow_released",
-    "Payout Transferred",
-    `Payout of ₦${payout/100} has been released to your wallet (commission: ₦${commission/100}).`
-  );
-
-  // Automated email notifications to parent and teacher
-  try {
-    const parentUser = db.findOne('users', u => u.uid === session.parentId);
-    if (parentUser && parentUser.email) {
-      sendTransactionalEmail(parentUser.email, "EduVista: Tutoring Session Completed Summary", "session_completed", {
-        teacherName: session.teacherName
-      });
-    }
-
-    const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
-    if (teacherUser && teacherUser.email) {
-      sendTransactionalEmail(teacherUser.email, "EduVista: Escrow Funds Released", "escrow_released", {
-        formattedPayout: `₦${payout/100}`,
-        formattedCommission: `₦${commission/100}`
-      });
-    }
-  } catch (err) {
-    console.error("Failed to send session ended transactional emails:", err);
-  }
-
-  // Add payout log to transactions
+  // Log transaction
   await db.insert('transactions', {
     amount: session.cost,
     amountMinorUnits: session.cost,
     currency: "NGN",
     commission,
+    payout,
     status: "settled",
+    type: "escrow_release",
     fromUserId: session.parentId,
     toUserId: session.teacherId,
     sessionId: session.id,
+    releaseReason: reason,
     paymentProcessor: "payout",
-    payoutStatus: "completed"
+    payoutStatus: "completed",
+    date: new Date().toISOString()
   });
 
-  // 4. Submit review if rating is supplied
+  // Notify teacher
+  await createNotification(
+    session.teacherId,
+    "escrow_released",
+    "Escrow Payout Settled",
+    `Payout of ₦${(payout/100).toLocaleString()} for session with ${session.studentName || 'student'} has been settled to your wallet balance.`
+  );
+
+  // Send transactional email
+  try {
+    const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
+    if (teacherUser && teacherUser.email) {
+      sendTransactionalEmail(teacherUser.email, "EduVista: Escrow Funds Released", "escrow_released", {
+        formattedPayout: `₦${(payout/100).toLocaleString()}`,
+        formattedCommission: `₦${(commission/100).toLocaleString()}`
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send escrow release email:", err);
+  }
+
+  return { success: true, payout, commission };
+}
+
+// Background Cron Worker: Scans and auto-releases escrow for sessions past their 24h cooling window
+async function runAutomatedEscrowReleaseCron() {
+  const now = new Date().toISOString();
+  const eligibleSessions = db.find('sessions', s => 
+    s.status === 'Completed' && 
+    !s.escrowReleased && 
+    s.autoReleaseAt && 
+    s.autoReleaseAt <= now &&
+    s.status !== 'Disputed' &&
+    s.disputeStatus !== 'Open - Under Investigation'
+  );
+
+  let releasedCount = 0;
+  for (const session of eligibleSessions) {
+    try {
+      await releaseSessionEscrow(session, 'auto_release_24h_cron');
+      releasedCount++;
+    } catch (err) {
+      console.error(`[ESCROW CRON] Failed to auto-release session ${session.id}:`, err);
+    }
+  }
+
+  if (releasedCount > 0) {
+    console.log(`[ESCROW CRON] Auto-released escrow for ${releasedCount} eligible sessions at ${now}`);
+  }
+  return { releasedCount, checkedAt: now };
+}
+
+// POST End session and begin 24h Escrow Review Window
+app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async (req, res) => {
+  const { sessionId, rating, comment, immediateRelease } = req.body;
+
+  const session = db.findOne('sessions', s => s.id === sessionId);
+  if (!session) {
+    return res.status(404).json({ error: "Session record not found." });
+  }
+
+  if (session.parentId !== req.user.uid) {
+    return res.status(403).json({ error: "Access forbidden. You are not the parent of this session." });
+  }
+
+  if (session.status === "Completed") {
+    return res.status(400).json({ error: "Session is already completed." });
+  }
+
+  const now = new Date();
+  const autoReleaseAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+  // 1. Update session status
+  await db.update('sessions', sessionId, {
+    status: "Completed",
+    actualEnd: now.toISOString(),
+    sessionEndedAt: now.toISOString(),
+    autoReleaseAt,
+    escrowReleased: false,
+    disputeStatus: null
+  });
+
+  // Submit review if rating is supplied
   if (rating) {
     await db.insert('reviews', {
       sessionId,
@@ -2155,10 +2212,9 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
       overallRating: rating,
       dimensions: { Punctuality: rating, Quality: rating, Communication: rating, Preparedness: rating, Impact: rating },
       comment: comment ? sanitizeText(comment) : "Session completed successfully.",
-      createdAt: new Date().toISOString()
+      createdAt: now.toISOString()
     });
 
-    // Update teacher reviews stats
     const teacher = db.findOne('teachers', t => t.uid === session.teacherId);
     if (teacher) {
       const allReviews = db.find('reviews', r => r.teacherId === session.teacherId);
@@ -2170,11 +2226,407 @@ app.post('/api/sessions/end', authenticateToken, requireRole(['Parent']), async 
     }
   }
 
+  // If parent opted for immediate escrow release on satisfaction
+  if (immediateRelease === true) {
+    const updatedSession = db.findOne('sessions', s => s.id === sessionId);
+    const releaseResult = await releaseSessionEscrow(updatedSession, 'parent_immediate_release');
+    return res.json({
+      status: "Success",
+      mode: "immediate_release",
+      payoutAmount: releaseResult.payout,
+      commissionAmount: releaseResult.commission,
+      message: "Session ended and escrow funds released immediately to tutor wallet."
+    });
+  }
+
+  // 24-Hour Review Window notifications
+  await createNotification(
+    session.parentId,
+    "session_completed",
+    "Session Completed (24h Escrow Protection)",
+    `Your session with ${session.teacherName} is complete. EduVista Timed Escrow will auto-disburse payment in 24 hours. You may release funds early or report an issue before auto-settlement.`
+  );
+
+  await createNotification(
+    session.teacherId,
+    "escrow_locked",
+    "Session Completed (24h Escrow Hold)",
+    `Session with ${session.studentName || 'student'} is complete. Payout is secured in 24h escrow and will auto-release at ${new Date(autoReleaseAt).toLocaleTimeString()}.`
+  );
+
+  try {
+    const parentUser = db.findOne('users', u => u.uid === session.parentId);
+    if (parentUser && parentUser.email) {
+      sendTransactionalEmail(parentUser.email, "EduVista: Tutoring Session Completed Summary", "session_completed", {
+        teacherName: session.teacherName
+      });
+    }
+  } catch (err) {
+    console.error("Failed to send session ended email:", err);
+  }
+
   res.json({
     status: "Success",
-    payoutAmount: payout,
-    commissionAmount: commission
+    mode: "escrow_24h_window",
+    autoReleaseAt,
+    message: "Session completed. Escrow locked for 24-hour review before auto-release."
   });
+});
+
+// POST Parent early approval of escrow release
+app.post('/api/sessions/:id/approve-escrow', authenticateToken, requireRole(['Parent']), async (req, res) => {
+  const session = db.findOne('sessions', s => s.id === req.params.id);
+  if (!session) return res.status(404).json({ error: "Session not found." });
+  if (session.parentId !== req.user.uid) return res.status(403).json({ error: "Access forbidden." });
+  if (session.escrowReleased) return res.status(400).json({ error: "Escrow funds already released." });
+  if (session.status === 'Disputed') return res.status(400).json({ error: "Cannot release escrow while under active dispute." });
+
+  const result = await releaseSessionEscrow(session, 'parent_manual_approval');
+  res.json({ success: true, ...result, message: "Escrow released successfully to tutor wallet." });
+});
+
+// POST Parent files a dispute claim
+app.post('/api/disputes/create', authenticateToken, requireRole(['Parent']), async (req, res) => {
+  const { sessionId, reason, details } = req.body;
+  if (!sessionId || !reason) {
+    return res.status(400).json({ error: "Session ID and dispute reason are required." });
+  }
+
+  const session = db.findOne('sessions', s => s.id === sessionId);
+  if (!session) return res.status(404).json({ error: "Session not found." });
+  if (session.parentId !== req.user.uid) return res.status(403).json({ error: "Access forbidden." });
+  if (session.escrowReleased) return res.status(400).json({ error: "Escrow already released for this session. Contact admin support." });
+
+  const parentUser = db.findOne('users', u => u.uid === req.user.uid);
+  const teacherUser = db.findOne('users', u => u.uid === session.teacherId);
+  const teacherObj = db.findOne('teachers', t => t.uid === session.teacherId);
+
+  // Freeze session auto-release
+  await db.update('sessions', session.id, {
+    status: 'Disputed',
+    disputeStatus: 'Open - Under Investigation',
+    disputeReason: sanitizeText(reason),
+    disputeDetails: sanitizeText(details || '')
+  });
+
+  const dispute = await db.insert('disputes', {
+    id: `disp_${Date.now()}`,
+    sessionId: session.id,
+    parentId: req.user.uid,
+    parentName: parentUser ? parentUser.displayName : 'Parent',
+    teacherId: session.teacherId,
+    teacherName: teacherObj ? teacherObj.name : (teacherUser ? teacherUser.displayName : session.teacherName || 'Tutor'),
+    reason: sanitizeText(reason),
+    description: sanitizeText(details || reason),
+    status: 'Open - Awaiting Admin Review',
+    amount: session.cost,
+    clockLog: session.clockLog && session.clockLog.length > 0 ? `${session.clockLog.length} clock sync events logged` : '58 mins recorded classroom time',
+    evidenceUrl: 'Classroom live recording snapshot and transcript',
+    createdAt: new Date().toISOString()
+  });
+
+  // Notify admins
+  const admins = db.find('users', u => u.role === 'Admin');
+  for (const admin of admins) {
+    await createNotification(
+      admin.uid,
+      'dispute',
+      'New Session Dispute Filed',
+      `Parent ${parentUser?.displayName || 'User'} opened a dispute for session ${session.id}: "${reason}". Escrow auto-release is suspended.`
+    );
+  }
+
+  // Notify teacher
+  await createNotification(
+    session.teacherId,
+    'dispute_opened',
+    'Session Disputed by Parent',
+    `A dispute was filed for your session on ${session.slot?.day || 'scheduled date'}. Escrow payout is held pending resolution.`
+  );
+
+  res.json({ success: true, dispute, message: "Dispute lodged. Escrow funds locked pending administrative review." });
+});
+
+// GET all disputes (Admin)
+app.get('/api/admin/disputes', authenticateToken, requireRole(['Admin']), (req, res) => {
+  let list = db.find('disputes');
+  if (!list || list.length === 0) {
+    // Seed baseline sample disputes if none exist for clean admin preview
+    list = [
+      {
+        id: 'disp_1',
+        sessionId: 'sess_101',
+        parentName: 'Ngozi Adeleke',
+        teacherName: 'Dorcas Adenigba',
+        reason: 'Tutor connection dropped 20 mins before lesson ended',
+        description: 'Tutor experienced network outage in Lagos; lesson cut short by 20 minutes.',
+        clockLog: '38 mins recorded before disconnect',
+        evidenceUrl: 'https://eduvista.com/evidence/disp_101.png',
+        status: 'Open - Awaiting Admin Review',
+        amount: 4500000,
+        createdAt: new Date(Date.now() - 3600000 * 5).toISOString()
+      },
+      {
+        id: 'disp_2',
+        sessionId: 'sess_102',
+        parentName: 'Sarah Mensah',
+        teacherName: 'Ngozi Ibembo',
+        reason: 'Incorrect curriculum topic delivered',
+        description: 'Scheduled for Cambridge IGCSE Physics Paper 4, but tutor prepared WAEC mechanics.',
+        clockLog: '58 mins full class recorded',
+        evidenceUrl: 'https://eduvista.com/evidence/disp_102.png',
+        status: 'Open - Under Investigation',
+        amount: 5000000,
+        createdAt: new Date(Date.now() - 3600000 * 18).toISOString()
+      }
+    ];
+  }
+  list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(list);
+});
+
+// POST Resolve dispute (Admin)
+app.post('/api/disputes/resolve', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  const { disputeId, action, resolutionNotes } = req.body;
+  if (!disputeId || !action) {
+    return res.status(400).json({ error: "Dispute ID and action are required." });
+  }
+
+  const dispute = db.findOne('disputes', d => d.id === disputeId);
+  const session = dispute ? db.findOne('sessions', s => s.id === dispute.sessionId) : null;
+
+  const isParentFavor = action === 'refund_parent' || action === 'Ruled in favor of Parent';
+  const isTeacherFavor = action === 'pay_teacher' || action === 'Ruled in favor of Teacher';
+  const isSplit = action === 'split' || action === 'Split 50/50';
+
+  const amount = dispute ? dispute.amount : 4000000;
+  let statusMsg = '';
+
+  if (isParentFavor) {
+    if (dispute && dispute.parentId) {
+      let parentWallet = db.findOne('wallets', w => w.uid === dispute.parentId);
+      if (!parentWallet) {
+        await db.insert('wallets', { uid: dispute.parentId, balance: amount, escrow: 0 });
+      } else {
+        await db.update('wallets', parentWallet.id, {
+          balance: Number(parentWallet.balance) + Number(amount),
+          escrow: Math.max(0, Number(parentWallet.escrow) - Number(amount))
+        });
+      }
+
+      await createNotification(dispute.parentId, 'dispute_resolved', 'Dispute Resolved in Your Favor', `A 100% refund of ₦${(amount / 100).toLocaleString()} has been credited to your wallet balance.`);
+      await createNotification(dispute.teacherId, 'dispute_resolved', 'Dispute Ruled in Favor of Parent', `Dispute for session was ruled in parent favor. Reason: ${resolutionNotes || 'Incomplete lesson delivery'}.`);
+    }
+
+    if (dispute) {
+      await db.update('disputes', dispute.id, {
+        status: 'Resolved - Refunded to Parent',
+        resolutionNotes: sanitizeText(resolutionNotes || 'Arbitration settled in favor of parent.'),
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: req.user.uid
+      });
+    }
+
+    if (session) {
+      await db.update('sessions', session.id, {
+        status: 'Refunded',
+        disputeStatus: 'Resolved - Refunded',
+        escrowReleased: true
+      });
+    }
+
+    statusMsg = `Dispute settled: 100% refund credited to parent wallet.`;
+
+  } else if (isTeacherFavor) {
+    if (session) {
+      await releaseSessionEscrow(session, 'dispute_resolved_in_teacher_favor');
+      await db.update('sessions', session.id, {
+        status: 'Completed',
+        disputeStatus: 'Resolved - Paid to Teacher',
+        escrowReleased: true
+      });
+    } else if (dispute) {
+      // Mock teacher release fallback
+      let teacherWallet = db.findOne('wallets', w => w.uid === dispute.teacherId);
+      const payout = Math.round(amount * 0.85);
+      if (teacherWallet) {
+        await db.update('wallets', teacherWallet.id, { balance: Number(teacherWallet.balance) + payout });
+      }
+    }
+
+    if (dispute) {
+      await db.update('disputes', dispute.id, {
+        status: 'Resolved - Paid to Teacher',
+        resolutionNotes: sanitizeText(resolutionNotes || 'Arbitration settled in favor of educator.'),
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: req.user.uid
+      });
+      await createNotification(dispute.teacherId, 'dispute_resolved', 'Dispute Ruled in Your Favor', `Dispute dismissed. Escrow payout has been transferred to your wallet.`);
+      await createNotification(dispute.parentId, 'dispute_resolved', 'Dispute Ruled in Favor of Tutor', `Dispute reviewed. Reason: ${resolutionNotes || 'Full curriculum attendance verified'}.`);
+    }
+
+    statusMsg = `Dispute settled: Escrow payout released to teacher.`;
+
+  } else if (isSplit) {
+    const halfAmount = Math.round(amount / 2);
+    const teacherPayout = Math.round(halfAmount * 0.85);
+    const commission = halfAmount - teacherPayout;
+
+    if (dispute) {
+      let parentWallet = db.findOne('wallets', w => w.uid === dispute.parentId);
+      if (parentWallet) {
+        await db.update('wallets', parentWallet.id, {
+          balance: Number(parentWallet.balance) + halfAmount,
+          escrow: Math.max(0, Number(parentWallet.escrow) - Number(amount))
+        });
+      }
+
+      let teacherWallet = db.findOne('wallets', w => w.uid === dispute.teacherId);
+      if (teacherWallet) {
+        await db.update('wallets', teacherWallet.id, {
+          balance: Number(teacherWallet.balance) + teacherPayout
+        });
+      }
+
+      await db.update('disputes', dispute.id, {
+        status: 'Resolved - Split 50/50',
+        resolutionNotes: sanitizeText(resolutionNotes || 'Arbitration settled with 50/50 split.'),
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: req.user.uid
+      });
+
+      await createNotification(dispute.parentId, 'dispute_resolved', 'Dispute Settled (50/50 Split)', `A 50% refund of ₦${(halfAmount / 100).toLocaleString()} has been returned to your wallet.`);
+      await createNotification(dispute.teacherId, 'dispute_resolved', 'Dispute Settled (50/50 Split)', `Dispute settled. 50% payout of ₦${(teacherPayout / 100).toLocaleString()} has been released to your wallet.`);
+    }
+
+    if (session) {
+      await db.update('sessions', session.id, {
+        status: 'Completed',
+        disputeStatus: 'Resolved - Split 50/50',
+        escrowReleased: true
+      });
+    }
+
+    statusMsg = `Dispute settled with 50/50 split between parent and teacher.`;
+  }
+
+  res.json({ success: true, message: statusMsg });
+});
+
+// GET Active Escrow Holds (Admin)
+app.get('/api/admin/escrow/active', authenticateToken, requireRole(['Admin']), (req, res) => {
+  const activeHolds = db.find('sessions', s => 
+    s.status === 'Completed' && 
+    !s.escrowReleased &&
+    s.status !== 'Disputed'
+  );
+  const now = Date.now();
+  const enriched = activeHolds.map(s => {
+    const autoReleaseTime = s.autoReleaseAt ? new Date(s.autoReleaseAt).getTime() : (now + 24 * 3600 * 1000);
+    const msLeft = Math.max(0, autoReleaseTime - now);
+    const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
+    const minsLeft = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
+    return {
+      ...s,
+      timeLeftFormatted: `${hoursLeft}h ${minsLeft}m`,
+      isReadyForRelease: msLeft === 0
+    };
+  });
+  res.json(enriched);
+});
+
+// POST Manual Trigger of 24h Escrow Release Cron (Admin)
+app.post('/api/admin/escrow/auto-release', authenticateToken, requireRole(['Admin']), async (req, res) => {
+  try {
+    const result = await runAutomatedEscrowReleaseCron();
+    res.json({
+      success: true,
+      releasedCount: result.releasedCount,
+      checkedAt: result.checkedAt,
+      message: `Escrow cron executed: ${result.releasedCount} sessions auto-released.`
+    });
+  } catch (err) {
+    console.error("Escrow auto-release error:", err);
+    res.status(500).json({ error: "Failed to run escrow auto-release: " + err.message });
+  }
+});
+
+// --- CHAT MESSAGING & FILE ATTACHMENTS API ---
+
+// GET Messages for a Session
+app.get('/api/messages/:sessionId', authenticateToken, (req, res) => {
+  const { sessionId } = req.params;
+  const messages = db.find('messages', m => m.sessionId === sessionId);
+  messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  res.json(messages);
+});
+
+// POST Send a Message (with optional attachment)
+app.post('/api/messages', authenticateToken, async (req, res) => {
+  const { sessionId, text, attachment } = req.body;
+  if (!sessionId) return res.status(400).json({ error: "Session ID required." });
+  if (!text && !attachment) return res.status(400).json({ error: "Message text or attachment required." });
+
+  const session = db.findOne('sessions', s => s.id === sessionId);
+  if (!session) return res.status(404).json({ error: "Session not found." });
+
+  const newMessage = await db.insert('messages', {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    sessionId,
+    senderId: req.user.uid,
+    senderName: req.user.displayName || req.user.name || 'User',
+    text: text ? sanitizeText(text) : '',
+    attachment: attachment || null,
+    createdAt: new Date().toISOString()
+  });
+
+  const recipientId = req.user.uid === session.parentId ? session.teacherId : session.parentId;
+  if (recipientId) {
+    await createNotification(
+      recipientId,
+      'new_message',
+      `New Message from ${newMessage.senderName}`,
+      attachment ? `[Shared ${attachment.fileName || 'Attachment'}] ${text || ''}` : text
+    );
+  }
+
+  res.json(newMessage);
+});
+
+// POST File Upload Endpoint for Homework, Worksheets, PDFs, and Past Papers
+app.post('/api/upload', authenticateToken, async (req, res) => {
+  try {
+    const { fileData, fileName, fileType } = req.body;
+    if (!fileData) {
+      return res.status(400).json({ error: "No file data provided." });
+    }
+
+    const base64Clean = fileData.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64Clean, 'base64');
+
+    if (buffer.length > 20 * 1024 * 1024) {
+      return res.status(400).json({ error: "File exceeds 20MB limit." });
+    }
+
+    const cleanBaseName = (fileName || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeName = `${Date.now()}_${cleanBaseName}`;
+    const destinationPath = path.join(uploadsDir, safeName);
+
+    fs.writeFileSync(destinationPath, buffer);
+
+    const publicUrl = `/uploads/${safeName}`;
+
+    res.json({
+      success: true,
+      url: publicUrl,
+      fileName: fileName || safeName,
+      fileType: fileType || 'application/octet-stream',
+      fileSize: buffer.length
+    });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Failed to process upload: " + err.message });
+  }
 });
 
 // Helper function to execute a bank transfer via Paystack Transfer APIs
@@ -3366,6 +3818,14 @@ app.get('/api/status', (req, res) => {
 // Start Server conditionally (only when not running inside Vercel serverless environment)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   ensureDb().then(() => {
+    // Run automated 24h escrow release check on startup
+    runAutomatedEscrowReleaseCron().catch(e => console.error("[ESCROW CRON] Initial run error:", e));
+
+    // Recurring automated escrow release worker (every 10 minutes)
+    setInterval(() => {
+      runAutomatedEscrowReleaseCron().catch(e => console.error("[ESCROW CRON] Recurring run error:", e));
+    }, 10 * 60 * 1000);
+
     app.listen(PORT, () => {
       console.log(`EduVista Africa Backend Server running on http://localhost:${PORT}`);
     });

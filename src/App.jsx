@@ -33,6 +33,7 @@ import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import BrandLogo from './components/BrandLogo';
 import { getTeacherAvatar } from './utils/avatar';
+import { detectDefaultCurrency } from './utils/timezone';
 
 const BookingModal = lazy(() => import('./components/BookingModal'));
 const Marketplace = lazy(() => import('./components/Marketplace'));
@@ -130,7 +131,14 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Dynamic App States for Portals Sync
-  const [selectedCurrency, setSelectedCurrency] = useState('NGN');
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    return localStorage.getItem('eduvista_currency') || detectDefaultCurrency();
+  });
+
+  const handleCurrencyChange = (newCurr) => {
+    setSelectedCurrency(newCurr);
+    localStorage.setItem('eduvista_currency', newCurr);
+  };
   const [walletBalance, setWalletBalance] = useState(0); // in minor units
   const [escrowBalance, setEscrowBalance] = useState(0); // in minor units
   
@@ -892,10 +900,15 @@ export default function App() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         await fetchInitialData();
         const commissionMinor = Math.round(releaseCost * 0.15);
         const payoutMinor = releaseCost - commissionMinor;
-        appendTelemetryLog(`Escrow Released: ${formatCurrency(convertMinor(releaseCost, selectedCurrency), selectedCurrency)} settled. Commission: ${formatCurrency(convertMinor(commissionMinor, selectedCurrency), selectedCurrency)} (15% platform tier). Payout: ${formatCurrency(convertMinor(payoutMinor, selectedCurrency), selectedCurrency)} routed to ${session.teacherName} bank wallet.`);
+        if (data.mode === 'escrow_24h_window') {
+          appendTelemetryLog(`Session Completed: 24h Escrow Review Window activated. Payout of ${formatCurrency(convertMinor(payoutMinor, selectedCurrency), selectedCurrency)} locked in escrow for tutor ${session.teacherName}.`);
+        } else {
+          appendTelemetryLog(`Escrow Released: ${formatCurrency(convertMinor(releaseCost, selectedCurrency), selectedCurrency)} settled. Commission: ${formatCurrency(convertMinor(commissionMinor, selectedCurrency), selectedCurrency)} (15% platform tier). Payout: ${formatCurrency(convertMinor(payoutMinor, selectedCurrency), selectedCurrency)} routed to ${session.teacherName} bank wallet.`);
+        }
       } else {
         const errData = await response.json();
         alert(`Failed to complete session: ${errData.error}`);
@@ -1146,7 +1159,7 @@ export default function App() {
                     <button
                       key={curr}
                       type="button"
-                      onClick={() => setSelectedCurrency(curr)}
+                      onClick={() => handleCurrencyChange(curr)}
                       className={`py-1 px-2.5 rounded-full font-mono text-[9px] font-bold tracking-wider transition-all duration-300 ${
                         selectedCurrency === curr
                           ? 'bg-brand-cream text-brand-moss shadow-sm'
@@ -1334,7 +1347,7 @@ export default function App() {
                 <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-white/50">Currency</span>
                 <select
                   value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  onChange={(e) => handleCurrencyChange(e.target.value)}
                   className="w-full bg-brand-charcoal border border-white/15 rounded-xl py-2 px-3 text-xs font-bold text-white outline-none cursor-pointer"
                 >
                   {['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'CAD'].map(curr => (

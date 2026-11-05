@@ -7,10 +7,27 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 let DATA_DIR = path.join(process.cwd(), 'server', 'data');
 
+if (process.env.VERCEL) {
+  DATA_DIR = path.join('/tmp', 'eduvista_data');
+}
+
 // Ensure data directory exists (robust fallback to /tmp for read-only environments)
 try {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  // When running on Vercel, copy packaged JSON fallback data to writable /tmp
+  if (process.env.VERCEL) {
+    const packagedDir = path.join(process.cwd(), 'server', 'data');
+    if (fs.existsSync(packagedDir)) {
+      const files = fs.readdirSync(packagedDir);
+      for (const file of files) {
+        const dest = path.join(DATA_DIR, file);
+        if (!fs.existsSync(dest) && file.endsWith('.json')) {
+          fs.copyFileSync(path.join(packagedDir, file), dest);
+        }
+      }
+    }
   }
 } catch (err) {
   console.warn("Read-only filesystem detected, falling back to /tmp/eduvista_data");

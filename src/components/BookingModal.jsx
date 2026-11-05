@@ -795,6 +795,64 @@ export default function BookingModal({
                     </span>
                   </div>
                 </button>
+
+                {/* Direct Bank Transfer Option (Flutterwave MFB) */}
+                <button
+                  onClick={() => setPaymentMethod('bank')}
+                  className={`w-full py-3 px-4 rounded-xl border text-left font-sans transition-all duration-300 flex items-center justify-between ${
+                    paymentMethod === 'bank'
+                      ? 'border-brand-moss bg-brand-moss/5 ring-1 ring-brand-moss'
+                      : 'border-brand-moss/10 bg-white hover:border-brand-moss/30'
+                  }`}
+                >
+                  <div>
+                    <span className="text-xs font-bold block text-brand-charcoal flex items-center gap-1.5">
+                      🏦 Direct Bank Transfer
+                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[8px] font-bold py-0.2 px-1.5 rounded">Instant Escrow</span>
+                    </span>
+                    <span className="text-[10px] text-brand-charcoal/60 mt-0.5 block">
+                      Transfer directly to Flutterwave MFB · Morichcare Educational Services
+                    </span>
+                  </div>
+                </button>
+
+                {paymentMethod === 'bank' && (
+                  <div className="bg-brand-moss/5 border border-brand-moss/15 rounded-xl p-3.5 space-y-2 animate-fade-in font-sans text-xs">
+                    <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">
+                      Official EduVista Payment Details
+                    </span>
+                    <div className="bg-white border border-brand-moss/10 p-2.5 rounded-lg space-y-1 font-mono text-[10px]">
+                      <div className="flex justify-between items-center">
+                        <span className="text-brand-charcoal/50">BANK NAME:</span>
+                        <span className="font-bold text-brand-moss">Flutterwave MFB</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-brand-charcoal/50">ACCOUNT NAME:</span>
+                        <span className="font-bold text-brand-moss">Morichcare Educational Services</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-brand-moss/5">
+                        <span className="text-brand-charcoal/50">ACCOUNT NUMBER:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-brand-clay text-xs tracking-wider">9811117173</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard?.writeText('9811117173');
+                              alert('Copied 9811117173 to clipboard!');
+                            }}
+                            className="px-1.5 py-0.5 text-[8px] bg-brand-clay/10 text-brand-clay hover:bg-brand-clay hover:text-white rounded font-bold"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-brand-charcoal/60 italic">
+                      After transfer, click below to confirm booking. Escrow will verify the transaction immediately.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -814,6 +872,8 @@ export default function BookingModal({
                   : selectedSlots.length > 0
                     ? paymentMethod === 'card' 
                       ? "Enter Card Details" 
+                      : paymentMethod === 'bank'
+                      ? `I Have Transferred ${formattedTotalRate} · Confirm`
                       : `Pay ${formattedTotalRate} & Lock Escrow`
                     : "Select at least one slot"
                 }

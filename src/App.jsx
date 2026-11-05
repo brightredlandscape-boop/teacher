@@ -1570,12 +1570,12 @@ export default function App() {
         )}
         <div className={currentUser && currentView === 'dashboard' ? 'hidden' : ''}>
           {/* Cinematic opening shot Hero */}
-      <section className="relative h-[95dvh] w-full overflow-hidden flex items-end justify-start md:justify-end pb-20 px-6 md:px-16 lg:px-24">
+      <section className="relative min-h-[88dvh] sm:h-[95dvh] w-full overflow-hidden flex items-end justify-start md:justify-end pb-16 sm:pb-20 px-6 md:px-16 lg:px-24">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
+          className="absolute inset-0 bg-cover bg-[center_20%] sm:bg-center bg-no-repeat transition-transform duration-1000 scale-100 sm:scale-105"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-moss/80 to-transparent mix-blend-multiply opacity-95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal via-brand-moss/80 to-transparent mix-blend-multiply opacity-85 sm:opacity-95" />
 
         <div className="relative z-10 max-w-4xl text-left md:text-right flex flex-col items-start md:items-end w-full">
           <h1 className="font-heading font-bold text-white text-3xl sm:text-5xl md:text-7xl tracking-tight mb-4 flex flex-col gap-2 md:gap-4 w-full">

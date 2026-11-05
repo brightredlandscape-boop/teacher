@@ -1362,32 +1362,48 @@ export default function ParentDashboard({
                 {/* Inline Bank Details Info Box */}
                 {topupMethod === 'bank' && (() => {
                   const details = {
-                    NGN: { bank: 'Providus Bank', number: '1023948571', name: 'EduVista Africa Ltd', extraLabel: null, extraVal: null },
+                    NGN: { bank: 'Flutterwave MFB', number: '9811117173', name: 'Morichcare Educational Services', extraLabel: null, extraVal: null },
                     USD: { bank: 'Citibank NY', number: '9988223311', name: 'EduVista Africa Ltd', extraLabel: 'ROUTING / ABA', extraVal: '021000021' },
                     GBP: { bank: 'Barclays Bank London', number: '88776655', name: 'EduVista Africa Ltd', extraLabel: 'SORT CODE', extraVal: '20-00-00' },
                     EUR: { bank: 'Deutsche Bank Frankfurt', number: 'DE89370400440532013000', name: 'EduVista Africa Ltd', extraLabel: 'IBAN', extraVal: 'DE89370400440532013000' },
                     GHS: { bank: 'Ecobank Ghana', number: '77665544', name: 'EduVista Africa Ltd', extraLabel: 'BRANCH', extraVal: 'Accra High St' }
-                  }[topupCurrency] || { bank: 'Providus Bank', number: '1023948571', name: 'EduVista Africa Ltd', extraLabel: null, extraVal: null };
+                  }[topupCurrency] || { bank: 'Flutterwave MFB', number: '9811117173', name: 'Morichcare Educational Services', extraLabel: null, extraVal: null };
 
                   return (
-                    <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 animate-fade-in font-sans text-xs space-y-2">
-                      <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">🏦 Direct Bank Transfer Details</span>
+                    <div className="bg-brand-moss/5 border border-brand-moss/10 rounded-2xl p-4 animate-fade-in font-sans text-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[9px] uppercase tracking-wider text-brand-clay font-bold block">🏦 Direct Bank Transfer Details</span>
+                        <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[8px] font-bold py-0.5 px-2 rounded-full uppercase">Instant Verification</span>
+                      </div>
                       <p className="text-brand-charcoal/70">Please make a transfer of the exact amount in your selected deposit currency <strong className="uppercase">{topupCurrency}</strong>. Ensure you include your parent user ID <strong className="font-mono">{currentUser?.uid || 'parent_1'}</strong> as the transfer description/reference.</p>
-                      <div className="bg-white border border-brand-moss/5 p-3 rounded-xl space-y-1.5 font-mono text-[10px]">
-                        <div className="flex justify-between">
+                      <div className="bg-white border border-brand-moss/10 p-3.5 rounded-xl space-y-2 font-mono text-[10px] shadow-xs">
+                        <div className="flex justify-between items-center py-0.5 border-b border-brand-moss/5">
                           <span className="text-brand-charcoal/50">BANK NAME:</span>
-                          <span className="font-bold text-brand-moss">{details.bank}</span>
+                          <span className="font-bold text-brand-moss text-xs">{details.bank}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center py-0.5 border-b border-brand-moss/5">
                           <span className="text-brand-charcoal/50">ACCOUNT NAME:</span>
-                          <span className="font-bold text-brand-moss">{details.name}</span>
+                          <span className="font-bold text-brand-moss text-xs">{details.name}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center py-0.5">
                           <span className="text-brand-charcoal/50">ACCOUNT NUMBER:</span>
-                          <span className="font-bold text-brand-clay">{details.number}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-brand-clay text-sm tracking-wider font-mono">{details.number}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(details.number);
+                                alert(`Copied account number ${details.number} to clipboard!`);
+                              }}
+                              className="px-2 py-0.5 text-[9px] font-sans font-bold bg-brand-clay/10 text-brand-clay hover:bg-brand-clay hover:text-white rounded transition-colors"
+                              title="Copy Account Number"
+                            >
+                              Copy
+                            </button>
+                          </div>
                         </div>
                         {details.extraLabel && (
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center pt-1 border-t border-brand-moss/5">
                             <span className="text-brand-charcoal/50">{details.extraLabel}:</span>
                             <span className="font-bold text-brand-moss">{details.extraVal}</span>
                           </div>

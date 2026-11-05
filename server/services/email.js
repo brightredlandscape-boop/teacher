@@ -4,6 +4,9 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
 let DATA_DIR = path.join(process.cwd(), 'server', 'data');
+if (process.env.VERCEL) {
+  DATA_DIR = path.join('/tmp', 'eduvista_data');
+}
 
 // Ensure data directory exists (robust fallback to /tmp for read-only environments)
 try {

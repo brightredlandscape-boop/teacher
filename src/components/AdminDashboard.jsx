@@ -44,6 +44,7 @@ import {
   Sliders
 } from 'lucide-react';
 import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
+import { SEED_TEACHERS } from '../data/seedTeachers';
 
 export default function AdminDashboard({ currentUser, selectedCurrency, formatCurrency, convertMinor, onBack }) {
   const API_BASE = '/api';
@@ -61,7 +62,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [b2bSubTab, setB2bSubTab] = useState('accounts'); // 'accounts' | 'api_manager'
   
   // Interactive mock lists
-  const [applications, setApplications] = useState([]);
+  const [applications, setApplications] = useState(SEED_TEACHERS);
   
   const [selectedApp, setSelectedApp] = useState(null);
   const [rejectReason, setRejectReason] = useState('Blurry ID document');
@@ -236,11 +237,11 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
   // Dynamic Admin Platform Statistics
   const [adminStats, setAdminStats] = useState({
-    approvedTeachers: 0,
-    pendingTeachers: 0,
-    totalTeachers: 0,
-    registeredParents: 0,
-    activeStudents: 0,
+    approvedTeachers: 14,
+    pendingTeachers: 6,
+    totalTeachers: 20,
+    registeredParents: 14,
+    activeStudents: 8,
     slaWarnings: 0,
     approvalRate: 85,
     avgDecisionTime: 14
@@ -288,12 +289,12 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
       if (!rawApps || rawApps.length === 0) {
         try {
-          const tRes = await fetch(`${API_BASE}/teachers`);
+          const tRes = await fetch(`${API_BASE}/teachers?all=true`);
           if (tRes.ok) {
             rawApps = await tRes.json();
           }
         } catch (e) {
-          console.warn("Fallback to /teachers failed:", e);
+          console.warn("Fallback to /teachers?all=true failed:", e);
         }
       }
 

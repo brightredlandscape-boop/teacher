@@ -334,7 +334,7 @@ export default function SessionEngine({
             {bookedSessions.length === 0 ? (
               <div className="space-y-4">
                 <p className="font-sans text-brand-cream/60 max-w-md mx-auto text-sm">
-                  You currently have no scheduled classes in escrow. Go to the teacher marketplace and book a trial class to unlock the live session sandbox.
+                  You currently have no scheduled classes in escrow. Go to the teacher marketplace and book a lesson to unlock the live session sandbox.
                 </p>
                 <a 
                   href="#marketplace"

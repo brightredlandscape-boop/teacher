@@ -643,7 +643,7 @@ export default function App() {
           const u = { uid: 'admin_zeerocodes', displayName: 'Zeerocodes Super Admin', role: 'Admin', email: authEmail };
           handleAuthSuccess(u);
         } else {
-          setAuthError('Simulated error: use parent@eduvista.com, teacher@eduvista.com, student@eduvista.com or admin@eduvista.com');
+          setAuthError('Invalid email or password. Please verify your credentials or register for an account.');
         }
       } else {
         const mockUid = `user_${Date.now()}`;
@@ -1812,9 +1812,9 @@ export default function App() {
                   2
                 </div>
                 <div className="space-y-1 mt-1">
-                  <h4 className="font-heading font-bold text-brand-moss text-lg">Schedule Your Trial Lesson</h4>
+                  <h4 className="font-heading font-bold text-brand-moss text-lg">Schedule 1-on-1 Tutoring Session</h4>
                   <p className="font-sans text-brand-charcoal/70 text-sm leading-relaxed">
-                    Book a trial class with absolute safety. Payments are processed securely and held in escrow until the lesson concludes. Your first class is backed by a 100% refund guarantee.
+                    Book lessons with absolute safety. Payments are processed securely and held in escrow until the lesson concludes. All sessions are 100% protected by our escrow guarantee.
                   </p>
                 </div>
               </div>
@@ -2285,7 +2285,7 @@ export default function App() {
             <h2 className="font-heading font-bold text-3xl sm:text-4xl md:text-5xl text-white leading-tight tracking-tight">
               Provide the Best Online Home Tutoring & Lessons for Your Child. <br />
               <span className="font-drama italic text-brand-clay font-light text-4xl sm:text-5xl md:text-6xl block mt-2">
-                Start with a risk-free trial private lesson today.
+                Start with an elite private lesson today.
               </span>
             </h2>
             <p className="font-sans text-brand-cream/80 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-2">
@@ -2331,7 +2331,7 @@ export default function App() {
               <div className="space-y-6">
                 <div>
                   <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">Single session</span>
-                  <h3 className="font-heading font-bold text-2xl text-brand-moss mt-1">Trial Pack</h3>
+                  <h3 className="font-heading font-bold text-2xl text-brand-moss mt-1">Starter Session</h3>
                 </div>
                 <div className="flex items-baseline gap-1">
                   <span className="font-heading text-4xl font-bold text-brand-moss">
@@ -2340,13 +2340,13 @@ export default function App() {
                   <span className="font-mono text-xs text-brand-charcoal/50 block mt-1">/ one-time</span>
                 </div>
                 <ul className="space-y-3 font-sans text-xs text-brand-charcoal/80">
-                  <li className="flex items-center gap-2">✓ 1-on-1 Trial Lesson</li>
+                  <li className="flex items-center gap-2">✓ 1-on-1 Private Lesson</li>
                   <li className="flex items-center gap-2">✓ Local Escrow Protection</li>
                   <li className="flex items-center gap-2">✓ 100% Refundable Guarantee</li>
                 </ul>
               </div>
               <a href="#marketplace" className="btn-magnetic w-full py-3.5 px-6 rounded-full border border-brand-moss text-brand-moss font-bold hover:bg-brand-clay hover:border-brand-clay hover:text-white transition-colors text-xs uppercase tracking-wider text-center">
-                Book Trial Class
+                Book Lesson Now
               </a>
             </div>
 
@@ -2734,7 +2734,7 @@ export default function App() {
                 "{watchingTeacherVideo.bio}"
               </p>
               <div className="flex justify-between items-center">
-                <span className="font-mono text-2xs text-brand-charcoal/50 uppercase">TRIAL RATE: {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)} / class</span>
+                <span className="font-mono text-2xs text-brand-charcoal/50 uppercase">HOURLY RATE: {formatCurrency(convertMinor(watchingTeacherVideo.rate || 350000, selectedCurrency), selectedCurrency)} / hr</span>
                 <button
                   onClick={() => {
                     const tutor = watchingTeacherVideo;
@@ -2743,7 +2743,7 @@ export default function App() {
                   }}
                   className="py-2.5 px-6 rounded-full bg-brand-clay hover:bg-brand-clay/95 text-white font-heading font-bold text-xs uppercase tracking-wider shadow-md shadow-brand-clay/10 transition-transform scale-100 hover:scale-103"
                 >
-                  Book Trial Session
+                  Book Tutoring Session
                 </button>
               </div>
             </div>

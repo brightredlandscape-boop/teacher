@@ -28,7 +28,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2647,
     "submittedTime": "2647h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "0r5AeYFk25dsfLftgiV5zQBwhh33",
@@ -61,7 +110,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2620,
     "submittedTime": "2620h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "4EnoPUNrm9fExrxBczoTBHL1Wg82",
@@ -94,7 +192,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2889,
     "submittedTime": "2889h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "8uwu4OqdeRfAPlGPvaGmYSu9nYE2",
@@ -125,7 +272,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1734,
     "submittedTime": "1734h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "D8pPIVkcJwNPZI4F7fQ5xj5ueV32",
@@ -164,7 +360,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1018,
     "submittedTime": "1018h ago",
-    "bio": "Aniebietobong Imaha is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Aniebietobong Imaha is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "EGIwdC6Qc1YLkg10tWLmgvD1lc13",
@@ -195,7 +440,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2620,
     "submittedTime": "2620h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "ENjZobEDIcSpxIM240HNXA2sYXr2",
@@ -234,7 +528,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1108,
     "submittedTime": "1108h ago",
-    "bio": "Modesayo Okeniyi  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Modesayo Okeniyi  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "GSnOJeHBhAWamEfGRdDpcWgLEwI2",
@@ -273,7 +616,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1016,
     "submittedTime": "1016h ago",
-    "bio": "Enobong Edubio  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Enobong Edubio  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "Il9kuOicX2a7PEiDwqnLZ9u02A53",
@@ -312,7 +704,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1015,
     "submittedTime": "1015h ago",
-    "bio": "Adenike Enoch-Salami  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Adenike Enoch-Salami  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "LoWGDCMnwgMxERiN7Rak88xCkmw1",
@@ -343,7 +784,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1734,
     "submittedTime": "1734h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "OsY20NfMP7YxFJY29bzfwkdhEzZ2",
@@ -382,7 +872,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1019,
     "submittedTime": "1019h ago",
-    "bio": " Christian Nwode is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": " Christian Nwode is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "RkAIhBHRjsYIxVpcFfJlI0ce4oE2",
@@ -413,7 +952,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2620,
     "submittedTime": "2620h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "StubTCOEqVfNpSmPMzG4YfcK4pD2",
@@ -444,7 +1032,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 2620,
     "submittedTime": "2620h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "dR7Gw9FFOtcDFEd9rZNcv5058962",
@@ -483,7 +1120,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 958,
     "submittedTime": "958h ago",
-    "bio": "Edidiong Wilson  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Edidiong Wilson  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "f3qayET3XBYgSrPzL9h7nAZUDog2",
@@ -522,7 +1208,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1022,
     "submittedTime": "1022h ago",
-    "bio": "Laura Elvis Jaja  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Laura Elvis Jaja  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "pLHfldBc3eWIgpVI9AqahuFCBhV2",
@@ -553,7 +1288,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1725,
     "submittedTime": "1725h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "teacher_fresh",
@@ -582,7 +1366,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1,
     "submittedTime": "1h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "z8CdeLMx6jbaGsntgkSSBHf0gMZ2",
@@ -621,7 +1454,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1016,
     "submittedTime": "1016h ago",
-    "bio": "Joy Usanga  is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Joy Usanga  is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "zyxvEbB5XbVT08V69TNSUo4jMFw1",
@@ -660,7 +1542,56 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1018,
     "submittedTime": "1018h ago",
-    "bio": "Editi Edidiong is a verified tutor on EduVistar specializing in personalized instruction and student success."
+    "bio": "Editi Edidiong is a verified tutor on EduVistar specializing in personalized instruction and student success.",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   },
   {
     "uid": "teacher_fresh",
@@ -689,6 +1620,55 @@ export const SEED_TEACHERS = [
     "duplicateCheck": "Clear",
     "slaHoursElapsed": 1,
     "submittedTime": "1h ago",
-    "bio": ""
+    "bio": "",
+    "availability": {
+      "Monday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Tuesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Wednesday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Thursday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Friday": [
+        "9:00 AM",
+        "11:00 AM",
+        "2:00 PM",
+        "4:00 PM",
+        "6:00 PM"
+      ],
+      "Saturday": [
+        "10:00 AM",
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ],
+      "Sunday": [
+        "12:00 PM",
+        "2:00 PM",
+        "4:00 PM"
+      ]
+    },
+    "online": true
   }
 ];

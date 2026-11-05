@@ -52,24 +52,23 @@ export default function BookingModal({
   const [otpCode, setOtpCode] = useState('');
   const [paymentStatusText, setPaymentStatusText] = useState('');
 
-  const isFirstTrial = !bookedSessions || bookedSessions.length === 0;
   const teacherRateMinor = teacher ? (teacher.rate || 0) : 350000;
-  const baseActiveRateMinor = isFirstTrial ? 0 : teacherRateMinor;
+  const baseActiveRateMinor = teacherRateMinor;
 
   // Apply 10% Sibling bundle discount if selected
-  const activeRateMinor = isSiblingBundle && !isFirstTrial
+  const activeRateMinor = isSiblingBundle
     ? Math.round(baseActiveRateMinor * 0.9)
     : baseActiveRateMinor;
 
   const convertedRateMinor = convertMinor(activeRateMinor, selectedCurrency);
-  const formattedRate = isFirstTrial ? "Free (First Trial Class)" : formatCurrency(convertedRateMinor, selectedCurrency);
+  const formattedRate = formatCurrency(convertedRateMinor, selectedCurrency);
 
   // Generate upcoming slots based on teacher availability mapped to actual calendar dates
   const generateUpcomingSlots = (availability) => {
-    if (!availability) return [];
     const slotsList = [];
     const today = new Date();
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const defaultDailySlots = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'];
     
     // Loop over the next 14 days
     for (let i = 1; i <= 14; i++) {
@@ -81,24 +80,29 @@ export default function BookingModal({
       // Match availability keys case-insensitively
       let times = [];
       const isTomorrow = i === 1;
-      if (isTomorrow && (availability['Tomorrow'] || availability['tomorrow'])) {
-        times = availability['Tomorrow'] || availability['tomorrow'] || [];
-      } else {
-        const matchedKey = Object.keys(availability).find(k => k.toLowerCase() === weekday.toLowerCase());
-        if (matchedKey) {
-          times = availability[matchedKey] || [];
+      if (availability && Object.keys(availability).length > 0) {
+        if (isTomorrow && (availability['Tomorrow'] || availability['tomorrow'])) {
+          times = availability['Tomorrow'] || availability['tomorrow'] || [];
+        } else {
+          const matchedKey = Object.keys(availability).find(k => k.toLowerCase() === weekday.toLowerCase());
+          if (matchedKey) {
+            times = availability[matchedKey] || [];
+          }
         }
       }
       
-      if (Array.isArray(times)) {
-        times.forEach(time => {
-          slotsList.push({
-            day: formattedDay,
-            time: time,
-            dateString: dateString
-          });
-        });
+      // Default open slots if none set for this day
+      if (!Array.isArray(times) || times.length === 0) {
+        times = defaultDailySlots;
       }
+      
+      times.forEach(time => {
+        slotsList.push({
+          day: formattedDay,
+          time: time,
+          dateString: dateString
+        });
+      });
     }
     return slotsList;
   };
@@ -581,7 +585,7 @@ export default function BookingModal({
             {/* Header */}
             <div className="mb-6">
               <span className="font-mono text-2xs uppercase tracking-widest text-brand-clay font-bold block mb-1">Secure Check-out</span>
-              <h3 className="font-heading font-bold text-2xl text-brand-moss">Book a Trial Class</h3>
+              <h3 className="font-heading font-bold text-2xl text-brand-moss">Book Tutoring Session</h3>
               <p className="font-sans text-xs text-brand-charcoal/70 mt-1">
                 with <span className="font-semibold">{teacher.name}</span>
               </p>
@@ -599,13 +603,13 @@ export default function BookingModal({
                   />
                 </div>
                 <div>
-                  <span className="font-heading font-bold text-sm text-brand-moss">{selectedSubject || '1-on-1'} Trial Class</span>
+                  <span className="font-heading font-bold text-sm text-brand-moss">{selectedSubject || '1-on-1'} Tutoring Session</span>
                   <span className="font-sans text-xs text-brand-charcoal/60 block">60 minutes · {selectedCurriculum || 'WAEC/Cambridge'}</span>
                 </div>
               </div>
               <div className="text-right">
                 <span className="font-heading font-bold text-base text-brand-moss block">{formattedRate}</span>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-brand-clay block font-bold">100% Refundable</span>
+                <span className="font-mono text-[9px] uppercase tracking-widest text-emerald-700 block font-bold">100% Escrow Protected</span>
               </div>
             </div>
 

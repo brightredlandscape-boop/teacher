@@ -1,3 +1,4 @@
+import { SEED_TEACHERS } from '../data/seedTeachers';
 import React, { useEffect, useState } from 'react';
 import { 
   Star, 
@@ -57,7 +58,11 @@ export default function TeacherPublicProfile({
 
   // Availability calendar states
   const [calendarMonth, setCalendarMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d;
+  });
   const [selectedSlots, setSelectedSlots] = useState([]); // Array of { day, time, dateString }
 
   const API_BASE = import.meta.env.VITE_API_BASE || '/api';
@@ -71,8 +76,6 @@ export default function TeacherPublicProfile({
   };
 
   const isTeacherAvailableOnDate = (d) => {
-    if (!teacher || !teacher.availability) return false;
-    
     // Past dates are not available
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -80,25 +83,31 @@ export default function TeacherPublicProfile({
     checkDate.setHours(0,0,0,0);
     if (checkDate < today) return false;
 
-    // Check weekday name in availability
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayOfWeek = dayNames[d.getDay()];
-    
-    // Check if tomorrow matches 'Tomorrow'
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    const isTomorrow = checkDate.getTime() - today.getTime() === oneDayMs;
+    // If teacher has explicit custom availability days, check them
+    if (teacher && teacher.availability && Object.keys(teacher.availability).length > 0) {
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = dayNames[d.getDay()];
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const isTomorrow = checkDate.getTime() - today.getTime() === oneDayMs;
 
-    if (isTomorrow && (teacher.availability['Tomorrow'] || teacher.availability['tomorrow'])) {
-      return true;
+      if (isTomorrow && (teacher.availability['Tomorrow'] || teacher.availability['tomorrow'])) {
+        return true;
+      }
+      const availableDays = Object.keys(teacher.availability).map(k => k.toLowerCase());
+      if (availableDays.includes(dayOfWeek.toLowerCase())) {
+        return true;
+      }
     }
-    
-    // Match weekday case-insensitively
-    const availableDays = Object.keys(teacher.availability).map(k => k.toLowerCase());
-    return availableDays.includes(dayOfWeek.toLowerCase());
+
+    // By default all upcoming dates are open for booking!
+    return true;
   };
 
   const getSlotsForDate = (d) => {
-    if (!teacher || !teacher.availability) return [];
+    const defaultDailySlots = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'];
+    if (!teacher || !teacher.availability || Object.keys(teacher.availability).length === 0) {
+      return defaultDailySlots;
+    }
     
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = dayNames[d.getDay()];
@@ -112,15 +121,16 @@ export default function TeacherPublicProfile({
     const isTomorrow = checkDate.getTime() - today.getTime() === oneDayMs;
 
     if (isTomorrow && (teacher.availability['Tomorrow'] || teacher.availability['tomorrow'])) {
-      return teacher.availability['Tomorrow'] || teacher.availability['tomorrow'] || [];
+      const slots = teacher.availability['Tomorrow'] || teacher.availability['tomorrow'];
+      return (Array.isArray(slots) && slots.length > 0) ? slots : defaultDailySlots;
     }
 
     // Match weekday
     const matchedKey = Object.keys(teacher.availability).find(k => k.toLowerCase() === dayOfWeek.toLowerCase());
-    if (matchedKey) {
-      return teacher.availability[matchedKey] || [];
+    if (matchedKey && Array.isArray(teacher.availability[matchedKey]) && teacher.availability[matchedKey].length > 0) {
+      return teacher.availability[matchedKey];
     }
-    return [];
+    return defaultDailySlots;
   };
 
   const handleSlotToggle = (time) => {
@@ -180,12 +190,42 @@ export default function TeacherPublicProfile({
           const subjects = Array.isArray(data.subjects) ? data.subjects.join(', ') : 'subjects';
           metaDesc.setAttribute('content', `Book premium online home tutoring and private lessons with ${data.name || 'this tutor'} on EduVista. Specializes in ${subjects}. Vetted credentials, secure escrow payment protection.`);
         } else {
+          const usernameLower = username.toLowerCase();
+          const seedMatch = SEED_TEACHERS.find(t => 
+            (t.username && t.username.toLowerCase() === usernameLower) ||
+            (t.uid && t.uid === username) ||
+            (t.id && String(t.id) === username)
+          );
+          if (seedMatch) {
+            setTeacher({
+              ...seedMatch,
+              avatar: getTeacherAvatar(seedMatch.avatar, seedMatch.name)
+            });
+            setError('');
+            document.title = `${seedMatch.name} | Online Home Tutoring & Lessons | EduVista`;
+            return;
+          }
           const errData = await response.json().catch(() => ({}));
           setError(errData.error || 'Tutor public profile page not found.');
         }
       } catch (err) {
-        console.warn("API offline, falling back to mock search for username:", username);
+        console.warn("API offline, falling back to seed search for username:", username);
         const usernameLower = username.toLowerCase();
+        
+        const seedMatch = SEED_TEACHERS.find(t => 
+          (t.username && t.username.toLowerCase() === usernameLower) ||
+          (t.uid && t.uid === username) ||
+          (t.id && String(t.id) === username)
+        );
+        if (seedMatch) {
+          setTeacher({
+            ...seedMatch,
+            avatar: getTeacherAvatar(seedMatch.avatar, seedMatch.name)
+          });
+          setError('');
+          document.title = `${seedMatch.name} | Online Home Tutoring & Lessons | EduVista`;
+          return;
+        }
         
         if (usernameLower === 'adenike') {
           const mockAdenike = {
@@ -450,24 +490,21 @@ export default function TeacherPublicProfile({
       {openSections.booking && (
         <div className="space-y-6 pt-2 animate-fade-in border-t border-brand-moss/5">
           {/* Rate Header Card */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 bg-brand-cream/30 p-4 rounded-2xl border border-brand-moss/5">
+          <div className="bg-brand-cream/40 p-4 rounded-2xl border border-brand-moss/10 flex items-center justify-between">
             <div>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">STANDARD RATE</span>
-              <div className="flex items-baseline gap-0.5">
-                <span className="font-heading text-lg sm:text-2xl font-extrabold text-brand-moss">
+              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/60 font-bold block mb-1">STANDARD HOURLY RATE</span>
+              <div className="flex items-baseline gap-1">
+                <span className="font-heading text-2xl sm:text-3xl font-extrabold text-brand-moss">
                   {formatCurrency(convertMinor(teacher.rate || 350000, selectedCurrency), selectedCurrency)}
                 </span>
-                <span className="font-mono text-[10px] text-brand-charcoal/50">/ hr</span>
+                <span className="font-mono text-xs text-brand-charcoal/60">/ hour</span>
               </div>
             </div>
-            <div>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-brand-charcoal/50 block mb-1">TRIAL RATE</span>
-              <div className="flex items-baseline gap-0.5">
-                <span className="font-heading text-lg sm:text-2xl font-extrabold text-brand-clay">
-                  {formatCurrency(convertMinor(350000, selectedCurrency), selectedCurrency)}
-                </span>
-                <span className="font-mono text-[10px] text-brand-charcoal/50">/ class</span>
-              </div>
+            <div className="text-right font-sans text-xs text-brand-charcoal/60">
+              <span className="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-1">
+                ✓ 100% Escrow Protected
+              </span>
+              <span className="block text-[11px]">60 min 1-on-1 private lesson</span>
             </div>
           </div>
 
@@ -634,18 +671,24 @@ export default function TeacherPublicProfile({
           {/* Direct CTA button to check booking triggers */}
           <button
             type="button"
-            onClick={() => onBookClick(teacher, null, selectedSlots)}
-            disabled={selectedSlots.length === 0}
-            className={`btn-magnetic w-full py-4 font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg flex items-center justify-center gap-2 transition-all ${
-              selectedSlots.length === 0
-                ? 'bg-brand-moss/20 text-brand-moss/45 cursor-not-allowed shadow-none'
-                : 'bg-brand-clay hover:bg-brand-clay/95 text-white shadow-brand-clay/20'
-            }`}
+            onClick={() => {
+              if (selectedSlots.length > 0) {
+                onBookClick(teacher, null, selectedSlots);
+              } else {
+                const targetDate = selectedDate || new Date();
+                const available = getSlotsForDate(targetDate);
+                const firstSlotTime = available[0] || '10:00 AM';
+                const dayName = targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                const dateString = targetDate.toISOString().split('T')[0];
+                onBookClick(teacher, null, [{ day: dayName, time: firstSlotTime, dateString }]);
+              }
+            }}
+            className="btn-magnetic w-full py-4 font-heading font-bold text-xs uppercase tracking-wider rounded-full shadow-lg flex items-center justify-center gap-2 bg-brand-clay hover:bg-brand-clay/95 text-white shadow-brand-clay/20 transition-all cursor-pointer"
           >
             <CheckCircle2 className="w-4.5 h-4.5" /> 
             {selectedSlots.length > 0 
               ? `Book Selected Sessions (${selectedSlots.length})` 
-              : 'Select date & slots to book'
+              : 'Book 1-on-1 Session Now'
             }
           </button>
         </div>
@@ -942,7 +985,7 @@ export default function TeacherPublicProfile({
                 <div className="pt-3 border-t border-brand-moss/5 space-y-4 animate-fade-in">
                   {(!reviews || reviews.length === 0) ? (
                     <div className="py-6 text-center font-sans text-brand-charcoal/50 text-xs">
-                      No reviews logged yet. Active reviews display once classroom trials conclude.
+                      No reviews logged yet. Active reviews display once tutoring sessions conclude.
                     </div>
                   ) : (
                     <div className="space-y-4">

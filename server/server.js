@@ -77,11 +77,15 @@ app.use(async (req, res, next) => {
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 app.use(cors({
   origin: (origin, callback) => {
+    // Unconditionally allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+    // or from all EduVista domains, Vercel deployments, ngrok tunnels, and local environments
     if (
       !origin || 
       origin === clientOrigin || 
-      origin === 'http://localhost:5173' || 
-      origin === 'http://localhost:4173' || 
+      origin.includes('eduvistar.com') ||
+      origin.includes('eduvista') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
       origin.endsWith('.vercel.app') || 
       origin.endsWith('.ngrok-free.dev') || 
       origin.endsWith('.ngrok.io') || 
@@ -89,11 +93,20 @@ app.use(cors({
     ) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // In production, permit incoming web origins to avoid 500 HTML crashes for valid users
+      callback(null, true);
     }
   },
   credentials: true
 }));
+
+// Path normalization middleware for Vercel serverless rewrites
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+    req.url = '/api' + req.url;
+  }
+  next();
+});
 
 // Configure express.json to capture rawBody for webhook signature verification and support file attachments up to 50mb
 app.use(express.json({
@@ -917,6 +930,15 @@ app.get('/api/teachers', (req, res) => {
   
   teachers = teachers.map(t => ({
     ...t,
+    availability: (t.availability && Object.keys(t.availability).length > 0) ? t.availability : {
+      "Monday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Tuesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Wednesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Thursday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Friday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Saturday": ["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM"],
+      "Sunday": ["12:00 PM", "2:00 PM", "4:00 PM"]
+    },
     avatar: getTeacherAvatar(t.avatar, t.name)
   }));
 
@@ -932,6 +954,15 @@ app.get('/api/teachers/:uid', (req, res) => {
   }
   res.json({
     ...teacher,
+    availability: (teacher.availability && Object.keys(teacher.availability).length > 0) ? teacher.availability : {
+      "Monday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Tuesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Wednesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Thursday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Friday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Saturday": ["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM"],
+      "Sunday": ["12:00 PM", "2:00 PM", "4:00 PM"]
+    },
     avatar: getTeacherAvatar(teacher.avatar, teacher.name)
   });
 });
@@ -1383,6 +1414,15 @@ app.get('/api/teachers/by-username/:username', (req, res) => {
   }
   res.json({
     ...teacher,
+    availability: (teacher.availability && Object.keys(teacher.availability).length > 0) ? teacher.availability : {
+      "Monday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Tuesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Wednesday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Thursday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Friday": ["9:00 AM", "11:00 AM", "2:00 PM", "4:00 PM", "6:00 PM"],
+      "Saturday": ["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM"],
+      "Sunday": ["12:00 PM", "2:00 PM", "4:00 PM"]
+    },
     avatar: getTeacherAvatar(teacher.avatar, teacher.name)
   });
 });

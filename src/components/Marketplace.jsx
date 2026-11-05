@@ -352,7 +352,7 @@ export default function Marketplace({
           if (!aHasElite && bHasElite) return 1;
           return 0;
         }).map(teacher => {
-          const rateValue = 350000; // ₦3,500 across board for trial class
+          const rateValue = teacher.rate || 350000;
           const convertedRate = convertMinor(rateValue, selectedCurrency);
           const formattedRate = formatCurrency(convertedRate, selectedCurrency);
           const standardRateVal = teacher.rate || 400000;
@@ -494,14 +494,11 @@ export default function Marketplace({
 
               {/* Hourly Rate & CTA buttons */}
               <div>
-                <div className="flex flex-col gap-1.5 mb-4 border-t border-brand-moss/5 pt-3">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-brand-charcoal/50 font-mono text-[10px] uppercase tracking-wider">Standard Rate:</span>
-                    <span className="font-heading font-bold text-brand-moss">{formattedStandardRate}/hr</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-brand-charcoal/50 font-mono text-[10px] uppercase tracking-wider">Trial Rate:</span>
-                    <span className="font-heading font-bold text-brand-clay">{formattedRate}/class</span>
+                <div className="flex justify-between items-center mb-4 border-t border-brand-moss/5 pt-3">
+                  <span className="text-brand-charcoal/60 font-mono text-[10px] uppercase tracking-wider font-bold">Standard Rate:</span>
+                  <div className="flex items-baseline gap-0.5">
+                    <span className="font-heading font-extrabold text-base text-brand-moss">{formattedStandardRate}</span>
+                    <span className="font-mono text-[10px] text-brand-charcoal/50">/ hr</span>
                   </div>
                 </div>
 
@@ -510,7 +507,7 @@ export default function Marketplace({
                     onClick={() => onBookClick(teacher)}
                     className="btn-magnetic bg-brand-clay hover:bg-brand-clay/90 text-white font-bold py-2.5 px-4 rounded-full text-xs uppercase tracking-wider text-center"
                   >
-                    Book Trial
+                    Book Lesson
                   </button>
                   <a
                     href="#chat"

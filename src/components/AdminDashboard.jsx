@@ -117,7 +117,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
   const [newSchoolStudentsLimit, setNewSchoolStudentsLimit] = useState('100');
   const [newSchoolTeachersList, setNewSchoolTeachersList] = useState('Mr. Adebayo Okafor, Mrs. Chioma');
 
-  // Policy configuration cancel overrides & Trial refund Calculator
+  // Policy configuration cancel overrides & Session refund Calculator
   const [refundCalcCost, setRefundCalcCost] = useState('4000'); // in NGN raw
   const [refundCalcDeduct, setRefundCalcDeduct] = useState('15'); // percent
   const [refundCalcResult, setRefundCalcResult] = useState(3400);
@@ -2751,7 +2751,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
               </div>
             </div>
 
-            {/* Trial Lesson Refund Queue & Policy Configuration */}
+            {/* Session Refund Queue & Policy Configuration */}
             <div className="lg:col-span-5 space-y-8">
               
               {/* Cancellation Policy Defaults editor */}
@@ -2876,12 +2876,12 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
                 </form>
               </div>
 
-              {/* Trial Lesson Refund Queue */}
+              {/* Session Refund Queue */}
               <div className="bg-white border border-brand-moss/10 rounded-[2.5rem] p-6 shadow-sm space-y-4">
                 <div className="flex justify-between items-center border-b border-brand-moss/5 pb-2">
                   <div>
                     <span className="font-mono text-2xs uppercase tracking-widest text-brand-charcoal/50 block">REFUND PIPELINE (5-DAY SLA)</span>
-                    <h3 className="font-heading font-bold text-lg text-brand-moss mt-0.5">Trial Refund Queue</h3>
+                    <h3 className="font-heading font-bold text-lg text-brand-moss mt-0.5">Session Refund Queue</h3>
                   </div>
                   {refunds.length > 0 && (
                     <button 
@@ -3999,7 +3999,7 @@ export default function AdminDashboard({ currentUser, selectedCurrency, formatCu
 
                 <div>
                   <div className="flex justify-between mb-1">
-                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/60 text-[9px]">Trial Lesson Refund Window</label>
+                    <label className="font-heading font-bold uppercase tracking-wider text-brand-charcoal/60 text-[9px]">Session Refund Window</label>
                     <span className="font-mono font-bold text-brand-moss">{configRefundWindow} Hours</span>
                   </div>
                   <input 

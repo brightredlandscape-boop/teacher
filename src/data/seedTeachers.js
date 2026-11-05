@@ -18,7 +18,7 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-online-learning-with-a-teacher-41221-large.mp4",
     "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLRdMJmI8Z6xXMjYKemNtfocff3RBEY6roWPeLzyWBtx38aqUpk=s400-c",
     "govId": "",
     "degree": "",
@@ -100,8 +100,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-ai-cert"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Blessing%20Akpan&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-giving-an-online-class-41224-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -182,7 +182,7 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-female-teacher-explaining-a-lesson-online-41223-large.mp4",
     "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLA85oewq-DwwXIXnhpAMdDEYXBbUD4OOuf5REwcMjS9hA6Mvg=s400-c",
     "govId": "",
     "degree": "",
@@ -262,7 +262,7 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-conducting-an-online-lesson-41225-large.mp4",
     "avatar": "https://res.cloudinary.com/dbyb4c1jq/image/upload/v1786353399/vp8lvozl7jcki8jh3qtv.png",
     "govId": "",
     "degree": "",
@@ -350,8 +350,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Aniebietobong%20Imaha&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-young-teacher-explaining-a-math-problem-41227-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -430,8 +430,8 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Ruth%20Uko&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-online-learning-with-a-teacher-41221-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -518,7 +518,7 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-giving-an-online-class-41224-large.mp4",
     "avatar": "https://res.cloudinary.com/dbyb4c1jq/image/upload/v1786356757/rrdkhtm35wbzjasdpevw.png",
     "govId": "",
     "degree": "",
@@ -606,8 +606,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Enobong%20Edubio%20&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-female-teacher-explaining-a-lesson-online-41223-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -694,7 +694,7 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-conducting-an-online-lesson-41225-large.mp4",
     "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
@@ -774,7 +774,7 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-young-teacher-explaining-a-math-problem-41227-large.mp4",
     "avatar": "https://res.cloudinary.com/dbyb4c1jq/image/upload/v1786356757/rrdkhtm35wbzjasdpevw.png",
     "govId": "",
     "degree": "",
@@ -862,8 +862,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=%20Christian%20Nwode&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-online-learning-with-a-teacher-41221-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -942,8 +942,8 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Daniel%20&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-giving-an-online-class-41224-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1022,7 +1022,7 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-female-teacher-explaining-a-lesson-online-41223-large.mp4",
     "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLbMZWzD7Lnc90ESpF39SqEgDrkcq0H-rPCv1EkrGW4c_LgnahP=s400-c",
     "govId": "",
     "degree": "",
@@ -1110,8 +1110,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Edidiong%20Wilson%20&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-conducting-an-online-lesson-41225-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1198,8 +1198,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Laura%20Elvis%20Jaja%20&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-young-teacher-explaining-a-math-problem-41227-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1278,7 +1278,7 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-online-learning-with-a-teacher-41221-large.mp4",
     "avatar": "https://res.cloudinary.com/dbyb4c1jq/image/upload/v1786388183/bpdav8s1uiwwjatberoi.jpg",
     "govId": "",
     "degree": "",
@@ -1356,8 +1356,8 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Dr+Chidi+Johnson&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-giving-an-online-class-41224-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1444,8 +1444,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Joy%20Usanga%20&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-female-teacher-explaining-a-lesson-online-41223-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1532,8 +1532,8 @@ export const SEED_TEACHERS = [
     "badges": [
       "badge-verified"
     ],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Editi%20Edidiong&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-teacher-conducting-an-online-lesson-41225-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",
@@ -1610,8 +1610,8 @@ export const SEED_TEACHERS = [
     "verified": false,
     "tier": "Pending",
     "badges": [],
-    "videoUrl": "",
-    "avatar": "https://ui-avatars.com/api/?name=Dr+Chidi+Johnson&background=1B3B2B&color=fff&size=200&bold=true",
+    "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-young-teacher-explaining-a-math-problem-41227-large.mp4",
+    "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=600&auto=format&fit=crop",
     "govId": "",
     "degree": "",
     "cvUrl": "",

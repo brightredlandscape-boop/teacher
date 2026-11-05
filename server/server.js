@@ -164,10 +164,11 @@ function sanitizeObject(obj) {
   return obj;
 }
 
-// Teacher avatar helper to ensure authentic images or branded initials fallback
+// Teacher avatar helper to ensure authentic images or branded educator portrait fallback
 const REJECTED_AVATAR_PATTERNS = [
-  'unsplash.com',
-  'photo-',
+  'ui-avatars.com',
+  'placeholder',
+  'avatar-default',
   'v1792159',
   'ekb2uxzepcz2cyl79d99',
   'gr8kdtbut0mm0oyr87uh',
@@ -184,10 +185,21 @@ const REJECTED_AVATAR_PATTERNS = [
   'yfk97qh8g7ekbaaif9od'
 ];
 
+const EDUCATOR_PORTRAITS = [
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?q=80&w=600&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop'
+];
+
 function isRealTeacherAvatar(avatar) {
   if (!avatar || typeof avatar !== 'string') return false;
   const clean = avatar.trim();
-  if (!clean) return false;
+  if (!clean || clean.includes('ui-avatars.com')) return false;
   for (const pattern of REJECTED_AVATAR_PATTERNS) {
     if (clean.includes(pattern)) return false;
   }
@@ -195,11 +207,15 @@ function isRealTeacherAvatar(avatar) {
 }
 
 function getTeacherAvatar(avatar, name = 'Tutor') {
-  const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Tutor')}&background=1B3B2B&color=fff&size=200&bold=true`;
-  if (!isRealTeacherAvatar(avatar)) {
-    return fallback;
+  if (isRealTeacherAvatar(avatar)) {
+    return avatar.trim();
   }
-  return avatar.trim();
+  const cleanName = (name || 'Tutor').trim();
+  let hash = 0;
+  for (let i = 0; i < cleanName.length; i++) {
+    hash = (hash + cleanName.charCodeAt(i)) % EDUCATOR_PORTRAITS.length;
+  }
+  return EDUCATOR_PORTRAITS[hash] || EDUCATOR_PORTRAITS[0];
 }
 
 // Global Input Sanitization Middleware to prevent XSS
@@ -1006,7 +1022,7 @@ app.post('/api/teachers/optimize-bio', authenticateToken, requireRole(['Teacher'
 
 // POST Update teacher profile (builder)
 app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), requireOwnerOrAdmin, async (req, res) => {
-  const { uid, name, location, rate, subjects, curricula, languages, bio, avatar } = req.body;
+  const { uid, name, location, rate, subjects, curricula, languages, bio, avatar, videoUrl, classroomLink, recordingTool } = req.body;
   const teacher = db.findOne('teachers', t => t.uid === uid);
   if (!teacher) {
     return res.status(404).json({ error: "Teacher profile not found." });
@@ -1020,7 +1036,10 @@ app.post('/api/teachers/profile', authenticateToken, requireRole(['Teacher']), r
     curricula: curricula || teacher.curricula,
     languages: languages || teacher.languages,
     bio: bio ? sanitizeText(bio) : teacher.bio,
-    avatar: avatar !== undefined ? avatar : teacher.avatar
+    avatar: avatar !== undefined ? avatar : teacher.avatar,
+    videoUrl: videoUrl !== undefined ? videoUrl : teacher.videoUrl,
+    classroomLink: classroomLink !== undefined ? classroomLink : teacher.classroomLink,
+    recordingTool: recordingTool !== undefined ? recordingTool : teacher.recordingTool
   });
 
   const user = db.findOne('users', u => u.uid === uid || u.id === uid);

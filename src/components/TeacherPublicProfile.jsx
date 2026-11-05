@@ -20,7 +20,9 @@ import {
   Clock,
   BookOpen,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  Play,
+  X
 } from 'lucide-react';
 import { getTeacherAvatar, handleAvatarError } from '../utils/avatar';
 
@@ -40,6 +42,7 @@ export default function TeacherPublicProfile({
 
   // Accordion drop-down open/close states
   const [openSections, setOpenSections] = useState({
+    video: true,
     about: true,
     booking: true,
     trophies: true,
@@ -760,6 +763,26 @@ export default function TeacherPublicProfile({
                   <span>Verified Tutor</span>
                 </div>
               </div>
+
+              {/* Quick Action: Video Intro Pill */}
+              {teacher.videoUrl && (
+                <div className="mt-3 flex justify-center sm:justify-start">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const videoEl = document.getElementById('tutor-video-section');
+                      if (videoEl) {
+                        videoEl.scrollIntoView({ behavior: 'smooth' });
+                        setOpenSections(prev => ({ ...prev, video: true }));
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-clay/10 hover:bg-brand-clay text-brand-clay hover:text-white font-heading font-bold text-[10px] uppercase tracking-wider transition-all duration-300 shadow-xs cursor-pointer group"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current text-brand-clay group-hover:text-white transition-colors" />
+                    <span>Watch Short Video Intro</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -821,9 +844,67 @@ export default function TeacherPublicProfile({
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Teacher Info (About, Trophy Cabinet, Parent Reviews) */}
+          {/* Left Column: Teacher Info (About, Video, Trophy Cabinet, Parent Reviews) */}
           <div className={`space-y-6 lg:col-span-8 ${mobileTab === 'booking' ? 'hidden lg:block' : 'block'}`}>
             
+            {/* Section: Teacher Video Introduction */}
+            {teacher.videoUrl && (
+              <div id="tutor-video-section" className="bg-white border border-brand-moss/10 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 shadow-sm space-y-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSection('video')}
+                  className="w-full flex items-center justify-between text-left group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-brand-clay/10 text-brand-clay flex items-center justify-center shrink-0">
+                      <Video className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-bold text-lg sm:text-xl text-brand-moss group-hover:text-brand-clay transition-colors flex items-center gap-2">
+                        <span>Video Introduction</span>
+                        <span className="font-mono text-[9px] uppercase px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                          Verified Video
+                        </span>
+                      </h3>
+                      <span className="font-sans text-xs text-brand-charcoal/50 block">
+                        Watch {teacher.name}'s short teaching preview and classroom methodology
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-full hover:bg-brand-moss/5 text-brand-moss/70 transition-transform">
+                    {openSections.video ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </button>
+
+                {openSections.video && (
+                  <div className="pt-3 border-t border-brand-moss/5 space-y-3 animate-fade-in">
+                    <div className="aspect-video w-full rounded-2xl overflow-hidden bg-brand-charcoal border border-brand-moss/10 shadow-lg relative">
+                      {teacher.videoUrl.includes('youtube.com') || teacher.videoUrl.includes('youtu.be') ? (
+                        <iframe 
+                          className="w-full h-full"
+                          src={teacher.videoUrl.replace('watch?v=', 'embed/')} 
+                          title="Tutor Video Introduction"
+                          frameBorder="0" 
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video controls playsInline preload="metadata" className="w-full h-full object-cover">
+                          <source src={teacher.videoUrl} type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] font-sans text-brand-charcoal/60 px-1 pt-1">
+                      <span className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Authentic Vetted Educator Video
+                      </span>
+                      <span>Recorded for EduVista Parents</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Dropdown 1: About Tutor */}
             <div className="bg-white border border-brand-moss/10 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-8 shadow-sm space-y-4">
               <button

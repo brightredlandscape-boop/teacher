@@ -459,12 +459,17 @@ export default function Marketplace({
                       {teacher.name || 'Verified Educator'}
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 fill-emerald-50" />
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <div className="flex items-center text-brand-clay">
                         <Star className="w-3.5 h-3.5 fill-current" />
                         <span className="font-heading font-bold text-xs ml-1 text-brand-moss">{teacher.rating || '5.0'}</span>
                       </div>
                       <span className="text-xs text-brand-charcoal/50">({teacher.reviewsCount || 0} sessions)</span>
+                      {teacher.videoUrl && (
+                        <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider font-bold text-brand-clay bg-brand-clay/10 px-2 py-0.5 rounded-full">
+                          <Play className="w-2.5 h-2.5 fill-current" /> Video
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

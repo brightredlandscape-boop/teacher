@@ -287,16 +287,21 @@ export async function connectDb() {
 
   if (isFirestore) {
     try {
-      // Load all collections into cache
-      for (const col of collections) {
-        const snapshot = await firestoreDb.collection(col).get();
-        const docs = [];
-        snapshot.forEach(doc => {
-          docs.push({ id: doc.id, ...doc.data() });
-        });
-        CACHE[col] = docs;
-        console.log(`Database Migration: Loaded ${CACHE[col].length} documents for collection '${col}' from Firestore.`);
-      }
+      // Load all collections into cache in parallel
+      await Promise.all(collections.map(async (col) => {
+        try {
+          const snapshot = await firestoreDb.collection(col).get();
+          const docs = [];
+          snapshot.forEach(doc => {
+            docs.push({ id: doc.id, ...doc.data() });
+          });
+          CACHE[col] = docs;
+        } catch (colErr) {
+          console.warn(`Database Migration: Firestore collection '${col}' fetch notice:`, colErr.message);
+          CACHE[col] = [];
+        }
+      }));
+      console.log("Database Migration: Loaded all collections from Firestore in parallel.");
     } catch (err) {
       console.error("Database Migration: Firestore loading failed, falling back to local JSON database:", err);
       isFirestore = false;
@@ -336,8 +341,11 @@ export async function connectDb() {
     }
   }
 
-  // Seed the database after collections are loaded in memory
-  await seedDatabase();
+  // Only seed the database if users collection is empty
+  if (!CACHE['users'] || CACHE['users'].length === 0) {
+    console.log("Database empty, initializing initial seed data...");
+    await seedDatabase();
+  }
 }
 
 // Read collection
